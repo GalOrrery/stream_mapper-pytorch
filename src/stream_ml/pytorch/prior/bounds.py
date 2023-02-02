@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-# STDLIB
 from abc import abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-# THIRD-PARTY
 import torch as xp
 
-# LOCAL
 from stream_ml.core.data import Data
 from stream_ml.core.prior.bounds import PriorBounds as CorePriorBounds
 from stream_ml.pytorch.typing import Array
@@ -18,7 +15,6 @@ from stream_ml.pytorch.utils.misc import within_bounds
 from stream_ml.pytorch.utils.sigmoid import scaled_sigmoid
 
 if TYPE_CHECKING:
-    # LOCAL
     from stream_ml.core.api import Model
     from stream_ml.core.params.core import Params
 

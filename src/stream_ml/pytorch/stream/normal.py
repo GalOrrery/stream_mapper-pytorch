@@ -3,10 +3,7 @@
 from __future__ import annotations
 
 # STDLIB
-import functools
-import operator
 from dataclasses import KW_ONLY, InitVar, dataclass
-from math import inf
 from typing import TYPE_CHECKING
 
 # THIRD-PARTY
@@ -17,13 +14,10 @@ from torch.distributions.normal import Normal as TorchNormal
 # LOCAL
 from stream_ml.core.api import WEIGHT_NAME
 from stream_ml.core.data import Data
-from stream_ml.core.params import ParamBounds, ParamNames, Params
+from stream_ml.core.params import Params
 from stream_ml.core.params.names import ParamNamesField
-from stream_ml.core.prior.bounds import NoBounds
-from stream_ml.core.typing import BoundsT, ArrayNamespace
-from stream_ml.core.utils.frozen_dict import FrozenDict
+from stream_ml.core.typing import ArrayNamespace
 from stream_ml.pytorch.base import ModelBase
-from stream_ml.pytorch.prior.bounds import PriorBounds, SigmoidBounds
 
 if TYPE_CHECKING:
     # LOCAL
@@ -53,8 +47,7 @@ class Normal(ModelBase):
         Upper limit on fraction, by default 0.45.s
     """
 
-    n_features: int = 50
-    n_layers: int = 3
+    net: InitVar[nn.Module | None] = None
 
     _: KW_ONLY
     array_namespace: InitVar[ArrayNamespace]
@@ -63,7 +56,9 @@ class Normal(ModelBase):
         (WEIGHT_NAME, (..., ("mu", "sigma")))
     )
 
-    def __post_init__(self, array_namespace: ArrayNamespace) -> None:
+    def __post_init__(
+        self, array_namespace: ArrayNamespace, net: nn.Module | None
+    ) -> None:
         super().__post_init__(array_namespace=array_namespace)
 
         # Validate the coord_names
@@ -71,73 +66,17 @@ class Normal(ModelBase):
             msg = "Only one coordinate is supported, e.g ('phi2',)"
             raise ValueError(msg)
 
-        # Define the layers of the neural network:
-        # Total: in (phi) -> out (fraction, mean, sigma)
-        self.layers = nn.Sequential(
-            nn.Linear(1, self.n_features),
-            nn.Tanh(),
-            *functools.reduce(
-                operator.add,
-                (
-                    (nn.Linear(self.n_features, self.n_features), nn.Tanh())
-                    for _ in range(self.n_layers - 2)
-                ),
-            ),
-            nn.Linear(self.n_features, 3),
-        )
-
-    @classmethod
-    def from_simpler_inputs(
-        cls,
-        n_features: int = 50,
-        n_layers: int = 3,
-        *,
-        coord_name: str,
-        coord_bounds: BoundsT = (-inf, inf),
-        weight_bounds: PriorBounds | BoundsT = SigmoidBounds(_eps, 1),  # noqa: B_eps008
-        mu_bounds: PriorBounds | BoundsT | None | NoBounds = None,
-        sigma_bounds: PriorBounds | BoundsT = SigmoidBounds(_eps, 0.3),  # noqa: B008
-    ) -> Normal:
-        """Create a Normal from a simpler set of inputs.
-
-        Parameters
-        ----------
-        n_features : int, optional
-            Number of features, by default 50.
-        n_layers : int, optional
-            Number of layers, by default 3.
-
-        coord_name : str, keyword-only
-            Coordinate name.
-        coord_bounds : BoundsT, optional keyword-only
-            Coordinate bounds.
-        weight_bounds : PriorBounds | BoundsT, optional keyword-only
-            Bounds on the mixture parameter.
-        mu_bounds : PriorBounds | BoundsT, optional keyword-only
-            Bounds on the mean.
-        sigma_bounds : PriorBounds | BoundsT, optional keyword-only
-            Bounds on the standard deviation.
-
-        Returns
-        -------
-        Normal
-        """
-        return cls(
-            n_features=n_features,
-            n_layers=n_layers,
-            coord_names=(coord_name,),
-            param_names=ParamNames((WEIGHT_NAME, (coord_name, ("mu", "sigma")))),  # type: ignore[arg-type] # noqa: E501
-            coord_bounds=FrozenDict({coord_name: coord_bounds}),  # type: ignore[arg-type] # noqa: E501
-            param_bounds=ParamBounds(  # type: ignore[arg-type]
-                {
-                    WEIGHT_NAME: cls._make_bounds(weight_bounds, (WEIGHT_NAME,)),
-                    coord_name: FrozenDict(
-                        mu=cls._make_bounds(mu_bounds, (coord_name, "mu")),
-                        sigma=cls._make_bounds(sigma_bounds, (coord_name, "sigma")),
-                    ),
-                }
-            ),
-        )
+        # Initialize the network
+        if net is not None:
+            self.nn = net
+        else:
+            self.nn = nn.Sequential(
+                nn.Linear(1, 50),
+                nn.Tanh(),
+                nn.Linear(50, 50),
+                nn.Tanh(),
+                nn.Linear(50, 3),
+            )
 
     # ========================================================================
     # Statistics
@@ -212,7 +151,7 @@ class Normal(ModelBase):
         Array
             fraction, mean, sigma
         """
-        nn = self._forward_prior(self.layers(data[self.indep_coord_name]), data)
+        nn = self._forward_prior(self.nn(data[self.indep_coord_name]), data)
 
         # Call the prior to limit the range of the parameters
         for prior in self.priors:

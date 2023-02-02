@@ -2,22 +2,18 @@
 
 from __future__ import annotations
 
-# STDLIB
-import functools
-import operator
-from dataclasses import KW_ONLY, dataclass
+from dataclasses import KW_ONLY, InitVar, dataclass
 from typing import TYPE_CHECKING
 
-# THIRD-PARTY
 import torch as xp
 from torch import nn
 from torch.distributions import MultivariateNormal as TorchMultivariateNormal
 
-# LOCAL
 from stream_ml.core.api import WEIGHT_NAME
 from stream_ml.core.data import Data
 from stream_ml.core.params import Params
 from stream_ml.core.params.names import ParamNamesField
+from stream_ml.core.typing import ArrayNamespace
 from stream_ml.pytorch.base import ModelBase
 
 if TYPE_CHECKING:
@@ -46,36 +42,35 @@ class MultivariateNormal(ModelBase):
         Upper limit on fraction, by default 0.45.s
     """
 
-    n_features: int = 50
-    n_layers: int = 3
+    net: InitVar[nn.Module | None] = None
 
     _: KW_ONLY
+    array_namespace: InitVar[ArrayNamespace]
     param_names: ParamNamesField = ParamNamesField(
         (WEIGHT_NAME, (..., ("mu", "sigma")))
     )
 
-    def __post_init__(self) -> None:
-        super().__post_init__()
+    def __post_init__(
+        self, array_namespace: ArrayNamespace, net: nn.Module | None
+    ) -> None:
+        super().__post_init__(array_namespace=array_namespace)
 
         # Validate param bounds.
         self.param_bounds.validate(self.param_names)
 
-        # Define the layers of the neural network:
-        # Total: in (phi) -> out (fraction, *mean, *sigma)
-        ndim = len(self.param_names) - 1
+        # Initialize the network
+        if net is not None:
+            self.nn = net
+        else:
+            ndim = len(self.param_names) - 1
 
-        self.layers = nn.Sequential(
-            nn.Linear(1, self.n_features),
-            nn.Tanh(),
-            *functools.reduce(
-                operator.add,
-                (
-                    (nn.Linear(self.n_features, self.n_features), nn.Tanh())
-                    for _ in range(self.n_layers - 2)
-                ),
-            ),
-            nn.Linear(self.n_features, 1 + 2 * ndim),
-        )
+            self.nn = nn.Sequential(
+                nn.Linear(1, 50),
+                nn.Tanh(),
+                nn.Linear(50, 50),
+                nn.Tanh(),
+                nn.Linear(50, 1 + 2 * ndim),
+            )
 
     # ========================================================================
     # Statistics

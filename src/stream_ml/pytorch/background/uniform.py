@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 # STDLIB
-from dataclasses import KW_ONLY, dataclass
+from dataclasses import KW_ONLY, InitVar, dataclass
 
 # THIRD-PARTY
 import torch as xp
@@ -12,8 +12,9 @@ import torch as xp
 from stream_ml.core.api import WEIGHT_NAME
 from stream_ml.core.data import Data
 from stream_ml.core.params import Params
-from stream_ml.core.params.names import ParamNamesField
 from stream_ml.core.params.bounds import ParamBoundsField
+from stream_ml.core.params.names import ParamNamesField
+from stream_ml.core.typing import ArrayNamespace
 from stream_ml.pytorch.base import ModelBase
 from stream_ml.pytorch.prior.bounds import SigmoidBounds
 from stream_ml.pytorch.typing import Array
@@ -29,14 +30,15 @@ class Uniform(ModelBase):
     """Uniform background model."""
 
     _: KW_ONLY
+    array_namespace: InitVar[ArrayNamespace]
     param_names: ParamNamesField = ParamNamesField((WEIGHT_NAME,))
     param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array](
         {WEIGHT_NAME: SigmoidBounds(_eps, 1.0, param_name=(WEIGHT_NAME,))}
     )
     require_mask: bool = False
 
-    def __post_init__(self) -> None:
-        super().__post_init__()
+    def __post_init__(self, array_namespace: ArrayNamespace) -> None:
+        super().__post_init__(array_namespace=array_namespace)
 
         # Pre-compute the log-difference, shape (1, F)
         self._ln_diffs = xp.log(

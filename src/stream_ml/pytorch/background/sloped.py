@@ -13,12 +13,12 @@ from torch import nn
 from stream_ml.core.api import WEIGHT_NAME
 from stream_ml.core.data import Data
 from stream_ml.core.params import Params
-from stream_ml.core.params.names import ParamNamesField
 from stream_ml.core.params.bounds import ParamBoundsField
+from stream_ml.core.params.names import ParamNamesField
+from stream_ml.core.typing import ArrayNamespace
 from stream_ml.pytorch.base import ModelBase
 from stream_ml.pytorch.prior.bounds import SigmoidBounds
 from stream_ml.pytorch.typing import Array
-from stream_ml.core.typing import ArrayNamespace
 
 __all__: list[str] = []
 
@@ -53,7 +53,9 @@ class Sloped(ModelBase):
     )
     require_mask: bool = False
 
-    def __post_init__(self, net: nn.Module | None, array_namespace: ArrayNamespace) -> None:  # type: ignore[override]
+    def __post_init__(
+        self, array_namespace: ArrayNamespace, net: nn.Module | None
+    ) -> None:
         super().__post_init__(array_namespace=array_namespace)
 
         n_slopes = len(self.param_names) - 1  # (don't count the weight)

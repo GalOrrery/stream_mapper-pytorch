@@ -2,61 +2,45 @@
 
 from __future__ import annotations
 
-# STDLIB
-from abc import abstractmethod
 from dataclasses import KW_ONLY, dataclass
-from typing import TYPE_CHECKING
+from math import inf
+from typing import TYPE_CHECKING, ClassVar
 
-# THIRD-PARTY
 import torch as xp
 from torch import nn
 
-# LOCAL
+from stream_ml.core.api import Model
 from stream_ml.core.bases import ModelsBase as CoreModelsBase
 from stream_ml.core.prior.base import PriorBase
 from stream_ml.core.utils.frozen_dict import FrozenDictField
-from stream_ml.pytorch.api import Model
+from stream_ml.pytorch.prior.bounds import PriorBounds, SigmoidBounds
 from stream_ml.pytorch.typing import Array
 
 if TYPE_CHECKING:
     # LOCAL
     from stream_ml.core.data import Data
-    from stream_ml.core.params import Params
 
 __all__: list[str] = []
 
 
 @dataclass
-class ModelsBase(nn.Module, CoreModelsBase[Array], Model):  # type: ignore[misc]
+class ModelsBase(nn.Module, CoreModelsBase[Array]):
     """Multi-model base class."""
 
-    components: FrozenDictField[str, Model] = FrozenDictField()  # type: ignore[assignment]  # noqa: E501
+    components: FrozenDictField[str, Model] = FrozenDictField()
 
     _: KW_ONLY
     priors: tuple[PriorBase[Array], ...] = ()
+
+    DEFAULT_BOUNDS: ClassVar[PriorBounds] = SigmoidBounds(-inf, inf)
 
     def __post_init__(self) -> None:
         super().__post_init__()
 
         # Register the models with pytorch.
+        nn.Module.__init__(self)  # Needed for PyTorch
         for name, model in self.components.items():
             self.add_module(name=name, module=model)
-
-    # ===============================================================
-    # Mapping
-
-    def __getitem__(self, key: str) -> Model:
-        return self.components[key]
-
-    # ===============================================================
-    # Statistics
-
-    @abstractmethod
-    def ln_likelihood_arr(
-        self, mpars: Params[Array], data: Data[Array], **kwargs: Array
-    ) -> Array:
-        """Log likelihood."""
-        raise NotImplementedError
 
     # ========================================================================
     # ML

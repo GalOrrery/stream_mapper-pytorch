@@ -38,11 +38,6 @@ def scaled_sigmoid(x: Array, /, lower: Array = _0, upper: Array = _1) -> Array:
     Returns
     -------
     Array
-
-    See Also
-    --------
-    stream_ml.core.utils.map_to_range
-        Maps ``[min(x), max(x)]`` to range ``[lower, upper]``.
     """
     if xp.isneginf(lower) and xp.isposinf(upper):
         return x

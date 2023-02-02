@@ -2,30 +2,32 @@
 
 from __future__ import annotations
 
-# STDLIB
 from abc import abstractmethod
 from dataclasses import dataclass
+from math import inf
+from typing import Any, ClassVar
 
-# THIRD-PARTY
 import torch as xp
 from torch import nn
 
-# LOCAL
 from stream_ml.core.base import ModelBase as CoreModelBase
 from stream_ml.core.data import Data
-from stream_ml.core.params import Params, freeze_params, set_param
-from stream_ml.pytorch.api import Model
+from stream_ml.core.params import Params
+from stream_ml.pytorch.prior.bounds import PriorBounds, SigmoidBounds
 from stream_ml.pytorch.typing import Array
-from stream_ml.core.typing import ArrayNamespace
 
 __all__: list[str] = []
 
 
 @dataclass(unsafe_hash=True)
-class ModelBase(nn.Module, CoreModelBase[Array], Model):  # type: ignore[misc]
+class ModelBase(nn.Module, CoreModelBase[Array]):
     """Model base class."""
 
-    indep_coord_name: str = "phi1"  # TODO: move up class hierarchy?
+    DEFAULT_BOUNDS: ClassVar[PriorBounds] = SigmoidBounds(-inf, inf)
+
+    def __post_init__(self, *args: Any, **kwargs: Any) -> None:
+        nn.Module.__init__(self)  # Needed for PyTorch
+        super().__post_init__(*args, **kwargs)
 
     # ========================================================================
     # Statistics

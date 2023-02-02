@@ -60,3 +60,4 @@ repos:
         args:
           - --strict
           - --ignore-missing-imports
+          - --allow-subclassing-any
