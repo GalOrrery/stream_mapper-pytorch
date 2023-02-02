@@ -106,34 +106,6 @@ class MultivariateNormal(ModelBase):
 
         return xp.log(xp.clip(mpars[(WEIGHT_NAME,)], eps)) + lik[:, None]
 
-    def ln_prior_arr(self, mpars: Params[Array], data: Data[Array]) -> Array:
-        """Log prior.
-
-        Parameters
-        ----------
-        mpars : Params[Array], positional-only
-            Model parameters. Note that these are different from the ML
-            parameters.
-        data : Data[Array]
-            Data.
-
-        Returns
-        -------
-        Array
-        """
-        lnp = xp.zeros_like(mpars[(WEIGHT_NAME,)])  # 100%
-        # Bounds
-        lnp += self._ln_prior_coord_bnds(mpars, data)
-        for bounds in self.param_bounds.flatvalues():
-            lnp += bounds.logpdf(mpars, data, self, lnp)
-
-        # TODO: use super().ln_prior_arr(mpars, data, current_lnp) once
-        #       the last argument is added to the signature.
-        for prior in self.priors:
-            lnp += prior.logpdf(mpars, data, self, lnp)
-
-        return lnp
-
     # ========================================================================
     # ML
 

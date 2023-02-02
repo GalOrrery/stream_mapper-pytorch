@@ -52,23 +52,6 @@ class FlowModel(ModelBase):
 
         return self.wrapped.log_prob(data[self.coord_names].array)[:, None]
 
-    def ln_prior_arr(self, mpars: Params[Array], data: Data[Array]) -> Array:
-        """Log prior.
-
-        Parameters
-        ----------
-        mpars : Params[Array], positional-only
-            Model parameters. Note that these are different from the ML
-            parameters.
-        data : Data[Array]
-            Data.
-
-        Returns
-        -------
-        Array
-        """
-        return xp.zeros((len(data), 1))
-
     def forward(self, data: Data[Array]) -> Array:
         """Forward pass.
 
