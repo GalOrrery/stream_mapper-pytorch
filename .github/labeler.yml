@@ -1,0 +1,16 @@
+# Infrastructure Labels
+Infrastructure:
+  - .github/**/*
+  - .pre-commit-config.yaml
+  - .readthedocs.yml
+  - setup.py
+  - .flake8
+  - .gitignore
+  - pyproject.toml
+
+GitHub:
+  - .github/**/*
+
+# Docs Labels
+Docs:
+  - docs/**/*
