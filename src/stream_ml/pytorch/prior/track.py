@@ -9,20 +9,15 @@
 
 from __future__ import annotations
 
-# STDLIB
 from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING
 
-# THIRD-PARTY
-import torch as xp
-
-# LOCAL
 from stream_ml.core.data import Data
 from stream_ml.core.prior.base import PriorBase
+from stream_ml.core.typing import ArrayNamespace
 from stream_ml.pytorch.typing import Array
 
 if TYPE_CHECKING:
-    # LOCAL
     from stream_ml.core.api import Model
     from stream_ml.core.params.core import Params
 
@@ -69,6 +64,8 @@ class ControlPoints(PriorBase[Array]):
         model: Model[Array],
         current_lnpdf: Array | None = None,
         /,
+        *,
+        xp: ArrayNamespace[Array],
     ) -> Array | float:
         """Evaluate the logpdf.
 
@@ -88,6 +85,9 @@ class ControlPoints(PriorBase[Array]):
         current_lnpdf : Array | None, optional position-only
             The current logpdf, by default `None`. This is useful for setting
             the additive log-pdf to a specific value.
+
+        xp : ArrayNamespace[Array], keyword-only
+            The array namespace.
 
         Returns
         -------
@@ -109,31 +109,13 @@ class ControlPoints(PriorBase[Array]):
             * ((cmp_arr - self._control_point_deps.array) ** 2).sum()  # (C, F) -> 1
         )
 
-    def __call__(self, pred: Array, data: Data[Array], model: Model[Array], /) -> Array:
-        """Evaluate the forward step in the prior.
-
-        Parameters
-        ----------
-        pred : Array, position-only
-            The input to evaluate the prior at.
-        data : Data[Array], position-only
-            The data to evaluate the prior at.
-        model : `~stream_ml.core.Model`, position-only
-            The model to evaluate the prior at.
-
-        Returns
-        -------
-        Array
-        """
-        return pred
-
 
 #####################################################################
 
 
 @dataclass(frozen=True)
 class ControlRegions(PriorBase[Array]):
-    r"""Control Regions prior.
+    r"""Control regions prior.
 
     A unit box convolved with a higher-order Gaussian. For mean :math:`\\mu`,
     width :math:`w`, and power :math:`P` the PDF is
@@ -156,7 +138,7 @@ class ControlRegions(PriorBase[Array]):
 
     control_points: Data[Array]
     lamda: float = 0.05  # TODO? as a trainable Parameter.
-    width: float = 1
+    width: float = 0.5
     flattening: float = 5
     _: KW_ONLY
     coord_name: str = "phi1"
@@ -164,6 +146,9 @@ class ControlRegions(PriorBase[Array]):
 
     def __post_init__(self) -> None:
         """Post-init."""
+        # Adjust the flattening to be adjusted by the width.
+        object.__setattr__(self, "flattening", self.flattening / self.width)
+
         # Pre-store the control points, seprated by indep & dep parameters.
         self._cpts_indep: Data[Array]
         object.__setattr__(self, "_cpts_indep", self.control_points[(self.coord_name,)])
@@ -181,6 +166,8 @@ class ControlRegions(PriorBase[Array]):
         model: Model[Array],
         current_lnpdf: Array | None = None,
         /,
+        *,
+        xp: ArrayNamespace[Array],
     ) -> Array | float:
         """Evaluate the logpdf.
 
@@ -201,12 +188,15 @@ class ControlRegions(PriorBase[Array]):
             The current logpdf, by default `None`. This is useful for setting
             the additive log-pdf to a specific value.
 
+        xp : ArrayNamespace[Array], keyword-only
+            The array namespace.
+
         Returns
         -------
         Array
             The logpdf.
         """
-        # Get the model parameters evaluated at the control points. shape (C, 1).
+        # Get model parameters evaluated at the control points. shape (C, 1).
         cmpars = model.unpack_params_from_arr(model(self._cpts_indep))
         cmp_arr = xp.hstack(  # (C, F)
             tuple(
@@ -215,35 +205,17 @@ class ControlRegions(PriorBase[Array]):
             )
         )
 
-        # For each control point, add the squared distance to the logpdf.
-        return (
-            -self.lamda
-            * xp.log(
-                xp.erf(
-                    self.flattening
-                    * ((cmp_arr - self._control_point_deps.array) + self.width)
-                )
-                - xp.erf(
-                    self.flattening
-                    * ((cmp_arr - self._control_point_deps.array) - self.width)
-                )
-            ).sum()  # (C, F) -> 1
+        # Unnormalized PDF.
+        pdf = xp.special.erf(
+            self.flattening * ((cmp_arr - self._control_point_deps.array) + self.width)
+        ) - xp.special.erf(
+            self.flattening * ((cmp_arr - self._control_point_deps.array) - self.width)
         )
 
-    def __call__(self, pred: Array, data: Data[Array], model: Model[Array], /) -> Array:
-        """Evaluate the forward step in the prior.
-
-        Parameters
-        ----------
-        pred : Array, position-only
-            The input to evaluate the prior at.
-        data : Data[Array], position-only
-            The data to evaluate the prior at.
-        model : `~stream_ml.core.Model`, position-only
-            The model to evaluate the prior at.
-
-        Returns
-        -------
-        Array
-        """
-        return pred
+        # For each control region, add the distance to the logpdf.
+        return (
+            self.lamda
+            * xp.log(
+                xp.clip(pdf / 2, min=xp.finfo(cmp_arr.dtype).tiny)
+            ).sum()  # (C, F) -> 1
+        )

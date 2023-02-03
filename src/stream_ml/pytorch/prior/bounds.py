@@ -10,13 +10,11 @@ import torch as xp
 
 from stream_ml.core.data import Data
 from stream_ml.core.prior.bounds import PriorBounds as CorePriorBounds
-from stream_ml.core.utils.funcs import within_bounds
 from stream_ml.pytorch.typing import Array
 from stream_ml.pytorch.utils.sigmoid import scaled_sigmoid
 
 if TYPE_CHECKING:
     from stream_ml.core.api import Model
-    from stream_ml.core.params.core import Params
 
 __all__: list[str] = []
 
@@ -29,23 +27,6 @@ class PriorBounds(CorePriorBounds[Array]):
         """Post-init."""
         object.__setattr__(self, "_lower_torch", xp.asarray([self.lower]))
         object.__setattr__(self, "_upper_torch", xp.asarray([self.upper]))
-
-    def logpdf(
-        self,
-        mpars: Params[Array],
-        data: Data[Array],
-        model: Model[Array],
-        current_lnpdf: Array | None = None,
-        /,
-    ) -> Array | float:
-        """Evaluate the logpdf."""
-        if self.param_name is None:
-            msg = "need to set param_name"
-            raise ValueError(msg)
-
-        bp = xp.zeros_like(mpars[self.param_name])
-        bp[~within_bounds(mpars[self.param_name], self.lower, self.upper)] = -xp.inf
-        return bp
 
     @abstractmethod
     def __call__(self, pred: Array, data: Data[Array], model: Model[Array], /) -> Array:

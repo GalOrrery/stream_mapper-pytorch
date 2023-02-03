@@ -2,23 +2,20 @@
 
 from __future__ import annotations
 
-# STDLIB
 from dataclasses import KW_ONLY, dataclass
 from math import inf
 from typing import TYPE_CHECKING
 
-# THIRD-PARTY
 import torch as xp
 
-# LOCAL
 from stream_ml.core.api import WEIGHT_NAME
 from stream_ml.core.data import Data
 from stream_ml.core.prior.base import PriorBase
+from stream_ml.core.typing import ArrayNamespace
 from stream_ml.core.utils.funcs import within_bounds
 from stream_ml.pytorch.typing import Array
 
 if TYPE_CHECKING:
-    # LOCAL
     from stream_ml.core.api import Model
     from stream_ml.core.params.core import Params
 
@@ -47,6 +44,8 @@ class Lasso(PriorBase[Array]):
         model: Model[Array],
         current_lnpdf: Array | None = None,
         /,
+        *,
+        xp: ArrayNamespace[Array],
     ) -> Array | float:
         """Evaluate the logpdf."""
         ...
@@ -79,6 +78,8 @@ class BoundedHardThreshold(PriorBase[Array]):
         model: Model[Array],
         current_lnpdf: Array | None = None,
         /,
+        *,
+        xp: ArrayNamespace[Array],
     ) -> Array | float:
         """Evaluate the logpdf.
 
@@ -98,6 +99,9 @@ class BoundedHardThreshold(PriorBase[Array]):
         current_lnpdf : Array | None, optional position-only
             The current logpdf, by default `None`. This is useful for setting
             the additive log-pdf to a specific value.
+
+        xp : ArrayNamespace[Array], keyword-only
+            The array namespace.
 
         Returns
         -------
