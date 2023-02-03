@@ -45,13 +45,13 @@ class MultivariateNormal(ModelBase):
     net: InitVar[nn.Module | None] = None
 
     _: KW_ONLY
-    array_namespace: InitVar[ArrayNamespace]
+    array_namespace: InitVar[ArrayNamespace[Array]]
     param_names: ParamNamesField = ParamNamesField(
         (WEIGHT_NAME, (..., ("mu", "sigma")))
     )
 
     def __post_init__(
-        self, array_namespace: ArrayNamespace, net: nn.Module | None
+        self, array_namespace: ArrayNamespace[Array], net: nn.Module | None
     ) -> None:
         super().__post_init__(array_namespace=array_namespace)
 
@@ -65,11 +65,11 @@ class MultivariateNormal(ModelBase):
             ndim = len(self.param_names) - 1
 
             self.nn = nn.Sequential(
-                nn.Linear(1, 50),
+                nn.Linear(1, 36),
                 nn.Tanh(),
-                nn.Linear(50, 50),
+                nn.Linear(36, 36),
                 nn.Tanh(),
-                nn.Linear(50, 1 + 2 * ndim),
+                nn.Linear(36, 1 + 2 * ndim),
             )
 
     # ========================================================================
@@ -106,31 +106,6 @@ class MultivariateNormal(ModelBase):
 
         return xp.log(xp.clip(mpars[(WEIGHT_NAME,)], eps)) + lik[:, None]
 
-    # ========================================================================
-    # ML
-
-    def forward(self, data: Data[Array]) -> Array:
-        """Forward pass.
-
-        Parameters
-        ----------
-        data : Data[Array]
-            Input. Only uses the first argument.
-
-        Returns
-        -------
-        Array
-            fraction, mean, sigma
-        """
-        nn = self._forward_prior(self.layers(data[self.indep_coord_name]), data)
-
-        # Call the prior to limit the range of the parameters
-        # TODO: a better way to do the order of the priors.
-        for prior in self.priors:
-            nn = prior(nn, data, self)
-
-        return nn
-
 
 ##############################################################################
 
@@ -138,9 +113,6 @@ class MultivariateNormal(ModelBase):
 @dataclass(unsafe_hash=True)
 class MultivariateMissingNormal(MultivariateNormal):  # (MultivariateNormal)
     """Multivariate Normal with missing data."""
-
-    n_features: int = 36
-    n_layers: int = 4
 
     _: KW_ONLY
     require_mask: bool = True

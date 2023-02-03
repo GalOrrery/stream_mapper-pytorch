@@ -14,8 +14,8 @@ import torch as xp
 from stream_ml.core.api import WEIGHT_NAME
 from stream_ml.core.data import Data
 from stream_ml.core.prior.base import PriorBase
+from stream_ml.core.utils.funcs import within_bounds
 from stream_ml.pytorch.typing import Array
-from stream_ml.pytorch.utils.misc import within_bounds
 
 if TYPE_CHECKING:
     # LOCAL

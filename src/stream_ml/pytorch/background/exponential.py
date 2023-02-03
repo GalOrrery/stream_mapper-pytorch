@@ -49,7 +49,7 @@ class Exponential(ModelBase):
     net: InitVar[nn.Module | None] = None
 
     _: KW_ONLY
-    array_namespace: InitVar[ArrayNamespace]
+    array_namespace: InitVar[ArrayNamespace[Array]]
     param_names: ParamNamesField = ParamNamesField(
         (WEIGHT_NAME, (..., ("slope",))), requires_all_coordinates=False
     )
@@ -59,7 +59,7 @@ class Exponential(ModelBase):
     require_mask: bool = False
 
     def __post_init__(
-        self, array_namespace: ArrayNamespace, net: nn.Module | None
+        self, array_namespace: ArrayNamespace[Array], net: nn.Module | None
     ) -> None:
         super().__post_init__(array_namespace=array_namespace)
 
@@ -171,10 +171,5 @@ class Exponential(ModelBase):
             fraction, mean, sigma
         """
         pred = (xp.sigmoid(self.nn(data[self.indep_coord_name])) - 0.5) / self._bma
-
-        # Call the prior to limit the range of the parameters
-        # TODO: a better way to do the order of the priors.
-        for prior in self.priors:
-            pred = prior(pred, data, self)
-
-        return pred
+        pred = xp.hstack((xp.zeros((len(pred), 1)), pred))  # add the weight
+        return self._forward_priors(pred, data)

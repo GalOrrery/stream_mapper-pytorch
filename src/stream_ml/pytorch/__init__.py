@@ -15,3 +15,6 @@ __all__ = [
     "IndependentModels",
     "Data",
 ]
+
+# Register with single-dispatch
+from stream_ml.pytorch.utils import compat, funcs  # noqa: F401

@@ -27,14 +27,14 @@ class Uniform(ModelBase):
     """Uniform background model."""
 
     _: KW_ONLY
-    array_namespace: InitVar[ArrayNamespace]
+    array_namespace: InitVar[ArrayNamespace[Array]]
     param_names: ParamNamesField = ParamNamesField((WEIGHT_NAME,))
     param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array](
         {WEIGHT_NAME: SigmoidBounds(_eps, 1.0, param_name=(WEIGHT_NAME,))}
     )
     require_mask: bool = False
 
-    def __post_init__(self, array_namespace: ArrayNamespace) -> None:
+    def __post_init__(self, array_namespace: ArrayNamespace[Array]) -> None:
         super().__post_init__(array_namespace=array_namespace)
 
         # Pre-compute the log-difference, shape (1, F)
@@ -105,11 +105,4 @@ class Uniform(ModelBase):
         Array
             fraction, mean, sigma
         """
-        pred = xp.asarray([])
-
-        # Call the prior to limit the range of the parameters
-        # TODO: a better way to do the order of the priors.
-        for prior in self.priors:
-            pred = prior(pred, data, self)
-
-        return pred
+        return xp.asarray([])  # there are no priors

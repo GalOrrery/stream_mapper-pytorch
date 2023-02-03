@@ -50,7 +50,7 @@ class Normal(ModelBase):
     net: InitVar[nn.Module | None] = None
 
     _: KW_ONLY
-    array_namespace: InitVar[ArrayNamespace]
+    array_namespace: InitVar[ArrayNamespace[Array]]
 
     param_names: ParamNamesField = ParamNamesField(
         (WEIGHT_NAME, (..., ("mu", "sigma")))
@@ -71,11 +71,11 @@ class Normal(ModelBase):
             self.nn = net
         else:
             self.nn = nn.Sequential(
-                nn.Linear(1, 50),
+                nn.Linear(1, 36),
                 nn.Tanh(),
-                nn.Linear(50, 50),
+                nn.Linear(36, 36),
                 nn.Tanh(),
-                nn.Linear(50, 3),
+                nn.Linear(36, 3),
             )
 
     # ========================================================================
@@ -106,27 +106,3 @@ class Normal(ModelBase):
             data[c]
         )
         return xp.log(xp.clip(mpars[(WEIGHT_NAME,)], min=eps)) + lik
-
-    # ========================================================================
-    # ML
-
-    def forward(self, data: Data[Array]) -> Array:
-        """Forward pass.
-
-        Parameters
-        ----------
-        data : Data[Array]
-            Input. Only uses the first argument.
-
-        Returns
-        -------
-        Array
-            fraction, mean, sigma
-        """
-        nn = self._forward_prior(self.nn(data[self.indep_coord_name]), data)
-
-        # Call the prior to limit the range of the parameters
-        for prior in self.priors:
-            nn = prior(nn, data, self)
-
-        return nn

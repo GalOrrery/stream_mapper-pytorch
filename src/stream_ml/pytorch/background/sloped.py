@@ -41,7 +41,7 @@ class Sloped(ModelBase):
     net: InitVar[nn.Module | None] = None
 
     _: KW_ONLY
-    array_namespace: InitVar[ArrayNamespace]
+    array_namespace: InitVar[ArrayNamespace[Array]]
     param_names: ParamNamesField = ParamNamesField(
         (WEIGHT_NAME, (..., ("slope",))), requires_all_coordinates=False
     )
@@ -51,7 +51,7 @@ class Sloped(ModelBase):
     require_mask: bool = False
 
     def __post_init__(
-        self, array_namespace: ArrayNamespace, net: nn.Module | None
+        self, array_namespace: ArrayNamespace[Array], net: nn.Module | None
     ) -> None:
         super().__post_init__(array_namespace=array_namespace)
 
@@ -106,8 +106,8 @@ class Sloped(ModelBase):
         -------
         Array
         """
-        f = mpars[(WEIGHT_NAME,)]
-        eps = xp.finfo(f.dtype).eps  # TOOD: or tiny?
+        wgt = mpars[(WEIGHT_NAME,)]
+        eps = xp.finfo(wgt.dtype).eps  # TOOD: or tiny?
 
         # The mask is used to indicate which data points are available. If the
         # mask is not provided, then all data points are assumed to be
@@ -118,11 +118,11 @@ class Sloped(ModelBase):
             msg = "mask is required"
             raise ValueError(msg)
         else:
-            indicator = xp.ones_like(f, dtype=xp.int)
+            indicator = xp.ones_like(wgt, dtype=xp.int)
             # This has shape (N, 1) so will broadcast correctly.
 
         # Compute the log-likelihood, columns are coordinates.
-        lnliks = xp.zeros((len(f), 4))
+        lnliks = xp.zeros((len(wgt), 4))
         for i, (k, b) in enumerate(self.coord_bounds.items()):
             # Get the slope from `mpars` we check param_names to see if the
             # slope is a parameter. If it is not, then we assume it is 0.
@@ -132,7 +132,7 @@ class Sloped(ModelBase):
                 xp.log(m * (data[k] - (b[0] + b[1]) / 2) + 1 / (b[1] - b[0]))
             )[:, 0]
 
-        return xp.log(xp.clip(f, eps)) + (indicator * lnliks).sum(dim=1, keepdim=True)
+        return xp.log(xp.clip(wgt, eps)) + (indicator * lnliks).sum(dim=1, keepdim=True)
 
     # ========================================================================
     # ML
@@ -151,10 +151,5 @@ class Sloped(ModelBase):
             fraction, mean, sigma
         """
         pred = (xp.sigmoid(self.nn(data[self.indep_coord_name])) - 0.5) / self._bma
-
-        # Call the prior to limit the range of the parameters
-        # TODO: a better way to do the order of the priors.
-        for prior in self.priors:
-            pred = prior(pred, data, self)
-
-        return pred
+        pred = xp.hstack((xp.zeros((len(pred), 1)), pred))  # add the weight
+        return self._forward_priors(pred, data)

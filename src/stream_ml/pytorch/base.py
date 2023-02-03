@@ -2,17 +2,20 @@
 
 from __future__ import annotations
 
-from abc import abstractmethod
 from dataclasses import dataclass
+from functools import reduce
 from math import inf
 from typing import Any, ClassVar
 
 import torch as xp
 from torch import nn
 
+from stream_ml.core.api import WEIGHT_NAME
 from stream_ml.core.base import ModelBase as CoreModelBase
 from stream_ml.core.data import Data
 from stream_ml.core.params import Params
+from stream_ml.core.utils.compat import array_at
+from stream_ml.core.utils.funcs import within_bounds
 from stream_ml.pytorch.prior.bounds import PriorBounds, SigmoidBounds
 from stream_ml.pytorch.typing import Array
 
@@ -35,16 +38,6 @@ class ModelBase(nn.Module, CoreModelBase[Array]):
     def _ln_prior_coord_bnds(self, mpars: Params[Array], data: Data[Array]) -> Array:
         """Elementwise log prior for coordinate bounds.
 
-        TODO: this is returning NaN for some reason
-
-        .. code-block:: python
-
-            where = reduce(
-                xp.logical_or,
-                (~within_bounds(data[k], *v) for k, v in self.coord_bounds.items()),
-            )
-            lnp[where] = -xp.inf
-
         Parameters
         ----------
         mpars : Params[Array], positional-only
@@ -59,33 +52,16 @@ class ModelBase(nn.Module, CoreModelBase[Array]):
             Zero everywhere except where the data are outside the
             coordinate bounds, where it is -inf.
         """
-        # TODO! move this to be a method on coord_bounds
-        lnp = xp.zeros((len(data), 1))
-        return lnp  # noqa: RET504
+        lnp = self.xp.zeros_like(mpars[(WEIGHT_NAME,)])
+        where = reduce(
+            xp.logical_or,
+            (~within_bounds(data[k], *v) for k, v in self.coord_bounds.items()),
+        )
+        return array_at(lnp, where).set(-self.xp.inf)
 
     # ========================================================================
     # ML
 
-    def _forward_prior(self, out: Array, data: Data[Array]) -> Array:
-        """Forward pass.
-
-        Parameters
-        ----------
-        out : Array
-            Input.
-        data : Data[Array]
-            Data.
-
-        Returns
-        -------
-        Array
-            Same as input.
-        """
-        for bnd in self.param_bounds.flatvalues():
-            out = bnd(out, data, self)
-        return out
-
-    @abstractmethod
     def forward(self, data: Data[Array]) -> Array:
         """Forward pass.
 
@@ -99,4 +75,4 @@ class ModelBase(nn.Module, CoreModelBase[Array]):
         Array
             fraction, mean, sigma
         """
-        raise NotImplementedError
+        return self._forward_priors(self.nn(data[self.indep_coord_name]), data)
