@@ -48,12 +48,12 @@ class ControlPoints(PriorBase[Array]):
     def __post_init__(self) -> None:
         """Post-init."""
         # Pre-store the control points, seprated by indep & dep parameters.
-        self._cpts_indep: Data[Array]
-        object.__setattr__(self, "_cpts_indep", self.control_points[(self.coord_name,)])
+        self._x: Data[Array]
+        object.__setattr__(self, "_x", self.control_points[(self.coord_name,)])
 
         dep_names = tuple(n for n in self.control_points.names if n != self.coord_name)
-        self._control_point_deps: Data[Array]
-        object.__setattr__(self, "_control_point_deps", self.control_points[dep_names])
+        self._y: Data[Array]
+        object.__setattr__(self, "_y", self.control_points[dep_names])
 
         super().__post_init__()
 
@@ -95,19 +95,13 @@ class ControlPoints(PriorBase[Array]):
             The logpdf.
         """
         # Get the model parameters evaluated at the control points. shape (C, 1).
-        cmpars = model.unpack_params_from_arr(model(self._cpts_indep))
+        cmpars = model.unpack_params_from_arr(model(self._x))
         cmp_arr = xp.hstack(  # (C, F)
-            tuple(
-                cmpars[(n, self.component_param_name)]
-                for n in self._control_point_deps.names
-            )
+            tuple(cmpars[(n, self.component_param_name)] for n in self._y.names)
         )
 
         # For each control point, add the squared distance to the logpdf.
-        return (
-            -self.lamda
-            * ((cmp_arr - self._control_point_deps.array) ** 2).sum()  # (C, F) -> 1
-        )
+        return -self.lamda * ((cmp_arr - self._y.array) ** 2).sum()  # (C, F) -> 1
 
 
 #####################################################################
@@ -117,45 +111,49 @@ class ControlPoints(PriorBase[Array]):
 class ControlRegions(PriorBase[Array]):
     r"""Control regions prior.
 
-    A unit box convolved with a higher-order Gaussian. For mean :math:`\\mu`,
-    width :math:`w`, and power :math:`P` the PDF is
+    The gaussian control points work very well, but they are very informative.
+    This prior is less informative, but still has a similar effect.
+    It is a Gaussian, split at the peak, with a flat region in the middle.
+    The split is done when the 1st derivative is 0, so it is smooth up to the
+    1st derivative.
 
     .. math::
 
-        PDF(x, \\mu, w, P) = \\erf{P ((x - \\mu) + w0)} - \\erf{P ((x - \\mu) - w0)}
+        \ln p(x, \mu, w) = \begin{cases}
+            (x - (mu - w))^2 & x \leq mu - w \\
+            0                & mu - w < x < mu + w \\
+            (x - (mu + w))^2 & x \geq mu + w \\
 
     Parameters
     ----------
     control_points : Data[Array]
-        The control points.
+        The control points. These are the means of the regions (mu in the above).
     lamda : float, optional
         Importance hyperparameter.
+        TODO: make this also able to be an array, so that each region can have
+        a different width.
     width : float, optional
         Width of the region.
-    flattening : float, optional
-        The power of the super-Gaussian. Higher powers are flatter.
+        TODO: make this also able to be an array, so that each region can have
+        a different width.
     """
 
     control_points: Data[Array]
     lamda: float = 0.05  # TODO? as a trainable Parameter.
     width: float = 0.5
-    flattening: float = 5
     _: KW_ONLY
     coord_name: str = "phi1"
     component_param_name: str = "mu"
 
     def __post_init__(self) -> None:
         """Post-init."""
-        # Adjust the flattening to be adjusted by the width.
-        object.__setattr__(self, "flattening", self.flattening / self.width)
-
         # Pre-store the control points, seprated by indep & dep parameters.
-        self._cpts_indep: Data[Array]
-        object.__setattr__(self, "_cpts_indep", self.control_points[(self.coord_name,)])
+        self._x: Data[Array]
+        object.__setattr__(self, "_x", self.control_points[(self.coord_name,)])
 
         dep_names = tuple(n for n in self.control_points.names if n != self.coord_name)
-        self._control_point_deps: Data[Array]
-        object.__setattr__(self, "_control_point_deps", self.control_points[dep_names])
+        self._y: Data[Array]
+        object.__setattr__(self, "_y", self.control_points[dep_names])
 
         super().__post_init__()
 
@@ -197,25 +195,15 @@ class ControlRegions(PriorBase[Array]):
             The logpdf.
         """
         # Get model parameters evaluated at the control points. shape (C, 1).
-        cmpars = model.unpack_params_from_arr(model(self._cpts_indep))
+        cmpars = model.unpack_params_from_arr(model(self._x))
         cmp_arr = xp.hstack(  # (C, F)
-            tuple(
-                cmpars[(n, self.component_param_name)]
-                for n in self._control_point_deps.names
-            )
+            tuple(cmpars[(n, self.component_param_name)] for n in self._y.names)
         )
 
-        # Unnormalized PDF.
-        pdf = xp.special.erf(
-            self.flattening * ((cmp_arr - self._control_point_deps.array) + self.width)
-        ) - xp.special.erf(
-            self.flattening * ((cmp_arr - self._control_point_deps.array) - self.width)
-        )
+        pdf = xp.zeros_like(cmp_arr)
+        where = cmp_arr <= self._y.array - self.width
+        pdf[where] = (cmp_arr[where] - (self._y.array[where] - self.width)) ** 2
+        where = cmp_arr >= self._y.array + self.width
+        pdf[where] = (cmp_arr[where] - (self._y.array[where] + self.width)) ** 2
 
-        # For each control region, add the distance to the logpdf.
-        return (
-            self.lamda
-            * xp.log(
-                xp.clip(pdf / 2, min=xp.finfo(cmp_arr.dtype).tiny)
-            ).sum()  # (C, F) -> 1
-        )
+        return -self.lamda * pdf.sum()  # (C, F) -> 1
