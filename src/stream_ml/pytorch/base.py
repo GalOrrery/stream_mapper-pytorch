@@ -10,7 +10,8 @@ from torch import nn
 
 from stream_ml.core.base import ModelBase as CoreModelBase
 from stream_ml.core.data import Data
-from stream_ml.pytorch.prior.bounds import PriorBounds, SigmoidBounds
+from stream_ml.core.prior.bounds import PriorBounds
+from stream_ml.pytorch.prior.bounds import SigmoidBounds
 from stream_ml.pytorch.typing import Array
 
 __all__: list[str] = []

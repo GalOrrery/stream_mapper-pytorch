@@ -6,11 +6,11 @@ from dataclasses import KW_ONLY, InitVar, dataclass
 
 import torch as xp
 
-from stream_ml.core.api import WEIGHT_NAME
 from stream_ml.core.data import Data
 from stream_ml.core.params import Params
 from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
+from stream_ml.core.setup_package import WEIGHT_NAME
 from stream_ml.core.typing import ArrayNamespace
 from stream_ml.pytorch.base import ModelBase
 from stream_ml.pytorch.prior.bounds import SigmoidBounds

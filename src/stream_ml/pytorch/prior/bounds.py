@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from abc import abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -20,23 +19,16 @@ __all__: list[str] = []
 
 
 @dataclass(frozen=True)
-class PriorBounds(CorePriorBounds[Array]):
+class SigmoidBounds(CorePriorBounds[Array]):
     """Base class for prior bounds."""
 
     def __post_init__(self) -> None:
         """Post-init."""
+        self._lower_torch: Array
+        self._upper_torch: Array
+
         object.__setattr__(self, "_lower_torch", xp.asarray([self.lower]))
         object.__setattr__(self, "_upper_torch", xp.asarray([self.upper]))
-
-    @abstractmethod
-    def __call__(self, pred: Array, data: Data[Array], model: Model[Array], /) -> Array:
-        """Evaluate the forward step in the prior."""
-        ...
-
-
-@dataclass(frozen=True)
-class SigmoidBounds(PriorBounds):
-    """Base class for prior bounds."""
 
     def __call__(self, pred: Array, data: Data[Array], model: Model[Array], /) -> Array:
         """Evaluate the forward step in the prior."""

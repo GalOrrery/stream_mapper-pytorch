@@ -1,6 +1,6 @@
 """Functions."""
 
-from typing import Any
+from typing import Any, Literal
 
 import torch as xp
 
@@ -20,14 +20,14 @@ class ArrayAt(CoreArrayAt[Array]):
         self.array = array
         self.idx = idx
 
-    def set(self, value: Array) -> Array:  # noqa: A003
+    def set(self, value: Array | Literal[0]) -> Array:  # noqa: A003
         """Set the value at the index, in-place."""
         self.array[self.idx] = value
         return self.array
 
 
-@array_at.register(xp.Tensor)
-def _array_at_pytorch(array: Array, idx: Any) -> ArrayAt:
+@array_at.register(xp.Tensor)  # type: ignore[misc]
+def _array_at_pytorch(array: Array, idx: Any, /, *, inplace: bool = True) -> ArrayAt:
     """Get the array at the index.
 
     This is to emulate the `jax.numpy.ndarray.at` method.
@@ -39,9 +39,12 @@ def _array_at_pytorch(array: Array, idx: Any) -> ArrayAt:
     idx : Any
         Index to get the value at.
 
+    inplace : bool, optional
+        Whether to set the value in-place, by default `False`.
+
     Returns
     -------
     ArrayAt[Array]
         Setter.
     """
-    return ArrayAt(array, idx)
+    return ArrayAt(array if inplace else array.clone(), idx)

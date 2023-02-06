@@ -9,10 +9,10 @@ import torch as xp
 from torch import nn
 from torch.distributions import MultivariateNormal as TorchMultivariateNormal
 
-from stream_ml.core.api import WEIGHT_NAME
 from stream_ml.core.data import Data
 from stream_ml.core.params import Params
 from stream_ml.core.params.names import ParamNamesField
+from stream_ml.core.setup_package import WEIGHT_NAME
 from stream_ml.core.typing import ArrayNamespace
 from stream_ml.pytorch.base import ModelBase
 
