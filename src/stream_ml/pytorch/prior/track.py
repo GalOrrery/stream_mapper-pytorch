@@ -1,16 +1,11 @@
-"""Track priors.
-
-.. todo::
-
-    - Add a ControlRegions prior that is an equiprobability region centered on a
-      point. This is a lot less informative than the ControlPoints.
-
-"""
+"""Track priors."""
 
 from __future__ import annotations
 
 from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING
+
+import torch as xp
 
 from stream_ml.core.data import Data
 from stream_ml.core.prior.base import PriorBase
@@ -140,7 +135,7 @@ class ControlRegions(PriorBase[Array]):
 
     control_points: Data[Array]
     lamda: float = 0.05  # TODO? as a trainable Parameter.
-    width: float = 0.5
+    width: float | Data[Array] = 0.5
     _: KW_ONLY
     coord_name: str = "phi1"
     component_param_name: str = "mu"
@@ -154,6 +149,16 @@ class ControlRegions(PriorBase[Array]):
         dep_names = tuple(n for n in self.control_points.names if n != self.coord_name)
         self._y: Data[Array]
         object.__setattr__(self, "_y", self.control_points[dep_names])
+
+        # Pre-store the width.
+        self._w: Array
+        object.__setattr__(
+            self,
+            "_w",
+            self.width[dep_names].array
+            if not isinstance(self.width, float)
+            else xp.ones_like(self._y.array) * self.width,
+        )
 
         super().__post_init__()
 
@@ -201,9 +206,9 @@ class ControlRegions(PriorBase[Array]):
         )
 
         pdf = xp.zeros_like(cmp_arr)
-        where = cmp_arr <= self._y.array - self.width
-        pdf[where] = (cmp_arr[where] - (self._y.array[where] - self.width)) ** 2
-        where = cmp_arr >= self._y.array + self.width
-        pdf[where] = (cmp_arr[where] - (self._y.array[where] + self.width)) ** 2
+        where = cmp_arr <= self._y.array - self._w
+        pdf[where] = (cmp_arr[where] - (self._y.array[where] - self._w[where])) ** 2
+        where = cmp_arr >= self._y.array + self._w
+        pdf[where] = (cmp_arr[where] - (self._y.array[where] + self._w[where])) ** 2
 
         return -self.lamda * pdf.sum()  # (C, F) -> 1
