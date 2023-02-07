@@ -75,13 +75,21 @@ class Exponential(ModelBase):
             # TODO: ensure n_out == n_slopes
 
         # Pre-compute the associated constant factors
-        self._bma = xp.asarray(
+        self._a = xp.asarray(
             [
-                (b - a)
-                for k, (a, b) in self.coord_bounds.items()
+                a
+                for k, (a, _) in self.coord_bounds.items()
                 if k in self.param_names.top_level
             ]
         )
+        self._b = xp.asarray(
+            [
+                b
+                for k, (_, b) in self.coord_bounds.items()
+                if k in self.param_names.top_level
+            ]
+        )
+        self._bma = self._b - self._a
 
     # ========================================================================
     # Statistics
@@ -129,28 +137,25 @@ class Exponential(ModelBase):
             indicator = xp.ones_like(f, dtype=xp.int)
             # This has shape (N, 1) so will broadcast correctly.
 
-        # Compute the log-likelihood, columns are coordinates.
-        lnliks = xp.zeros((len(f), 4))
-        for i, (k, b) in enumerate(self.coord_bounds.items()):
-            # Get the slope from `mpars` we check param_names to see if the
-            # slope is a parameter. If it is not, then we assume it is 0.
-            # When the slope is 0, the log-likelihood reduces to a Uniform.
-            m = mpars[(k, "slope")] if (k, "slope") in self.param_names.flats else 0
-
-            # TODO! rewrite to better use logs
-            lnliks[:, i] = xp.log(
-                1 / (b[1] - b[0])
-                + (m * (0.5 - (data[k] - b[0]) / (b[1] - b[0])))
-                + (
-                    m**2
-                    * (
-                        (b[1] - b[0]) / 6
-                        - (data[k] - b[0])
-                        + (data[k] - b[0]) ** 2 / (b[1] - b[0])
-                    )
-                    / 2
-                )
-            )[:, 0]
+        # Data
+        d_arr = data[self.coord_names].array - self._a
+        # Get the slope from `mpars` we check param_names to see if the
+        # slope is a parameter. If it is not, then we assume it is 0.
+        # When the slope is 0, the log-likelihood reduces to a Uniform.
+        ms = xp.hstack(
+            tuple(
+                mpars[(k, "slope")]
+                if (k, "slope") in self.param_names.flats
+                else xp.zeros((len(d_arr), 1))
+                for k in self.coord_names
+            )
+        )
+        # log-likelihood
+        lnliks = xp.log(
+            1 / self._bma
+            + (ms * (0.5 - d_arr / self._bma))
+            + (ms**2 * (self._bma / 6 - d_arr + d_arr**2 / self._bma) / 2)
+        )
 
         return xp.log(xp.clip(f, eps)) + (indicator * lnliks).sum(dim=1, keepdim=True)
 
