@@ -23,7 +23,7 @@
   ]
   dependencies = [
     "stream_ml.core @ git+https://github.com/nstarman/stream_ml-core.git",
-    "torch",
+    "torch>=1.13",
     "nflows",
   ]
 
