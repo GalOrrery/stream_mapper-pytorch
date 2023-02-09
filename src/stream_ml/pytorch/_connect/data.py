@@ -11,8 +11,6 @@ import numpy as np
 import torch as xp
 
 from stream_ml.core.data import ARRAY_HOOK, DATA_HOOK, TO_FORMAT_REGISTRY, Data
-
-# LOCAL
 from stream_ml.pytorch.typing import Array
 
 # --------  Register  ------------------------------------------------------

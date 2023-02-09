@@ -3,21 +3,25 @@
 from __future__ import annotations
 
 from dataclasses import KW_ONLY, InitVar, dataclass
+from typing import TYPE_CHECKING
 
 import torch as xp
 from torch import nn
 
-from stream_ml.core.data import Data
-from stream_ml.core.params import Params
 from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
 from stream_ml.core.setup_package import WEIGHT_NAME
-from stream_ml.core.typing import ArrayNamespace
+from stream_ml.core.typing import ArrayNamespace  # noqa: TCH001
 from stream_ml.pytorch.base import ModelBase
 from stream_ml.pytorch.prior.bounds import SigmoidBounds
 from stream_ml.pytorch.typing import Array
 
 __all__: list[str] = []
+
+
+if TYPE_CHECKING:
+    from stream_ml.core.data import Data
+    from stream_ml.core.params import Params
 
 
 _eps = float(xp.finfo(xp.float32).eps)

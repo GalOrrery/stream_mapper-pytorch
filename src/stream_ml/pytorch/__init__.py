@@ -1,20 +1,23 @@
 """Stream Memberships Likelihood, with ML."""
 
-# LOCAL
-from stream_ml.pytorch import background, stream, utils
-from stream_ml.pytorch.data import Data  # type: ignore[attr-defined]
+from stream_ml.core.data import Data
+from stream_ml.pytorch import background, nn, params, prior, stream, utils
 from stream_ml.pytorch.mixture import IndependentModels, MixtureModel
 
 __all__ = [
+    # classes
+    "Data",
     # modules
     "background",
     "stream",
     "utils",
-    # classes
+    "params",
+    "prior",
+    "nn",
+    # model classes
     "MixtureModel",
     "IndependentModels",
-    "Data",
 ]
 
 # Register with single-dispatch
-from stream_ml.pytorch.utils import compat, funcs  # noqa: F401
+from stream_ml.pytorch import _connect  # noqa: F401

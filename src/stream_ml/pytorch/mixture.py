@@ -8,12 +8,12 @@ from typing import TYPE_CHECKING, ClassVar
 
 from torch import nn
 
-from stream_ml.core.api import Model
+from stream_ml.core.api import Model  # noqa: TCH001
 from stream_ml.core.bases import ModelsBase as CoreModelsBase
 from stream_ml.core.independent import IndependentModels as CoreIndependentModels
 from stream_ml.core.mixture import MixtureModel as CoreMixtureModel
-from stream_ml.core.prior.base import PriorBase
-from stream_ml.core.prior.bounds import PriorBounds
+from stream_ml.core.prior.base import PriorBase  # noqa: TCH001
+from stream_ml.core.prior.bounds import PriorBounds  # noqa: TCH001
 from stream_ml.core.utils.frozen_dict import FrozenDictField
 from stream_ml.pytorch.prior.bounds import SigmoidBounds
 from stream_ml.pytorch.typing import Array
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 class ModelsBase(nn.Module, CoreModelsBase[Array]):
     """Multi-model base class."""
 
-    components: FrozenDictField[str, Model] = FrozenDictField()
+    components: FrozenDictField[str, Model[Array]] = FrozenDictField()
 
     _: KW_ONLY
     priors: tuple[PriorBase[Array], ...] = ()
