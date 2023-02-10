@@ -1,7 +1,7 @@
 """Stream Memberships Likelihood, with ML."""
 
 from stream_ml.core.data import Data
-from stream_ml.pytorch import background, nn, params, prior, stream, utils
+from stream_ml.pytorch import background, compat, nn, params, prior, stream, utils
 from stream_ml.pytorch.multi import IndependentModels, MixtureModel
 
 __all__ = [
@@ -9,11 +9,12 @@ __all__ = [
     "Data",
     # modules
     "background",
-    "stream",
-    "utils",
+    "compat",
+    "nn",
     "params",
     "prior",
-    "nn",
+    "stream",
+    "utils",
     # model classes
     "MixtureModel",
     "IndependentModels",
