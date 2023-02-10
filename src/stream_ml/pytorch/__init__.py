@@ -2,7 +2,7 @@
 
 from stream_ml.core.data import Data
 from stream_ml.pytorch import background, nn, params, prior, stream, utils
-from stream_ml.pytorch.mixture import IndependentModels, MixtureModel
+from stream_ml.pytorch.multi import IndependentModels, MixtureModel
 
 __all__ = [
     # classes
