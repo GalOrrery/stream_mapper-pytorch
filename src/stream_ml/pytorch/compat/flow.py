@@ -23,12 +23,15 @@ if TYPE_CHECKING:
 class FlowModel(ModelBase):
     """Normalizing flow model."""
 
-    model: InitVar[Flow]
+    model: InitVar[Flow | None] = None
     _: KW_ONLY
     with_grad: bool = True
 
-    def __post_init__(self, model: Flow) -> None:
+    def __post_init__(self, model: Flow | None) -> None:
         super().__post_init__()
+        if model is None:
+            msg = "must provide a wrapped flow."
+            raise ValueError(msg)
         self.wrapped = model
 
     def ln_likelihood_arr(
