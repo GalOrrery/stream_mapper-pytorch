@@ -7,14 +7,14 @@ from typing import TYPE_CHECKING
 
 import torch as xp
 
-from stream_ml.core.data import Data
+from stream_ml.core.data import Data  # noqa: TCH001
 from stream_ml.core.prior.base import PriorBase
-from stream_ml.core.typing import ArrayNamespace
 from stream_ml.pytorch.typing import Array
 
 if TYPE_CHECKING:
     from stream_ml.core.api import Model
     from stream_ml.core.params.core import Params
+    from stream_ml.core.typing import ArrayNamespace
 
 __all__: list[str] = []
 

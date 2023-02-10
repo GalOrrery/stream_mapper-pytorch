@@ -1,6 +1,6 @@
 """Stream models."""
 
-# LOCAL
+
 from stream_ml.pytorch.stream.multinormal import (
     MultivariateMissingNormal,
     MultivariateNormal,

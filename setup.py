@@ -44,7 +44,7 @@ def find_python_files(base: Path, exclude: tuple[str, ...] = ("test_",)) -> list
     for entry in base.iterdir():
         if entry.name.startswith(exclude):
             continue
-        if entry.is_file() and entry.suffix == ".py":  # noqa: PLR2004
+        if entry.is_file() and entry.suffix == ".py":
             files.append(entry)
         elif entry.is_dir():
             files.extend(find_python_files(entry))
@@ -53,10 +53,10 @@ def find_python_files(base: Path, exclude: tuple[str, ...] = ("test_",)) -> list
 
 
 # To compile with mypyc, a mypyc checkout must be present on the PYTHONPATH
-if len(sys.argv) > 1 and sys.argv[1] == "--use-mypyc":  # noqa: PLR2004
+if len(sys.argv) > 1 and sys.argv[1] == "--use-mypyc":
     sys.argv.pop(1)
     USE_MYPYC = True
-if os.getenv("STREAM_ML_CORE_USE_MYPYC", None) == "1":  # noqa: PLR2004
+if os.getenv("STREAM_ML_CORE_USE_MYPYC", None) == "1":
     USE_MYPYC = True
 
 
@@ -64,7 +64,6 @@ if not USE_MYPYC:
     ext_modules = []
 
 else:
-
     print("BUILDING `stream_ml.pytorch` with MYPYC")  # noqa: T201
 
     blocklist: list[Path] = []  # TODO!

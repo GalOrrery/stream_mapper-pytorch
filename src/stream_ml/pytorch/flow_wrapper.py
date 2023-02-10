@@ -3,16 +3,20 @@
 from __future__ import annotations
 
 from dataclasses import KW_ONLY, InitVar, dataclass
+from typing import TYPE_CHECKING
 
 import torch as xp
-from nflows.flows.base import Flow
+from nflows.flows.base import Flow  # noqa: TCH002
 
-from stream_ml.core.data import Data
-from stream_ml.core.params import Params
 from stream_ml.pytorch.base import ModelBase
-from stream_ml.pytorch.typing import Array
 
 __all__: list[str] = []
+
+
+if TYPE_CHECKING:
+    from stream_ml.core.data import Data
+    from stream_ml.core.params import Params
+    from stream_ml.pytorch.typing import Array
 
 
 @dataclass(unsafe_hash=True)

@@ -1,27 +1,22 @@
-"""Core feature."""
+"""Gaussian stream model."""
 
 from __future__ import annotations
 
-# STDLIB
 from dataclasses import KW_ONLY, InitVar, dataclass
 from typing import TYPE_CHECKING
 
-# THIRD-PARTY
 import torch as xp
 from torch import nn
 from torch.distributions.normal import Normal as TorchNormal
 
-from stream_ml.core.data import Data
-from stream_ml.core.params import Params
 from stream_ml.core.params.names import ParamNamesField
-
-# LOCAL
 from stream_ml.core.setup_package import WEIGHT_NAME
-from stream_ml.core.typing import ArrayNamespace
+from stream_ml.core.typing import ArrayNamespace  # noqa: TCH001
 from stream_ml.pytorch.base import ModelBase
 
 if TYPE_CHECKING:
-    # LOCAL
+    from stream_ml.core.data import Data
+    from stream_ml.core.params import Params
     from stream_ml.pytorch.typing import Array
 
 __all__: list[str] = []
@@ -58,7 +53,7 @@ class Normal(ModelBase):
     )
 
     def __post_init__(
-        self, array_namespace: ArrayNamespace, net: nn.Module | None
+        self, array_namespace: ArrayNamespace[Array], net: nn.Module | None
     ) -> None:
         super().__post_init__(array_namespace=array_namespace)
 

@@ -4,17 +4,20 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import inf
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from torch import nn
 
 from stream_ml.core.base import ModelBase as CoreModelBase
-from stream_ml.core.data import Data
-from stream_ml.core.prior.bounds import PriorBounds
+from stream_ml.core.prior.bounds import PriorBounds  # noqa: TCH001
 from stream_ml.pytorch.prior.bounds import SigmoidBounds
 from stream_ml.pytorch.typing import Array
 
 __all__: list[str] = []
+
+
+if TYPE_CHECKING:
+    from stream_ml.core.data import Data
 
 
 @dataclass(unsafe_hash=True)
