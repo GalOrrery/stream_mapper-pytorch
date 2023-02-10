@@ -9,9 +9,9 @@ from typing import TYPE_CHECKING, ClassVar
 from torch import nn
 
 from stream_ml.core.api import Model  # noqa: TCH001
-from stream_ml.core.bases import ModelsBase as CoreModelsBase
-from stream_ml.core.independent import IndependentModels as CoreIndependentModels
-from stream_ml.core.mixture import MixtureModel as CoreMixtureModel
+from stream_ml.core.multi.bases import ModelsBase as CoreModelsBase
+from stream_ml.core.multi.independent import IndependentModels as CoreIndependentModels
+from stream_ml.core.multi.mixture import MixtureModel as CoreMixtureModel
 from stream_ml.core.prior.base import PriorBase  # noqa: TCH001
 from stream_ml.core.prior.bounds import PriorBounds  # noqa: TCH001
 from stream_ml.core.utils.frozen_dict import FrozenDictField

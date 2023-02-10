@@ -36,8 +36,6 @@ repos:
     hooks:
       - id: black
         additional_dependencies: [toml]
-      - id: black-jupyter
-        additional_dependencies: [toml]
 
   - repo: https://github.com/adamchainz/blacken-docs
     rev: 1.13.0
