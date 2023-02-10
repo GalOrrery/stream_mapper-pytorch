@@ -16,6 +16,7 @@ __all__: list[str] = []
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
     from stream_ml.core.params import Params
+    from stream_ml.core.typing import ArrayNamespace
     from stream_ml.pytorch.typing import Array
 
 
@@ -27,15 +28,22 @@ class FlowModel(ModelBase):
     _: KW_ONLY
     with_grad: bool = True
 
-    def __post_init__(self, model: Flow | None) -> None:
-        super().__post_init__()
+    def __post_init__(
+        self, array_namespace: ArrayNamespace[Array], model: Flow | None
+    ) -> None:
+        super().__post_init__(array_namespace=array_namespace)
         if model is None:
             msg = "must provide a wrapped flow."
             raise ValueError(msg)
         self.wrapped = model
 
     def ln_likelihood_arr(
-        self, mpars: Params[Array], data: Data[Array], **kwargs: Array
+        self,
+        mpars: Params[Array],
+        data: Data[Array],
+        *,
+        context: Array | None,
+        **kwargs: Array,
     ) -> Array:
         """Log-likelihood of the array.
 
@@ -46,6 +54,9 @@ class FlowModel(ModelBase):
             parameters.
         data : Data[Array]
             Data (phi1, phi2).
+
+        context : Array | None, optional keyword-only
+            Context, by default `None`.
         **kwargs : Array
             Additional arguments.
 
@@ -55,9 +66,13 @@ class FlowModel(ModelBase):
         """
         if not self.with_grad:
             with xp.no_grad():
-                return self.wrapped.log_prob(data[self.coord_names].array)[:, None]
+                return self.wrapped.log_prob(
+                    inputs=data[self.coord_names].array, context=context
+                )[:, None]
 
-        return self.wrapped.log_prob(data[self.coord_names].array)[:, None]
+        return self.wrapped.log_prob(
+            inputs=data[self.coord_names].array, context=context
+        )[:, None]
 
     def forward(self, data: Data[Array]) -> Array:
         """Forward pass.
