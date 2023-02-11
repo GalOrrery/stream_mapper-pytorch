@@ -42,7 +42,7 @@ class FlowModel(ModelBase):
         mpars: Params[Array],
         data: Data[Array],
         *,
-        context: Array | None,
+        context: Array | None = None,
         **kwargs: Array,
     ) -> Array:
         """Log-likelihood of the array.
