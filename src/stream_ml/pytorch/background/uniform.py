@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import KW_ONLY, InitVar, dataclass
-from typing import TYPE_CHECKING
+from dataclasses import KW_ONLY, dataclass
+from typing import TYPE_CHECKING, Any
 
 import torch as xp
+from torch import nn
 
 from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
@@ -31,19 +32,27 @@ class Uniform(ModelBase):
     """Uniform background model."""
 
     _: KW_ONLY
-    array_namespace: InitVar[ArrayNamespace[Array]]
     param_names: ParamNamesField = ParamNamesField((WEIGHT_NAME,))
     param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array](
         {WEIGHT_NAME: SigmoidBounds(_eps, 1.0, param_name=(WEIGHT_NAME,))}
     )
     require_mask: bool = False
 
-    def __post_init__(self, array_namespace: ArrayNamespace[Array]) -> None:
-        super().__post_init__(array_namespace=array_namespace)
+    def __post_init__(
+        self, array_namespace: ArrayNamespace[Array], net: Any | None
+    ) -> None:
+        # Initialize the network
+        if net is not None:
+            msg = "net must be None"
+            raise ValueError(msg)
+        else:
+            nnet = nn.Identity()
+
+        super().__post_init__(array_namespace=array_namespace, net=nnet)
 
         # Pre-compute the log-difference, shape (1, F)
         self._ln_diffs = self.xp.log(
-            xp.asarray([b - a for a, b in self.coord_bounds.values()])[None, :]
+            self.xp.asarray([b - a for a, b in self.coord_bounds.values()])[None, :]
         )
 
     # ========================================================================

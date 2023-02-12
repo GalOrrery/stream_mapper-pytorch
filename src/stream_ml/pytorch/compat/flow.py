@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import torch as xp
 from nflows.flows.base import Flow  # noqa: TCH002
 
+from stream_ml.core.setup_package import WEIGHT_NAME
 from stream_ml.pytorch.base import ModelBase
 
 __all__: list[str] = []
@@ -24,19 +25,15 @@ if TYPE_CHECKING:
 class FlowModel(ModelBase):
     """Normalizing flow model."""
 
-    model: InitVar[Flow | None] = None
+    net: InitVar[Flow | None] = None
     _: KW_ONLY
     with_grad: bool = True
     context_coord_names: tuple[str, ...] | None = None
 
     def __post_init__(
-        self, array_namespace: ArrayNamespace[Array], model: Flow | None
+        self, array_namespace: ArrayNamespace[Array], net: Flow | None
     ) -> None:
-        super().__post_init__(array_namespace=array_namespace)
-        if model is None:
-            msg = "must provide a wrapped flow."
-            raise ValueError(msg)
-        self.wrapped = model
+        super().__post_init__(array_namespace=array_namespace, net=net)
 
     def ln_likelihood_arr(
         self,
@@ -61,21 +58,33 @@ class FlowModel(ModelBase):
         -------
         Array
         """
+        ln_weight = (
+            self.xp.log(mpars[(WEIGHT_NAME,)])
+            if WEIGHT_NAME in mpars
+            else self.xp.asarray(0)
+        )
+
         if not self.with_grad:
             with xp.no_grad():
-                return self.wrapped.log_prob(
-                    inputs=data[self.coord_names].array,
-                    context=data[self.context_coord_names].array
-                    if self.context_coord_names is not None
-                    else None,
-                )[:, None]
+                return (
+                    ln_weight
+                    + self.nn.log_prob(
+                        inputs=data[self.coord_names].array,
+                        context=data[self.context_coord_names].array
+                        if self.context_coord_names is not None
+                        else None,
+                    )[:, None]
+                )
 
-        return self.wrapped.log_prob(
-            inputs=data[self.coord_names].array,
-            context=data[self.context_coord_names].array
-            if self.context_coord_names is not None
-            else None,
-        )[:, None]
+        return (
+            ln_weight
+            + self.nn.log_prob(
+                inputs=data[self.coord_names].array,
+                context=data[self.context_coord_names].array
+                if self.context_coord_names is not None
+                else None,
+            )[:, None]
+        )
 
     def forward(self, data: Data[Array]) -> Array:
         """Forward pass.

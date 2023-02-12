@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import KW_ONLY, InitVar, dataclass
+from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING
 
 import torch as xp
@@ -50,10 +50,7 @@ class Exponential(ModelBase):
         (\frac{b-a}{6} - (x-a) + \frac{(x-a)^2}{b-a})
     """
 
-    net: InitVar[nn.Module | None] = None
-
     _: KW_ONLY
-    array_namespace: InitVar[ArrayNamespace[Array]]
     param_names: ParamNamesField = ParamNamesField(
         (WEIGHT_NAME, (..., ("slope",))), requires_all_coordinates=False
     )
@@ -65,18 +62,12 @@ class Exponential(ModelBase):
     def __post_init__(
         self, array_namespace: ArrayNamespace[Array], net: nn.Module | None
     ) -> None:
-        super().__post_init__(array_namespace=array_namespace)
-
-        n_slopes = len(self.param_names) - 1  # (don't count the weight)
-
         # Initialize the network
-        if net is None:
-            self.nn = nn.Linear(1, n_slopes)
-            # Note; would prefer nn.Parameter(xp.zeros((1, n_slopes)) + 1e-5)
-            # as that has 1/2 as many params, but it's not callable.
-        else:
-            self.nn = net
-            # TODO: ensure n_out == n_slopes
+        # Note; would prefer nn.Parameter(xp.zeros((1, n_slopes)) + 1e-5)
+        # as that has 1/2 as many params, but it's not callable.
+        nnet = nn.Linear(1, len(self.coord_names)) if net is None else net
+
+        super().__post_init__(array_namespace=array_namespace, net=nnet)
 
         # Pre-compute the associated constant factors
         self._a = xp.asarray(
