@@ -24,10 +24,6 @@ if TYPE_CHECKING:
     from stream_ml.core.params import Params
 
 
-_eps = float(xp.finfo(xp.float32).eps)
-_1 = xp.asarray(1)
-
-
 @dataclass(unsafe_hash=True)
 class Exponential(ModelBase):
     r"""Tilted separately in each dimension.
@@ -55,7 +51,7 @@ class Exponential(ModelBase):
         (WEIGHT_NAME, (..., ("slope",))), requires_all_coordinates=False
     )
     param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array](
-        {WEIGHT_NAME: SigmoidBounds(_eps, 1.0, param_name=(WEIGHT_NAME,))}
+        {WEIGHT_NAME: SigmoidBounds(1e-10, 1.0, param_name=(WEIGHT_NAME,))}
     )
     require_mask: bool = False
 
@@ -70,21 +66,13 @@ class Exponential(ModelBase):
         super().__post_init__(array_namespace=array_namespace, net=nnet)
 
         # Pre-compute the associated constant factors
-        self._a = xp.asarray(
+        self._a, self._b, self._bma = self.xp.asarray(
             [
-                a
-                for k, (a, _) in self.coord_bounds.items()
+                (a, b, b - a)
+                for k, (a, b) in self.coord_bounds.items()
                 if k in self.param_names.top_level
             ]
-        )
-        self._b = xp.asarray(
-            [
-                b
-                for k, (_, b) in self.coord_bounds.items()
-                if k in self.param_names.top_level
-            ]
-        )
-        self._bma = self._b - self._a
+        ).T
 
     # ========================================================================
     # Statistics
@@ -117,8 +105,7 @@ class Exponential(ModelBase):
         -------
         Array
         """
-        f = mpars[(WEIGHT_NAME,)]
-        eps = xp.finfo(f.dtype).eps  # TOOD: or tiny?
+        ln_wgt = self.xp.log(self.xp.clip(mpars[(WEIGHT_NAME,)], 1e-10))  # TODO: eps
 
         # The mask is used to indicate which data points are available. If the
         # mask is not provided, then all data points are assumed to be
@@ -129,7 +116,7 @@ class Exponential(ModelBase):
             msg = "mask is required"
             raise ValueError(msg)
         else:
-            indicator = xp.ones_like(f, dtype=xp.int)
+            indicator = self.xp.ones_like(ln_wgt, dtype=self.xp.int)
             # This has shape (N, 1) so will broadcast correctly.
 
         # Data
@@ -137,22 +124,22 @@ class Exponential(ModelBase):
         # Get the slope from `mpars` we check param_names to see if the
         # slope is a parameter. If it is not, then we assume it is 0.
         # When the slope is 0, the log-likelihood reduces to a Uniform.
-        ms = xp.hstack(
+        ms = self.xp.hstack(
             tuple(
                 mpars[(k, "slope")]
                 if (k, "slope") in self.param_names.flats
-                else xp.zeros((len(d_arr), 1))
+                else self.xp.zeros((len(d_arr), 1))
                 for k in self.coord_names
             )
         )
         # log-likelihood
-        lnliks = xp.log(
+        lnliks = self.xp.log(
             1 / self._bma
             + (ms * (0.5 - d_arr / self._bma))
             + (ms**2 * (self._bma / 6 - d_arr + d_arr**2 / self._bma) / 2)
         )
 
-        return xp.log(xp.clip(f, eps)) + (indicator * lnliks).sum(dim=1, keepdim=True)
+        return ln_wgt + (indicator * lnliks).sum(dim=1, keepdim=True)
 
     # ========================================================================
     # ML
@@ -170,6 +157,10 @@ class Exponential(ModelBase):
         Array
             fraction, mean, sigma
         """
-        pred = (xp.sigmoid(self.nn(data[self.indep_coord_name])) - 0.5) / self._bma
-        pred = xp.hstack((xp.zeros((len(pred), 1)), pred))  # add the weight
+        pred = self.xp.hstack(
+            (
+                self.xp.zeros((len(data), 1)),  # add the weight
+                (xp.sigmoid(self.nn(data[self.indep_coord_name])) - 0.5) / self._bma,
+            )
+        )
         return self._forward_priors(pred, data)
