@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import KW_ONLY, InitVar, dataclass
+from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING
 
 import torch as xp
@@ -41,10 +41,7 @@ class MultivariateNormal(ModelBase):
         Upper limit on fraction, by default 0.45.s
     """
 
-    net: InitVar[nn.Module | None] = None
-
     _: KW_ONLY
-    array_namespace: InitVar[ArrayNamespace[Array]]
     param_names: ParamNamesField = ParamNamesField(
         (WEIGHT_NAME, (..., ("mu", "sigma")))
     )
@@ -52,24 +49,24 @@ class MultivariateNormal(ModelBase):
     def __post_init__(
         self, array_namespace: ArrayNamespace[Array], net: nn.Module | None
     ) -> None:
-        super().__post_init__(array_namespace=array_namespace)
-
-        # Validate param bounds.
-        self.param_bounds.validate(self.param_names)
-
         # Initialize the network
         if net is not None:
-            self.nn = net
+            nnet = net
         else:
-            ndim = len(self.param_names) - 1
+            nout = 1 + 2 * len(self.coord_names)  # weight + (mu + sigma) * per coord
 
-            self.nn = nn.Sequential(
+            nnet = nn.Sequential(
                 nn.Linear(1, 36),
                 nn.Tanh(),
                 nn.Linear(36, 36),
                 nn.Tanh(),
-                nn.Linear(36, 1 + 2 * ndim),
+                nn.Linear(36, nout),
             )
+
+        super().__post_init__(array_namespace=array_namespace, net=nnet)
+
+        # Validate param bounds.
+        self.param_bounds.validate(self.param_names)
 
     # ========================================================================
     # Statistics

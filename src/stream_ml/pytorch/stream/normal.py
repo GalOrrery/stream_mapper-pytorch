@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import KW_ONLY, InitVar, dataclass
+from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING
 
 import torch as xp
@@ -11,12 +11,12 @@ from torch.distributions.normal import Normal as TorchNormal
 
 from stream_ml.core.params.names import ParamNamesField
 from stream_ml.core.setup_package import WEIGHT_NAME
-from stream_ml.core.typing import ArrayNamespace  # noqa: TCH001
 from stream_ml.pytorch.base import ModelBase
 
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
     from stream_ml.core.params import Params
+    from stream_ml.core.typing import ArrayNamespace
     from stream_ml.pytorch.typing import Array
 
 __all__: list[str] = []
@@ -43,11 +43,7 @@ class Normal(ModelBase):
         Upper limit on fraction, by default 0.45.s
     """
 
-    net: InitVar[nn.Module | None] = None
-
     _: KW_ONLY
-    array_namespace: InitVar[ArrayNamespace[Array]]
-
     param_names: ParamNamesField = ParamNamesField(
         (WEIGHT_NAME, (..., ("mu", "sigma")))
     )
@@ -55,24 +51,24 @@ class Normal(ModelBase):
     def __post_init__(
         self, array_namespace: ArrayNamespace[Array], net: nn.Module | None
     ) -> None:
-        super().__post_init__(array_namespace=array_namespace)
-
-        # Validate the coord_names
-        if len(self.coord_names) != 1:
-            msg = "Only one coordinate is supported, e.g ('phi2',)"
-            raise ValueError(msg)
-
         # Initialize the network
         if net is not None:
-            self.nn = net
+            nnet = net
         else:
-            self.nn = nn.Sequential(
+            nnet = nn.Sequential(
                 nn.Linear(1, 36),
                 nn.Tanh(),
                 nn.Linear(36, 36),
                 nn.Tanh(),
                 nn.Linear(36, 3),
             )
+
+        super().__post_init__(array_namespace=array_namespace, net=nnet)
+
+        # Validate the coord_names
+        if len(self.coord_names) != 1:
+            msg = "Only one coordinate is supported, e.g ('phi2',)"
+            raise ValueError(msg)
 
     # ========================================================================
     # Statistics
