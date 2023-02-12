@@ -27,6 +27,7 @@ class FlowModel(ModelBase):
     model: InitVar[Flow | None] = None
     _: KW_ONLY
     with_grad: bool = True
+    context_coord_names: tuple[str, ...] | None = None
 
     def __post_init__(
         self, array_namespace: ArrayNamespace[Array], model: Flow | None
@@ -41,8 +42,6 @@ class FlowModel(ModelBase):
         self,
         mpars: Params[Array],
         data: Data[Array],
-        *,
-        context: Array | None = None,
         **kwargs: Array,
     ) -> Array:
         """Log-likelihood of the array.
@@ -55,8 +54,6 @@ class FlowModel(ModelBase):
         data : Data[Array]
             Data (phi1, phi2).
 
-        context : Array | None, optional keyword-only
-            Context, by default `None`.
         **kwargs : Array
             Additional arguments.
 
@@ -67,11 +64,17 @@ class FlowModel(ModelBase):
         if not self.with_grad:
             with xp.no_grad():
                 return self.wrapped.log_prob(
-                    inputs=data[self.coord_names].array, context=context
+                    inputs=data[self.coord_names].array,
+                    context=data[self.context_coord_names].array
+                    if self.context_coord_names is not None
+                    else None,
                 )[:, None]
 
         return self.wrapped.log_prob(
-            inputs=data[self.coord_names].array, context=context
+            inputs=data[self.coord_names].array,
+            context=data[self.context_coord_names].array
+            if self.context_coord_names is not None
+            else None,
         )[:, None]
 
     def forward(self, data: Data[Array]) -> Array:
