@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import inf
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 from torch import nn
 
@@ -19,6 +19,8 @@ __all__: list[str] = []
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
 
+    Self = TypeVar("Self", bound="ModelBase")
+
 
 @dataclass(unsafe_hash=True)
 class ModelBase(nn.Module, CoreModelBase[Array]):
@@ -26,9 +28,14 @@ class ModelBase(nn.Module, CoreModelBase[Array]):
 
     DEFAULT_BOUNDS: ClassVar[PriorBounds] = SigmoidBounds(-inf, inf)
 
-    def __post_init__(self, *args: Any, **kwargs: Any) -> None:
-        nn.Module.__init__(self)  # Needed for PyTorch
-        super().__post_init__(*args, **kwargs)
+    def __new__(  # noqa: D102
+        cls: type[Self], *args: Any, **kwargs: Any  # noqa: ARG003
+    ) -> Self:
+        self = object.__new__(cls)
+
+        # PyTorch needs to be initialized before attributes are assigned.
+        nn.Module.__init__(self)
+        return self
 
     # ========================================================================
     # ML
