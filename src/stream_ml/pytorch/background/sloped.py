@@ -5,7 +5,6 @@ from __future__ import annotations
 from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING
 
-import torch as xp
 from torch import nn
 
 from stream_ml.core.params.bounds import ParamBoundsField
@@ -21,10 +20,6 @@ __all__: list[str] = []
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
     from stream_ml.core.params import Params
-
-
-_eps = float(xp.finfo(xp.float32).eps)
-_1 = xp.asarray(1)
 
 
 @dataclass(unsafe_hash=True)
@@ -46,7 +41,7 @@ class Sloped(ModelBase):
         (WEIGHT_NAME, (..., ("slope",))), requires_all_coordinates=False
     )
     param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array](
-        {WEIGHT_NAME: SigmoidBounds(_eps, 1.0, param_name=(WEIGHT_NAME,))}
+        {WEIGHT_NAME: SigmoidBounds(1e-10, 1.0, param_name=(WEIGHT_NAME,))}
     )
     require_mask: bool = False
 
@@ -61,7 +56,7 @@ class Sloped(ModelBase):
         super().__post_init__(array_namespace=array_namespace, net=nnet)
 
         # Pre-compute the associated constant factors
-        self._bma = xp.asarray(
+        self._bma = self.xp.asarray(
             [
                 (b - a)
                 for k, (a, b) in self.coord_bounds.items()
@@ -101,7 +96,7 @@ class Sloped(ModelBase):
         Array
         """
         wgt = mpars[(WEIGHT_NAME,)]
-        eps = xp.finfo(wgt.dtype).eps  # TOOD: or tiny?
+        eps = self.xp.finfo(wgt.dtype).eps  # TOOD: or tiny?
 
         # The mask is used to indicate which data points are available. If the
         # mask is not provided, then all data points are assumed to be
@@ -112,21 +107,23 @@ class Sloped(ModelBase):
             msg = "mask is required"
             raise ValueError(msg)
         else:
-            indicator = xp.ones_like(wgt, dtype=xp.int)
+            indicator = self.xp.ones_like(wgt, dtype=self.xp.int)
             # This has shape (N, 1) so will broadcast correctly.
 
         # Compute the log-likelihood, columns are coordinates.
-        lnliks = xp.zeros((len(wgt), 4))
+        lnliks = self.xp.zeros((len(wgt), 4))
         for i, (k, b) in enumerate(self.coord_bounds.items()):
             # Get the slope from `mpars` we check param_names to see if the
             # slope is a parameter. If it is not, then we assume it is 0.
             # When the slope is 0, the log-likelihood reduces to a Uniform.
             m = mpars[(k, "slope")] if (k, "slope") in self.param_names.flats else 0
             lnliks[:, i] = (
-                xp.log(m * (data[k] - (b[0] + b[1]) / 2) + 1 / (b[1] - b[0]))
+                self.xp.log(m * (data[k] - (b[0] + b[1]) / 2) + 1 / (b[1] - b[0]))
             )[:, 0]
 
-        return xp.log(xp.clip(wgt, eps)) + (indicator * lnliks).sum(dim=1, keepdim=True)
+        return self.xp.log(self.xp.clip(wgt, eps)) + (indicator * lnliks).sum(
+            dim=1, keepdim=True
+        )
 
     # ========================================================================
     # ML
@@ -144,6 +141,6 @@ class Sloped(ModelBase):
         Array
             fraction, mean, sigma
         """
-        pred = (xp.sigmoid(self.nn(data[self.indep_coord_name])) - 0.5) / self._bma
-        pred = xp.hstack((xp.zeros((len(pred), 1)), pred))  # add the weight
+        pred = (self.xp.sigmoid(self.nn(data[self.indep_coord_name])) - 0.5) / self._bma
+        pred = self.xp.hstack((self.xp.zeros((len(pred), 1)), pred))  # add the weight
         return self._forward_priors(pred, data)
