@@ -163,7 +163,7 @@ class Exponential(ModelBase):
         pred = self.xp.hstack(
             (
                 self.xp.zeros((len(data), 1)),  # add the weight
-                (self.nn(data[self.indep_coord_name]) - 0.5) / self._bma,
+                (self.nn(data[self.indep_coord_names].array) - 0.5) / self._bma,
             )
         )
         return self._forward_priors(pred, data)
