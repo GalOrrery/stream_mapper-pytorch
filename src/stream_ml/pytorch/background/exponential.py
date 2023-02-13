@@ -66,9 +66,9 @@ class Exponential(ModelBase):
         super().__post_init__(array_namespace=array_namespace, net=nnet)
 
         # Pre-compute the associated constant factors
-        self._a, self._b, self._bma = self.xp.asarray(
+        self._a, self._bma = self.xp.asarray(
             [
-                (a, b, b - a)
+                (a, b - a)
                 for k, (a, b) in self.coord_bounds.items()
                 if k in self.param_names.top_level
             ]
