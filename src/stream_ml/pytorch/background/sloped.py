@@ -152,6 +152,6 @@ class Sloped(ModelBase):
         Array
             fraction, mean, sigma
         """
-        pred = (self.nn(data[self.indep_coord_name]) - 0.5) / self._bma
+        pred = (self.nn(data[self.indep_coord_names].array) - 0.5) / self._bma
         pred = self.xp.hstack((self.xp.zeros((len(pred), 1)), pred))  # add the weight
         return self._forward_priors(pred, data)
