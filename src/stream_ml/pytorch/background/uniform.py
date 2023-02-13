@@ -5,13 +5,11 @@ from __future__ import annotations
 from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING, Any
 
-import torch as xp
 from torch import nn
 
 from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
 from stream_ml.core.setup_package import WEIGHT_NAME
-from stream_ml.core.typing import ArrayNamespace  # noqa: TCH001
 from stream_ml.pytorch.base import ModelBase
 from stream_ml.pytorch.prior.bounds import SigmoidBounds
 from stream_ml.pytorch.typing import Array
@@ -22,9 +20,7 @@ __all__: list[str] = []
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
     from stream_ml.core.params import Params
-
-
-_eps = float(xp.finfo(xp.float32).eps)
+    from stream_ml.core.typing import ArrayNamespace
 
 
 @dataclass(unsafe_hash=True)
@@ -34,7 +30,8 @@ class Uniform(ModelBase):
     _: KW_ONLY
     param_names: ParamNamesField = ParamNamesField((WEIGHT_NAME,))
     param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array](
-        {WEIGHT_NAME: SigmoidBounds(_eps, 1.0, param_name=(WEIGHT_NAME,))}
+        {WEIGHT_NAME: SigmoidBounds(1e-10, 1.0, param_name=(WEIGHT_NAME,))}
+        # TODO: eps, not 1e-10
     )
     require_mask: bool = False
 
