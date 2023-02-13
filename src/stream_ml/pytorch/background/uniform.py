@@ -5,7 +5,6 @@ from __future__ import annotations
 from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING, Any
 
-import torch as xp
 from torch import nn
 
 from stream_ml.core.params.bounds import ParamBoundsField
@@ -24,9 +23,6 @@ if TYPE_CHECKING:
     from stream_ml.core.params import Params
 
 
-_eps = float(xp.finfo(xp.float32).eps)
-
-
 @dataclass(unsafe_hash=True)
 class Uniform(ModelBase):
     """Uniform background model."""
@@ -34,7 +30,8 @@ class Uniform(ModelBase):
     _: KW_ONLY
     param_names: ParamNamesField = ParamNamesField((WEIGHT_NAME,))
     param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array](
-        {WEIGHT_NAME: SigmoidBounds(_eps, 1.0, param_name=(WEIGHT_NAME,))}
+        {WEIGHT_NAME: SigmoidBounds(1e-10, 1.0, param_name=(WEIGHT_NAME,))}
+        # TODO: eps, not 1e-10
     )
     require_mask: bool = False
 
