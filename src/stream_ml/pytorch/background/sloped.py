@@ -34,6 +34,13 @@ class Sloped(ModelBase):
     .. math::
 
         f(x) = m(x - \frac{a + b}{2}) + \frac{1}{b-a}
+
+    Parameters
+    ----------
+    net : nn.Module, keyword-only
+        The network to use. If not provided, a new one will be created. Must be
+        a layer with 1 input and ``len(param_names)-1`` outputs.
+        The output must be scaled between 0 and 1 for each feature.
     """
 
     _: KW_ONLY
@@ -51,7 +58,11 @@ class Sloped(ModelBase):
         # Initialize the network
         # Note; would prefer nn.Parameter(xp.zeros((1, n_slopes)) + 1e-5)
         # as that has 1/2 as many params, but it's not callable.
-        nnet = nn.Linear(1, len(self.coord_bounds)) if net is None else net
+        nnet = (
+            nn.Sequential(nn.Linear(1, len(self.param_names) - 1), nn.Sigmoid())
+            if net is None
+            else net
+        )
         # TODO: ensure n_out == n_slopes
         super().__post_init__(array_namespace=array_namespace, net=nnet)
 
@@ -141,6 +152,6 @@ class Sloped(ModelBase):
         Array
             fraction, mean, sigma
         """
-        pred = (self.xp.sigmoid(self.nn(data[self.indep_coord_name])) - 0.5) / self._bma
+        pred = (self.nn(data[self.indep_coord_name]) - 0.5) / self._bma
         pred = self.xp.hstack((self.xp.zeros((len(pred), 1)), pred))  # add the weight
         return self._forward_priors(pred, data)

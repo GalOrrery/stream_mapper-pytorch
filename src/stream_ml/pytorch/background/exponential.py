@@ -5,7 +5,6 @@ from __future__ import annotations
 from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING
 
-import torch as xp
 from torch import nn
 
 from stream_ml.core.params.bounds import ParamBoundsField
@@ -61,7 +60,11 @@ class Exponential(ModelBase):
         # Initialize the network
         # Note; would prefer nn.Parameter(xp.zeros((1, n_slopes)) + 1e-5)
         # as that has 1/2 as many params, but it's not callable.
-        nnet = nn.Linear(1, len(self.coord_names)) if net is None else net
+        nnet = (
+            nn.Sequential(nn.Linear(1, len(self.param_names) - 1), nn.Sigmoid())
+            if net is None
+            else net
+        )
 
         super().__post_init__(array_namespace=array_namespace, net=nnet)
 
@@ -160,7 +163,7 @@ class Exponential(ModelBase):
         pred = self.xp.hstack(
             (
                 self.xp.zeros((len(data), 1)),  # add the weight
-                (xp.sigmoid(self.nn(data[self.indep_coord_name])) - 0.5) / self._bma,
+                (self.nn(data[self.indep_coord_name]) - 0.5) / self._bma,
             )
         )
         return self._forward_priors(pred, data)
