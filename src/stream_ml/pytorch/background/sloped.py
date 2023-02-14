@@ -40,7 +40,6 @@ class Sloped(ModelBase):
     net : nn.Module, keyword-only
         The network to use. If not provided, a new one will be created. Must be
         a layer with 1 input and ``len(param_names)-1`` outputs.
-        The output must be scaled between 0 and 1 for each feature.
     """
 
     _: KW_ONLY
@@ -152,6 +151,10 @@ class Sloped(ModelBase):
         Array
             fraction, mean, sigma
         """
-        pred = (self.nn(data[self.indep_coord_names].array) - 0.5) / self._bma
-        pred = self.xp.hstack((self.xp.zeros((len(pred), 1)), pred))  # add the weight
+        pred = self.xp.hstack(
+            (
+                self.xp.zeros((len(data), 1)),  # weight placeholder
+                (self.nn(data[self.indep_coord_names].array) - 0.5) / self._bma,
+            )
+        )
         return self._forward_priors(pred, data)
