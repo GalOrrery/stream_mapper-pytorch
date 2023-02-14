@@ -44,7 +44,7 @@ class Exponential(ModelBase):
         f(x) =   \frac{1}{b-a}
                + m * (0.5 - \frac{x-a}{b-a})
                + \frac{m^2}{2} * (\frac{b-a}{6} - (x-a) + \frac{(x-a)^2}{b-a})
-               + \frac{m^3}{12(b-a)} (a+b-2x)(a-x)(b-x)
+               + \frac{m^3}{12(b-a)} (2(x-a)-(b-a))(x-a)(b-x)
     """
 
     _: KW_ONLY
@@ -169,7 +169,7 @@ class Exponential(ModelBase):
         pred = self.xp.hstack(
             (
                 self.xp.zeros((len(data), 1)),  # add the weight
-                (self.nn(data[self.indep_coord_names].array) - 0.5) / self._bma,
+                self.nn(data[self.indep_coord_names].array),
             )
         )
         return self._forward_priors(pred, data)
