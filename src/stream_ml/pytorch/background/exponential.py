@@ -41,8 +41,10 @@ class Exponential(ModelBase):
 
     .. math::
 
-        f(x) = \frac{1}{b-a} + m * (0.5 - \frac{x-a}{b-a}) + \frac{m^2}{2} *
-        (\frac{b-a}{6} - (x-a) + \frac{(x-a)^2}{b-a})
+        f(x) =   \frac{1}{b-a}
+               + m * (0.5 - \frac{x-a}{b-a})
+               + \frac{m^2}{2} * (\frac{b-a}{6} - (x-a) + \frac{(x-a)^2}{b-a})
+               + \frac{m^3}{12(b-a)} (2(x-a)-(b-a))(x-a)(b-x)
     """
 
     _: KW_ONLY
@@ -122,7 +124,7 @@ class Exponential(ModelBase):
             indicator = self.xp.ones_like(ln_wgt, dtype=self.xp.int)
             # This has shape (N, 1) so will broadcast correctly.
 
-        # Data
+        # Data is x - a
         d_arr = data[self.coord_names].array - self._a
         # Get the slope from `mpars` we check param_names to see if the
         # slope is a parameter. If it is not, then we assume it is 0.
@@ -139,7 +141,11 @@ class Exponential(ModelBase):
         lnliks = self.xp.log(
             1 / self._bma
             + (ms * (0.5 - d_arr / self._bma))
-            + (ms**2 * (self._bma / 6 - d_arr + d_arr**2 / self._bma) / 2)
+            + (ms**2 / 2 * (self._bma / 6 - d_arr + d_arr**2 / self._bma))
+            + (
+                (ms**3 * (2 * d_arr - self._bma) * d_arr * (self._bma - d_arr))
+                / (12 * self._bma)
+            )
         )
 
         return ln_wgt + (indicator * lnliks).sum(dim=1, keepdim=True)
@@ -163,7 +169,7 @@ class Exponential(ModelBase):
         pred = self.xp.hstack(
             (
                 self.xp.zeros((len(data), 1)),  # add the weight
-                (self.nn(data[self.indep_coord_names].array) - 0.5) / self._bma,
+                self.nn(data[self.indep_coord_names].array),
             )
         )
         return self._forward_priors(pred, data)
