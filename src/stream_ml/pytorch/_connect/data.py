@@ -25,10 +25,8 @@ def _data_hook(data: Data[Array], /) -> Data[Array]:
 DATA_HOOK[Array] = _data_hook
 
 
-def _array_hook(array: Array, /) -> Array:
-    if isinstance(array, Array) and array.ndim == 1:
-        return array[:, None]
-    return array
+def _array_hook(array: Array, /, key: Any) -> Array:
+    return array[:, None] if isinstance(key, str) and array.ndim == 1 else array
 
 
 ARRAY_HOOK[Array] = _array_hook
