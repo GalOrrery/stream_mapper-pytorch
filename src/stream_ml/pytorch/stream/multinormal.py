@@ -65,9 +65,6 @@ class MultivariateNormal(ModelBase):
 
         super().__post_init__(array_namespace=array_namespace, net=nnet)
 
-        # Validate param bounds.
-        self.param_bounds.validate(self.param_names)
-
     # ========================================================================
     # Statistics
 
