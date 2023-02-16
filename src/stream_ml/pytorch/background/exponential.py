@@ -52,7 +52,10 @@ class Exponential(ModelBase):
         (WEIGHT_NAME, (..., ("slope",))), requires_all_coordinates=False
     )
     param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array](
-        {WEIGHT_NAME: SigmoidBounds(1e-10, 1.0, param_name=(WEIGHT_NAME,))}
+        {
+            WEIGHT_NAME: SigmoidBounds(1e-10, 1.0, param_name=(WEIGHT_NAME,)),
+            ...: {"slope": SigmoidBounds(-1.0, 1.0)},  # param_name is filled in later
+        }
     )
     require_mask: bool = False
 
