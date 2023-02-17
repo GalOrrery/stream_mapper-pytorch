@@ -1,15 +1,16 @@
 """Functions."""
 
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import torch as xp
 
-from stream_ml.core.utils.compat import ArrayAt as CoreArrayAt
 from stream_ml.core.utils.compat import array_at
-from stream_ml.pytorch.typing import Array
+
+if TYPE_CHECKING:
+    from stream_ml.pytorch.typing import Array
 
 
-class ArrayAt(CoreArrayAt[Array]):
+class ArrayAt:
     """Array at index.
 
     This is to emulate the `jax.numpy.ndarray.at` method.
