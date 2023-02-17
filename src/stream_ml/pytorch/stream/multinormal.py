@@ -9,15 +9,17 @@ import torch as xp
 from torch import nn
 from torch.distributions import MultivariateNormal as TorchMultivariateNormal
 
+from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
 from stream_ml.core.setup_package import WEIGHT_NAME
 from stream_ml.core.typing import ArrayNamespace  # noqa: TCH001
 from stream_ml.pytorch.base import ModelBase
+from stream_ml.pytorch.prior.bounds import SigmoidBounds
+from stream_ml.pytorch.typing import Array
 
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
     from stream_ml.core.params import Params
-    from stream_ml.pytorch.typing import Array
 
 __all__: list[str] = []
 
@@ -44,6 +46,12 @@ class MultivariateNormal(ModelBase):
     _: KW_ONLY
     param_names: ParamNamesField = ParamNamesField(
         (WEIGHT_NAME, (..., ("mu", "sigma")))
+    )
+    param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array](
+        {  # reasonable guess for parameter bounds
+            WEIGHT_NAME: SigmoidBounds(1e-10, 0.5),
+            ...: {"mu": SigmoidBounds(-5.0, 5.0), "sigma": SigmoidBounds(0.05, 1.5)},
+        }
     )
 
     def __post_init__(
