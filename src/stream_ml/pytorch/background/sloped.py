@@ -124,7 +124,8 @@ class Sloped(ModelBase):
             # This has shape (N, 1) so will broadcast correctly.
 
         # Compute the log-likelihood, columns are coordinates.
-        lnliks = self.xp.zeros((len(wgt), 4))
+        lnliks = self.xp.zeros((len(wgt), len(self.coord_bounds)))
+        # TODO! vectorize, like Exponentials
         for i, (k, b) in enumerate(self.coord_bounds.items()):
             # Get the slope from `mpars` we check param_names to see if the
             # slope is a parameter. If it is not, then we assume it is 0.
