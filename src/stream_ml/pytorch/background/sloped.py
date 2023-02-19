@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import KW_ONLY, dataclass
+from dataclasses import KW_ONLY, dataclass, replace
 from typing import TYPE_CHECKING
 
 from torch import nn
@@ -10,6 +10,7 @@ from torch import nn
 from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
 from stream_ml.core.setup_package import WEIGHT_NAME
+from stream_ml.core.utils.frozen_dict import FrozenDict
 from stream_ml.pytorch.base import ModelBase
 from stream_ml.pytorch.prior.bounds import SigmoidBounds
 from stream_ml.pytorch.typing import Array
@@ -76,6 +77,17 @@ class Sloped(ModelBase):
                 if k in self.param_names.top_level
             ]
         )
+
+        # Add the slope param_names to the coordinate bounds
+        for k, (a, b) in self.coord_bounds.items():
+            bv = 2 / (b - a) ** 2  # absolute value of the bound
+
+            if k in self.param_bounds and isinstance(self.param_bounds[k], FrozenDict):
+                pb = self.param_bounds[k, "slope"]
+                # Mutate the underlying dictionary
+                self.param_bounds[k]._dict["slope"] = replace(
+                    pb, lower=-max(pb.lower, bv), upper=min(pb.upper, bv)
+                )
 
     # ========================================================================
     # Statistics
