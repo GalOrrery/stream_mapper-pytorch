@@ -57,7 +57,7 @@ class Normal(ModelBase):
     )
 
     def __post_init__(
-        self, array_namespace: ArrayNamespace[Array], net: nn.Module | None
+        self, net: nn.Module | None, array_namespace: ArrayNamespace[Array]
     ) -> None:
         # Initialize the network
         if net is not None:
@@ -71,7 +71,7 @@ class Normal(ModelBase):
                 nn.Linear(36, 3),
             )
 
-        super().__post_init__(array_namespace=array_namespace, net=nnet)
+        super().__post_init__(net=nnet, array_namespace=array_namespace)
 
         # Validate the coord_names
         if len(self.coord_names) != 1:

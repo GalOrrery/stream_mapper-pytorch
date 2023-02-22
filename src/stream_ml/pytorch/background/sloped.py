@@ -56,7 +56,7 @@ class Sloped(ModelBase):
     require_mask: bool = False
 
     def __post_init__(
-        self, array_namespace: ArrayNamespace[Array], net: nn.Module | None
+        self, net: nn.Module | None, array_namespace: ArrayNamespace[Array]
     ) -> None:
         # Initialize the network
         # Note; would prefer nn.Parameter(xp.zeros((1, n_slopes)) + 1e-5)
@@ -67,7 +67,7 @@ class Sloped(ModelBase):
             else net
         )
         # TODO: ensure n_out == n_slopes
-        super().__post_init__(array_namespace=array_namespace, net=nnet)
+        super().__post_init__(net=nnet, array_namespace=array_namespace)
 
         # Pre-compute the associated constant factors
         self._bma = self.xp.asarray(
