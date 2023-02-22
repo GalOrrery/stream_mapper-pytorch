@@ -11,7 +11,7 @@ from torch import nn
 from stream_ml.core.base import ModelBase as CoreModelBase
 from stream_ml.core.prior.bounds import PriorBounds  # noqa: TCH001
 from stream_ml.pytorch.prior.bounds import SigmoidBounds
-from stream_ml.pytorch.typing import Array
+from stream_ml.pytorch.typing import Array, NNModel
 
 __all__: list[str] = []
 
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 
 @dataclass(unsafe_hash=True)
-class ModelBase(nn.Module, CoreModelBase[Array]):
+class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
     """Model base class."""
 
     net: InitVar[nn.Module | None] = None
@@ -41,17 +41,9 @@ class ModelBase(nn.Module, CoreModelBase[Array]):
         return self
 
     def __post_init__(
-        self, array_namespace: ArrayNamespace[Array], net: nn.Module | None
+        self, net: nn.Module | None, array_namespace: ArrayNamespace[Array]
     ) -> None:
-        super().__post_init__(array_namespace=array_namespace)
-
-        # Need to type hint the nn.Module
-        self.nn: nn.Module
-        if net is not None:
-            self.nn = net
-        else:
-            msg = "must provide a wrapped neural network."
-            raise ValueError(msg)
+        super().__post_init__(net=net, array_namespace=array_namespace)
 
     # ========================================================================
     # ML

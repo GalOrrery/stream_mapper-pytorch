@@ -36,7 +36,7 @@ class Uniform(ModelBase):
     require_mask: bool = False
 
     def __post_init__(
-        self, array_namespace: ArrayNamespace[Array], net: Any | None
+        self, net: Any | None, array_namespace: ArrayNamespace[Array]
     ) -> None:
         # Initialize the network
         if net is not None:
@@ -45,7 +45,7 @@ class Uniform(ModelBase):
         else:
             nnet = nn.Identity()
 
-        super().__post_init__(array_namespace=array_namespace, net=nnet)
+        super().__post_init__(net=nnet, array_namespace=array_namespace)
 
         # Pre-compute the log-difference, shape (1, F)
         self._ln_diffs = self.xp.log(

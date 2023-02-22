@@ -16,7 +16,7 @@ from stream_ml.core.prior.base import PriorBase  # noqa: TCH001
 from stream_ml.core.prior.bounds import PriorBounds  # noqa: TCH001
 from stream_ml.core.utils.frozen_dict import FrozenDictField
 from stream_ml.pytorch.prior.bounds import SigmoidBounds
-from stream_ml.pytorch.typing import Array
+from stream_ml.pytorch.typing import Array, NNModel
 
 __all__: list[str] = []
 
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class ModelsBase(nn.Module, CoreModelsBase[Array]):
+class ModelsBase(nn.Module, CoreModelsBase[Array, NNModel]):
     """Multi-model base class."""
 
     components: FrozenDictField[str, Model[Array]] = FrozenDictField()
@@ -75,7 +75,7 @@ class ModelsBase(nn.Module, CoreModelsBase[Array]):
 
 
 @dataclass(unsafe_hash=True)
-class IndependentModels(ModelsBase, CoreIndependentModels[Array]):
+class IndependentModels(ModelsBase, CoreIndependentModels[Array, NNModel]):
     """Composite of a few models that acts like one model.
 
     This is different from a mixture model in that the components are not
@@ -105,7 +105,7 @@ class IndependentModels(ModelsBase, CoreIndependentModels[Array]):
 
 
 @dataclass(unsafe_hash=True)
-class MixtureModel(ModelsBase, CoreMixtureModel[Array]):
+class MixtureModel(ModelsBase, CoreMixtureModel[Array, NNModel]):
     """Full Model.
 
     Parameters

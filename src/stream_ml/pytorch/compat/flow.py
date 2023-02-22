@@ -31,9 +31,9 @@ class FlowModel(ModelBase):
     context_coord_names: tuple[str, ...] | None = None
 
     def __post_init__(
-        self, array_namespace: ArrayNamespace[Array], net: Flow | None
+        self, net: Flow | None, array_namespace: ArrayNamespace[Array]
     ) -> None:
-        super().__post_init__(array_namespace=array_namespace, net=net)
+        super().__post_init__(net=net, array_namespace=array_namespace)
 
     def ln_likelihood_arr(
         self,
