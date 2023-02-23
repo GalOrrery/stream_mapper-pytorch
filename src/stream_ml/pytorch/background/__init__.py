@@ -1,7 +1,7 @@
 """Background models."""
 
 
-from dataclasses import dataclass
+from dataclasses import make_dataclass
 
 from stream_ml.core.background.uniform import Uniform as CoreUniform
 from stream_ml.pytorch.base import ModelBase
@@ -13,6 +13,6 @@ from .sloped import Sloped
 __all__ = ["Uniform", "Sloped", "Exponential"]
 
 
-@dataclass(unsafe_hash=True)
-class Uniform(CoreUniform[Array, NNModel], ModelBase):
-    """Uniform background model."""
+Uniform = make_dataclass(
+    "Uniform", [], bases=(CoreUniform[Array, NNModel], ModelBase), unsafe_hash=True
+)
