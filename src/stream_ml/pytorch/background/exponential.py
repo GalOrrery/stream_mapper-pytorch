@@ -128,7 +128,7 @@ class Exponential(ModelBase):
             # This has shape (N, 1) so will broadcast correctly.
 
         # Data is x - a
-        d_arr = data[self.coord_names].array - self._a
+        d_arr = data[:, self.coord_names, 0] - self._a
         # Get the slope from `mpars` we check param_names to see if the
         # slope is a parameter. If it is not, then we assume it is 0.
         # When the slope is 0, the log-likelihood reduces to a Uniform.
