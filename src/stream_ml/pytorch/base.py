@@ -61,4 +61,4 @@ class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
         Array
             fraction, mean, sigma
         """
-        return self._forward_priors(self.nn(data[self.indep_coord_names].array), data)
+        return self._forward_priors(self.nn(data[:, self.indep_coord_names, 0]), data)
