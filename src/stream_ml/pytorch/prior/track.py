@@ -153,9 +153,9 @@ class ControlRegions(TrackPriorBase):
         object.__setattr__(
             self,
             "_w",
-            self.width[self._y_names].array
+            xp.squeeze(self.width[self._y_names].array)
             if not isinstance(self.width, float)
-            else xp.ones_like(self._y.array) * self.width,
+            else xp.ones_like(self._y) * self.width,
         )
 
     def logpdf(
