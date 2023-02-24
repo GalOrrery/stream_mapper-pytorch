@@ -149,7 +149,10 @@ ignore = [
   "COM819",  # TrailingCommaProhibited
 ]
 
+[tool.ruff.flake8-tidy-imports]
+ban-relative-imports = "all"
 
 [tool.ruff.isort]
+force-sort-within-sections = true
 known-first-party = ["stream_ml"]
 known-third-party = ["numpy", "pytest", "torch", "flax", "jax"]

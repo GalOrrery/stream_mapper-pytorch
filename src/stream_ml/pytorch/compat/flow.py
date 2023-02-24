@@ -5,8 +5,8 @@ from __future__ import annotations
 from dataclasses import KW_ONLY, InitVar, dataclass
 from typing import TYPE_CHECKING
 
-import torch as xp
 from nflows.flows.base import Flow  # noqa: TCH002
+import torch as xp
 
 from stream_ml.core.setup_package import WEIGHT_NAME
 from stream_ml.pytorch.base import ModelBase
