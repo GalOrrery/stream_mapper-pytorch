@@ -127,7 +127,7 @@ class Sloped(ModelBase):
         # mask is not provided, then all data points are assumed to be
         # available.
         if mask is not None:
-            indicator = mask[tuple(self.coord_bounds.keys())].array.int()
+            indicator = mask[:, tuple(self.coord_bounds.keys()), 0]
         elif self.require_mask:
             msg = "mask is required"
             raise ValueError(msg)
