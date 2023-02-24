@@ -23,16 +23,8 @@ __all__: list[str] = []
 
 
 @dataclass(frozen=True)
-class ControlPoints(PriorBase[Array]):
-    """Control points prior.
-
-    Parameters
-    ----------
-    control_points : Data[Array]
-        The control points.
-    lamda : float, optional
-        Importance hyperparameter.
-    """
+class TrackPriorBase(PriorBase[Array]):
+    """Track Prior Base."""
 
     control_points: Data[Array]
     lamda: float = 0.05  # TODO? as a trainable Parameter.
@@ -42,15 +34,32 @@ class ControlPoints(PriorBase[Array]):
 
     def __post_init__(self) -> None:
         """Post-init."""
+        super().__post_init__()
+
         # Pre-store the control points, seprated by indep & dep parameters.
         self._x: Data[Array]
         object.__setattr__(self, "_x", self.control_points[(self.coord_name,)])
 
-        dep_names = tuple(n for n in self.control_points.names if n != self.coord_name)
-        self._y: Data[Array]
-        object.__setattr__(self, "_y", self.control_points[dep_names])
+        dep_names: tuple[str, ...] = tuple(
+            n for n in self.control_points.names if n != self.coord_name
+        )
+        object.__setattr__(self, "_y_names", dep_names)
 
-        super().__post_init__()
+        self._y: Array
+        object.__setattr__(self, "_y", xp.squeeze(self.control_points[dep_names].array))
+
+
+@dataclass(frozen=True)
+class ControlPoints(TrackPriorBase):
+    """Control points prior.
+
+    Parameters
+    ----------
+    control_points : Data[Array]
+        The control points.
+    lamda : float, optional
+        Importance hyperparameter.
+    """
 
     def logpdf(
         self,
@@ -92,18 +101,18 @@ class ControlPoints(PriorBase[Array]):
         # Get the model parameters evaluated at the control points. shape (C, 1).
         cmpars = model.unpack_params_from_arr(model(self._x))
         cmp_arr = xp.hstack(  # (C, F)
-            tuple(cmpars[(n, self.component_param_name)] for n in self._y.names)
+            tuple(cmpars[(n, self.component_param_name)] for n in self._y_names)
         )
 
         # For each control point, add the squared distance to the logpdf.
-        return -self.lamda * ((cmp_arr - self._y.array) ** 2).sum()  # (C, F) -> 1
+        return -self.lamda * ((cmp_arr - self._y) ** 2).sum()  # (C, F) -> 1
 
 
 #####################################################################
 
 
 @dataclass(frozen=True)
-class ControlRegions(PriorBase[Array]):
+class ControlRegions(TrackPriorBase):
     r"""Control regions prior.
 
     The gaussian control points work very well, but they are very informative.
@@ -133,34 +142,21 @@ class ControlRegions(PriorBase[Array]):
         a different width.
     """
 
-    control_points: Data[Array]
-    lamda: float = 0.05  # TODO? as a trainable Parameter.
     width: float | Data[Array] = 0.5
-    _: KW_ONLY
-    coord_name: str = "phi1"
-    component_param_name: str = "mu"
 
     def __post_init__(self) -> None:
         """Post-init."""
-        # Pre-store the control points, seprated by indep & dep parameters.
-        self._x: Data[Array]
-        object.__setattr__(self, "_x", self.control_points[(self.coord_name,)])
-
-        dep_names = tuple(n for n in self.control_points.names if n != self.coord_name)
-        self._y: Data[Array]
-        object.__setattr__(self, "_y", self.control_points[dep_names])
+        super().__post_init__()
 
         # Pre-store the width.
         self._w: Array
         object.__setattr__(
             self,
             "_w",
-            self.width[dep_names].array
+            self.width[self._y_names].array
             if not isinstance(self.width, float)
             else xp.ones_like(self._y.array) * self.width,
         )
-
-        super().__post_init__()
 
     def logpdf(
         self,
@@ -202,13 +198,13 @@ class ControlRegions(PriorBase[Array]):
         # Get model parameters evaluated at the control points. shape (C, 1).
         cmpars = model.unpack_params_from_arr(model(self._x))
         cmp_arr = xp.hstack(  # (C, F)
-            tuple(cmpars[(n, self.component_param_name)] for n in self._y.names)
+            tuple(cmpars[(n, self.component_param_name)] for n in self._y_names)
         )
 
         pdf = xp.zeros_like(cmp_arr)
-        where = cmp_arr <= self._y.array - self._w
-        pdf[where] = (cmp_arr[where] - (self._y.array[where] - self._w[where])) ** 2
-        where = cmp_arr >= self._y.array + self._w
-        pdf[where] = (cmp_arr[where] - (self._y.array[where] + self._w[where])) ** 2
+        where = cmp_arr <= self._y - self._w
+        pdf[where] = (cmp_arr[where] - (self._y[where] - self._w[where])) ** 2
+        where = cmp_arr >= self._y + self._w
+        pdf[where] = (cmp_arr[where] - (self._y[where] + self._w[where])) ** 2
 
         return -self.lamda * pdf.sum()  # (C, F) -> 1
