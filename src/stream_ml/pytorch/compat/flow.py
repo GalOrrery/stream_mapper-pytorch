@@ -69,7 +69,7 @@ class FlowModel(ModelBase):
                 return (
                     ln_weight
                     + self.nn.log_prob(
-                        inputs=data[self.coord_names].array,
+                        inputs=data[:, self.coord_names, 0],
                         context=data[self.context_coord_names].array
                         if self.context_coord_names is not None
                         else None,
@@ -79,7 +79,7 @@ class FlowModel(ModelBase):
         return (
             ln_weight
             + self.nn.log_prob(
-                inputs=data[self.coord_names].array,
+                inputs=data[:, self.coord_names, 0],
                 context=data[self.context_coord_names].array
                 if self.context_coord_names is not None
                 else None,

@@ -96,7 +96,7 @@ class MultivariateNormal(ModelBase):
         Array
         """
         eps = xp.finfo(mpars[(WEIGHT_NAME,)].dtype).eps  # TODO: or tiny?
-        datav = data[self.coord_names].array
+        datav = data[:, self.coord_names, 0]
 
         lik = TorchMultivariateNormal(
             xp.hstack([mpars[c, "mu"] for c in self.coord_names]),
@@ -141,12 +141,12 @@ class MultivariateMissingNormal(MultivariateNormal):  # (MultivariateNormal)
         **kwargs : Array
             Additional arguments.
         """
-        datav = data[self.coord_names].array
+        datav = data[:, self.coord_names, 0]
         mu = xp.hstack([mpars[c, "mu"] for c in self.coord_names])
         sigma = xp.hstack([mpars[c, "sigma"] for c in self.coord_names])
 
         if mask is not None:
-            indicator = mask[tuple(self.coord_bounds.keys())].array.int()
+            indicator = mask[:, tuple(self.coord_bounds.keys()), 0]
         elif self.require_mask:
             msg = "mask is required"
             raise ValueError(msg)
