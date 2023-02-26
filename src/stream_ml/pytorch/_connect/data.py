@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-# STDLIB
 from typing import Any
 
 import numpy as np
-
-# THIRD-PARTY
 import torch as xp
 
 from stream_ml.core.data import ASTYPE_REGISTRY, Data
