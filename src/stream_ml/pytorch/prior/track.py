@@ -22,6 +22,13 @@ __all__: list[str] = []
 #####################################################################
 
 
+def atleast_2d(x: Array) -> Array:
+    """Ensure that x is at least 2d."""
+    if x.ndim == 1:
+        return x[:, None]
+    return x
+
+
 @dataclass(frozen=True)
 class TrackPriorBase(PriorBase[Array]):
     """Track Prior Base."""
@@ -46,7 +53,9 @@ class TrackPriorBase(PriorBase[Array]):
         object.__setattr__(self, "_y_names", dep_names)
 
         self._y: Array
-        object.__setattr__(self, "_y", xp.squeeze(self.control_points[dep_names].array))
+        object.__setattr__(
+            self, "_y", atleast_2d(xp.squeeze(self.control_points[dep_names].array))
+        )
 
 
 @dataclass(frozen=True)
@@ -153,7 +162,7 @@ class ControlRegions(TrackPriorBase):
         object.__setattr__(
             self,
             "_w",
-            xp.squeeze(self.width[self._y_names].array)
+            atleast_2d(xp.squeeze(self.width[self._y_names].array))
             if not isinstance(self.width, float)
             else xp.ones_like(self._y) * self.width,
         )
