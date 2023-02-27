@@ -46,7 +46,9 @@ class TrackPriorBase(PriorBase[Array]):
         object.__setattr__(self, "_y_names", dep_names)
 
         self._y: Array
-        object.__setattr__(self, "_y", xp.squeeze(self.control_points[dep_names].array))
+        object.__setattr__(
+            self, "_y", xp.atleast_2d(xp.squeeze(self.control_points[dep_names].array))
+        )
 
 
 @dataclass(frozen=True)
@@ -153,7 +155,7 @@ class ControlRegions(TrackPriorBase):
         object.__setattr__(
             self,
             "_w",
-            xp.squeeze(self.width[self._y_names].array)
+            xp.atleast_2d(xp.squeeze(self.width[self._y_names].array))
             if not isinstance(self.width, float)
             else xp.ones_like(self._y) * self.width,
         )
