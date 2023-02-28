@@ -5,15 +5,13 @@ from __future__ import annotations
 from dataclasses import KW_ONLY, dataclass, replace
 from typing import TYPE_CHECKING
 
-from torch import nn
-
 from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
 from stream_ml.core.setup_package import WEIGHT_NAME
 from stream_ml.core.utils.frozen_dict import FrozenDict
 from stream_ml.pytorch.base import ModelBase
 from stream_ml.pytorch.prior.bounds import SigmoidBounds
-from stream_ml.pytorch.typing import Array
+from stream_ml.pytorch.typing import Array, NNModel
 
 __all__: list[str] = []
 
@@ -55,19 +53,8 @@ class Sloped(ModelBase):
     )
     require_mask: bool = False
 
-    def __post_init__(
-        self, net: nn.Module | None, array_namespace: ArrayNamespace[Array]
-    ) -> None:
-        # Initialize the network
-        # Note; would prefer nn.Parameter(xp.zeros((1, n_slopes)) + 1e-5)
-        # as that has 1/2 as many params, but it's not callable.
-        nnet = (
-            nn.Sequential(nn.Linear(1, len(self.param_names) - 1), nn.Sigmoid())
-            if net is None
-            else net
-        )
-        # TODO: ensure n_out == n_slopes
-        super().__post_init__(net=nnet, array_namespace=array_namespace)
+    def __post_init__(self, array_namespace: ArrayNamespace[Array]) -> None:
+        super().__post_init__(array_namespace=array_namespace)
 
         # Pre-compute the associated constant factors
         self._bma = self.xp.asarray(
@@ -88,6 +75,16 @@ class Sloped(ModelBase):
                 self.param_bounds[k]._dict["slope"] = replace(
                     pb, lower=-max(pb.lower, bv), upper=min(pb.upper, bv)
                 )
+
+    def _net_init_default(self) -> NNModel:
+        # Initialize the network
+        # Note; would prefer nn.Parameter(xp.zeros((1, n_slopes)) + 1e-5)
+        # as that has 1/2 as many params, but it's not callable.
+        # TODO: ensure n_out == n_slopes
+        # TODO! for jax need to bundle into 1 arg. Detect this!
+        return self.xpnn.Sequential(
+            self.xpnn.Linear(1, len(self.param_names) - 1), self.xpnn.Sigmoid()
+        )
 
     # ========================================================================
     # Statistics
@@ -170,7 +167,7 @@ class Sloped(ModelBase):
         pred = self.xp.hstack(
             (
                 self.xp.zeros((len(data), 1)),  # weight placeholder
-                (self.nn(data[:, self.indep_coord_names, 0]) - 0.5) / self._bma,
+                (self.net(data[:, self.indep_coord_names, 0]) - 0.5) / self._bma,
             )
         )
         return self._forward_priors(pred, data)

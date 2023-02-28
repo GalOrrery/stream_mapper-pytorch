@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import InitVar, dataclass
+from dataclasses import dataclass
 from math import inf
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
@@ -27,8 +27,6 @@ if TYPE_CHECKING:
 class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
     """Model base class."""
 
-    net: InitVar[nn.Module | None] = None
-
     DEFAULT_BOUNDS: ClassVar[PriorBounds] = SigmoidBounds(-inf, inf)
 
     def __new__(  # noqa: D102
@@ -40,10 +38,8 @@ class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
         nn.Module.__init__(self)
         return self
 
-    def __post_init__(
-        self, net: nn.Module | None, array_namespace: ArrayNamespace[Array]
-    ) -> None:
-        super().__post_init__(net=net, array_namespace=array_namespace)
+    def __post_init__(self, array_namespace: ArrayNamespace[Array]) -> None:
+        super().__post_init__(array_namespace=array_namespace)
 
     # ========================================================================
     # ML
@@ -61,4 +57,4 @@ class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
         Array
             fraction, mean, sigma
         """
-        return self._forward_priors(self.nn(data[:, self.indep_coord_names, 0]), data)
+        return self._forward_priors(self.net(data[:, self.indep_coord_names, 0]), data)

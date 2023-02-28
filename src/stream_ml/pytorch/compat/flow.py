@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import KW_ONLY, InitVar, dataclass
+from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING
 
-from nflows.flows.base import Flow  # noqa: TCH002
 import torch as xp
 
 from stream_ml.core.setup_package import WEIGHT_NAME
@@ -25,15 +24,14 @@ if TYPE_CHECKING:
 class FlowModel(ModelBase):
     """Normalizing flow model."""
 
-    net: InitVar[Flow | None] = None
+    # net: NNField[Flow] = NNField[Flow](default=None)  # noqa: ERA001
+
     _: KW_ONLY
     with_grad: bool = True
     context_coord_names: tuple[str, ...] | None = None
 
-    def __post_init__(
-        self, net: Flow | None, array_namespace: ArrayNamespace[Array]
-    ) -> None:
-        super().__post_init__(net=net, array_namespace=array_namespace)
+    def __post_init__(self, array_namespace: ArrayNamespace[Array]) -> None:
+        super().__post_init__(array_namespace=array_namespace)
 
     def ln_likelihood_arr(
         self,
