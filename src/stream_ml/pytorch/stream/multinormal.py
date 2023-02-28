@@ -6,16 +6,14 @@ from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING
 
 import torch as xp
-from torch import nn
 from torch.distributions import MultivariateNormal as TorchMultivariateNormal
 
 from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
 from stream_ml.core.setup_package import WEIGHT_NAME
-from stream_ml.core.typing import ArrayNamespace  # noqa: TCH001
 from stream_ml.pytorch.base import ModelBase
 from stream_ml.pytorch.prior.bounds import SigmoidBounds
-from stream_ml.pytorch.typing import Array
+from stream_ml.pytorch.typing import Array, NNModel
 
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
@@ -54,24 +52,21 @@ class MultivariateNormal(ModelBase):
         }
     )
 
-    def __post_init__(
-        self, net: nn.Module | None, array_namespace: ArrayNamespace[Array]
-    ) -> None:
+    def _net_init_default(self) -> NNModel:
         # Initialize the network
-        if net is not None:
-            nnet = net
-        else:
-            nout = 1 + 2 * len(self.coord_names)  # weight + (mu + sigma) * per coord
+        # Note; would prefer nn.Parameter(xp.zeros((1, n_slopes)) + 1e-5)
+        # as that has 1/2 as many params, but it's not callable.
+        # TODO: ensure n_out == n_slopes
+        # TODO! for jax need to bundle into 1 arg. Detect this!
+        nout = 1 + 2 * len(self.coord_names)  # weight + (mu + sigma) * per coord
 
-            nnet = nn.Sequential(
-                nn.Linear(1, 36),
-                nn.Tanh(),
-                nn.Linear(36, 36),
-                nn.Tanh(),
-                nn.Linear(36, nout),
-            )
-
-        super().__post_init__(net=nnet, array_namespace=array_namespace)
+        return self.xpnn.Sequential(
+            self.xpnn.Linear(1, 36),
+            self.xpnn.Tanh(),
+            self.xpnn.Linear(36, 36),
+            self.xpnn.Tanh(),
+            self.xpnn.Linear(36, nout),
+        )
 
     # ========================================================================
     # Statistics
