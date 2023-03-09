@@ -89,7 +89,7 @@ class Sloped(ModelBase):
     # ========================================================================
     # Statistics
 
-    def ln_likelihood_arr(
+    def ln_likelihood(
         self,
         mpars: Params[Array],
         data: Data[Array],

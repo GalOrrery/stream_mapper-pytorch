@@ -33,7 +33,7 @@ class FlowModel(ModelBase):
     def __post_init__(self, array_namespace: ArrayNamespace[Array]) -> None:
         super().__post_init__(array_namespace=array_namespace)
 
-    def ln_likelihood_arr(
+    def ln_likelihood(
         self,
         mpars: Params[Array],
         data: Data[Array],
@@ -66,9 +66,9 @@ class FlowModel(ModelBase):
             with xp.no_grad():
                 return (
                     ln_weight
-                    + self.nn.log_prob(
+                    + self.net.log_prob(
                         inputs=data[:, self.coord_names, 0],
-                        context=data[self.context_coord_names].array
+                        context=data[:, self.context_coord_names, 0]
                         if self.context_coord_names is not None
                         else None,
                     )[:, None]
@@ -76,9 +76,9 @@ class FlowModel(ModelBase):
 
         return (
             ln_weight
-            + self.nn.log_prob(
+            + self.net.log_prob(
                 inputs=data[:, self.coord_names, 0],
-                context=data[self.context_coord_names].array
+                context=data[:, self.context_coord_names, 0]
                 if self.context_coord_names is not None
                 else None,
             )[:, None]
