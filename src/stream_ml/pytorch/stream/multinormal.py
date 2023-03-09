@@ -71,7 +71,7 @@ class MultivariateNormal(ModelBase):
     # ========================================================================
     # Statistics
 
-    def ln_likelihood_arr(
+    def ln_likelihood(
         self, mpars: Params[Array], data: Data[Array], **kwargs: Array
     ) -> Array:
         """Log-likelihood of the stream.
@@ -113,7 +113,7 @@ class MultivariateMissingNormal(MultivariateNormal):  # (MultivariateNormal)
     _: KW_ONLY
     require_mask: bool = True
 
-    def ln_likelihood_arr(
+    def ln_likelihood(
         self,
         mpars: Params[Array],
         data: Data[Array],
