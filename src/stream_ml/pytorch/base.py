@@ -29,10 +29,8 @@ class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
 
     DEFAULT_BOUNDS: ClassVar[PriorBounds] = SigmoidBounds(-inf, inf)
 
-    def __new__(  # noqa: D102
-        cls: type[Self], *args: Any, **kwargs: Any  # noqa: ARG003
-    ) -> Self:
-        self = object.__new__(cls)
+    def __new__(cls: type[Self], *args: Any, **kwargs: Any) -> Self:  # noqa: D102
+        self: Self = super().__new__(cls, *args, **kwargs)  # <- CoreModelBase
 
         # PyTorch needs to be initialized before attributes are assigned.
         nn.Module.__init__(self)
