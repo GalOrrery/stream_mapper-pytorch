@@ -95,7 +95,7 @@ class MultivariateNormal(ModelBase):
 
         lik = TorchMultivariateNormal(
             xp.hstack([mpars[c, "mu"] for c in self.coord_names]),
-            xp.diag_embed(
+            covariance_matrix=xp.diag_embed(
                 xp.hstack([mpars[c, "sigma"] for c in self.coord_names]) ** 2
             ),
         ).log_prob(datav)
@@ -108,7 +108,12 @@ class MultivariateNormal(ModelBase):
 
 @dataclass(unsafe_hash=True)
 class MultivariateMissingNormal(MultivariateNormal):  # (MultivariateNormal)
-    """Multivariate Normal with missing data."""
+    """Multivariate Normal with missing data.
+
+    .. note::
+
+        Currently this requires a diagonal covariance matrix.
+    """
 
     _: KW_ONLY
     require_mask: bool = True
