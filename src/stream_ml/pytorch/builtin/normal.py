@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import KW_ONLY, dataclass
+import math
 from typing import TYPE_CHECKING
 
 import torch as xp
-from torch.distributions.normal import Normal as TorchNormal
 
+# from torch.distributions.normal import Normal as TorchNormal  # noqa: ERA001
 from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
 from stream_ml.core.setup_package import WEIGHT_NAME
@@ -23,12 +24,33 @@ if TYPE_CHECKING:
 __all__: list[str] = []
 
 
-_eps = float(xp.finfo(xp.float32).eps)
+_logsqrt2pi = math.log(math.sqrt(2 * math.pi))
+
+
+def norm_logpdf(value: Array, loc: Array, var: Array) -> Array:
+    r"""Log of the probability density function of the normal distribution.
+
+    Parameters
+    ----------
+    value : Array
+        Value at which to evaluate the PDF.
+    loc : Array
+        Mean of the distribution.
+    var : Array
+        variance of the distribution.
+
+    Returns
+    -------
+    Array
+        Log of the PDF.
+    """
+    # compute the variance
+    return -((value - loc) ** 2) / (2 * var) - var.sqrt().log() - _logsqrt2pi
 
 
 @dataclass(unsafe_hash=True)
 class Normal(ModelBase):
-    r"""2D Gaussian with mixture weight.
+    r"""1D Gaussian with mixture weight.
 
     :math:`(weight, \mu, \sigma)(\phi1)`
 
@@ -101,7 +123,8 @@ class Normal(ModelBase):
         """
         c = self.coord_names[0]
         eps = xp.finfo(mpars[(WEIGHT_NAME,)].dtype).eps  # TOOD: or tiny?
-        lik = TorchNormal(mpars[c, "mu"], xp.clip(mpars[c, "sigma"], min=eps)).log_prob(
-            data[c]
+        # lnlik = TorchNormal(mpars[c, "mu"], xp.clip(mpars[c, "sigma"], min=eps)).log_prob(data[c])  # noqa: ERA001, E501
+        lnlik = norm_logpdf(
+            data[c], mpars[c, "mu"], xp.clip(mpars[c, "sigma"], min=eps)
         )
-        return xp.log(xp.clip(mpars[(WEIGHT_NAME,)], min=eps)) + lik
+        return xp.log(xp.clip(mpars[(WEIGHT_NAME,)], min=eps)) + lnlik
