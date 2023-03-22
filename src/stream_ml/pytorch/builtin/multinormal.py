@@ -90,7 +90,11 @@ class MultivariateNormal(ModelBase):
         -------
         Array
         """
-        eps = xp.finfo(mpars[(WEIGHT_NAME,)].dtype).eps  # TODO: or tiny?
+        data = self.data_scaler.transform(
+            data[self.data_scaler.names], names=self.data_scaler.names
+        )
+
+        ln_wgt = xp.log(xp.clip(mpars[(WEIGHT_NAME,)], 1e-10))
         datav = data[:, self.coord_names, 0]
 
         lik = TorchMultivariateNormal(
@@ -100,7 +104,7 @@ class MultivariateNormal(ModelBase):
             ),
         ).log_prob(datav)
 
-        return xp.log(xp.clip(mpars[(WEIGHT_NAME,)], eps)) + lik[:, None]
+        return ln_wgt + lik[:, None]
 
 
 ##############################################################################
@@ -141,6 +145,10 @@ class MultivariateMissingNormal(MultivariateNormal):  # (MultivariateNormal)
         **kwargs : Array
             Additional arguments.
         """
+        data = self.data_scaler.transform(
+            data[self.data_scaler.names], names=self.data_scaler.names
+        )
+
         datav = data[:, self.coord_names, 0]
         mu = xp.hstack([mpars[c, "mu"] for c in self.coord_names])
         sigma = xp.hstack([mpars[c, "sigma"] for c in self.coord_names])

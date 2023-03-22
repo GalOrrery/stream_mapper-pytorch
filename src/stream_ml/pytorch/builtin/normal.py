@@ -121,6 +121,10 @@ class Normal(ModelBase):
         -------
         Array
         """
+        data = self.data_scaler.transform(
+            data[self.data_scaler.names], names=self.data_scaler.names
+        )
+
         c = self.coord_names[0]
         eps = xp.finfo(mpars[(WEIGHT_NAME,)].dtype).eps  # TOOD: or tiny?
         # lnlik = TorchNormal(mpars[c, "mu"], xp.clip(mpars[c, "sigma"], min=eps)).log_prob(data[c])  # noqa: ERA001, E501
