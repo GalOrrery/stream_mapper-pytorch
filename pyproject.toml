@@ -3,7 +3,7 @@
   version = "0.1.0"
   description = "Stream ML pytorch extension."
   readme = "README.rst"
-  requires-python = ">=3.8"
+  requires-python = ">=3.10"
   license = {file = "LICENSE"}
   keywords = ["numpy", "interoperability"]
   authors = [
