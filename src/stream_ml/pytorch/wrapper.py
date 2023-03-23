@@ -72,6 +72,10 @@ class WithWeightModel(ModelBase):
         -------
         Array
         """
+        # The forward step runs on the normalized coordinates
+        data = self.data_scaler.transform(
+            data[self.data_scaler.names], names=self.data_scaler.names
+        )
         w = self.weight(data[:, self.weight_coords, 0])
         return self._forward_priors(self.xp.hstack((w, self.net(data))), data)
 
