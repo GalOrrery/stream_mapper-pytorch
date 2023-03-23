@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
+from cmath import inf
 from dataclasses import dataclass
-from math import inf
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 from torch import nn
 
 from stream_ml.core.base import ModelBase as CoreModelBase
-from stream_ml.core.prior.bounds import PriorBounds  # noqa: TCH001
 from stream_ml.pytorch.prior.bounds import SigmoidBounds
 from stream_ml.pytorch.typing import Array, NNModel
 
@@ -17,7 +16,9 @@ __all__: list[str] = []
 
 
 if TYPE_CHECKING:
+    from stream_ml.core.base import NNField
     from stream_ml.core.data import Data
+    from stream_ml.core.prior.bounds import PriorBounds
     from stream_ml.core.typing import ArrayNamespace
 
     Self = TypeVar("Self", bound="ModelBase")
@@ -39,6 +40,10 @@ class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
     def __post_init__(self, array_namespace: ArrayNamespace[Array]) -> None:
         super().__post_init__(array_namespace=array_namespace)
 
+        # Net needs to added to ensure that it's registered as a module.
+        # TODO! not need to overwrite the descriptor.
+        self.net: NNField[NNModel] = self.net
+
     # ========================================================================
     # ML
 
@@ -55,4 +60,10 @@ class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
         Array
             fraction, mean, sigma
         """
-        return self._forward_priors(self.net(data[:, self.indep_coord_names, 0]), data)
+        # The forward step runs on the normalized coordinates
+        data = self.data_scaler.transform(
+            data[self.data_scaler.names], names=self.data_scaler.names
+        )
+        return self._forward_priors(
+            self.net(data[:, self.indep_coord_names, 0]), data=data
+        )

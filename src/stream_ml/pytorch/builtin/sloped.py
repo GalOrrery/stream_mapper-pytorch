@@ -117,6 +117,10 @@ class Sloped(ModelBase):
         -------
         Array
         """
+        data = self.data_scaler.transform(
+            data[self.data_scaler.names], names=self.data_scaler.names
+        )
+
         wgt = mpars[(WEIGHT_NAME,)]
         eps = self.xp.finfo(wgt.dtype).eps  # TOOD: or tiny?
 

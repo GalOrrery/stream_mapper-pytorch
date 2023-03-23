@@ -110,6 +110,10 @@ class Exponential(ModelBase):
         -------
         Array
         """
+        data = self.data_scaler.transform(
+            data[self.data_scaler.names], names=self.data_scaler.names
+        )
+
         ln_wgt = self.xp.log(self.xp.clip(mpars[(WEIGHT_NAME,)], 1e-10))  # TODO: eps
 
         # The mask is used to indicate which data points are available. If the
