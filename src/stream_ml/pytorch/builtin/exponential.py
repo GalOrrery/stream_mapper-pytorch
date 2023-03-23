@@ -170,6 +170,10 @@ class Exponential(ModelBase):
         Array
             fraction, mean, sigma
         """
+        # The forward step runs on the normalized coordinates
+        data = self.data_scaler.transform(
+            data[self.data_scaler.names], names=self.data_scaler.names
+        )
         pred = self.xp.hstack(
             (
                 self.xp.zeros((len(data), 1)),  # add the weight
