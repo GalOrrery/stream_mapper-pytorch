@@ -121,9 +121,7 @@ class Sloped(ModelBase):
             data[self.data_scaler.names], names=self.data_scaler.names
         )
 
-        wgt = mpars[(WEIGHT_NAME,)]
-        eps = self.xp.finfo(wgt.dtype).eps  # TOOD: or tiny?
-
+        ln_wgt = self.xp.log(self.xp.clip(mpars[(WEIGHT_NAME,)], 1e-10))
         # The mask is used to indicate which data points are available. If the
         # mask is not provided, then all data points are assumed to be
         # available.
@@ -133,11 +131,11 @@ class Sloped(ModelBase):
             msg = "mask is required"
             raise ValueError(msg)
         else:
-            indicator = self.xp.ones_like(wgt, dtype=self.xp.int)
+            indicator = self.xp.ones_like(ln_wgt, dtype=self.xp.int)
             # This has shape (N, 1) so will broadcast correctly.
 
         # Compute the log-likelihood, columns are coordinates.
-        lnliks = self.xp.zeros((len(wgt), len(self.coord_bounds)))
+        lnliks = self.xp.zeros((len(ln_wgt), len(self.coord_bounds)))
         # TODO! vectorize, like Exponentials
         for i, (k, b) in enumerate(self.coord_bounds.items()):
             # Get the slope from `mpars` we check param_names to see if the
@@ -148,9 +146,7 @@ class Sloped(ModelBase):
                 self.xp.log(m * (data[k] - (b[0] + b[1]) / 2) + 1 / (b[1] - b[0]))
             )[:, 0]
 
-        return self.xp.log(self.xp.clip(wgt, eps)) + (indicator * lnliks).sum(
-            dim=1, keepdim=True
-        )
+        return ln_wgt + (indicator * lnliks).sum(dim=1, keepdim=True)
 
     # ========================================================================
     # ML

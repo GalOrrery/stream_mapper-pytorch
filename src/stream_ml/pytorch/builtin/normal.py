@@ -125,10 +125,9 @@ class Normal(ModelBase):
             data[self.data_scaler.names], names=self.data_scaler.names
         )
 
+        ln_wgt = xp.log(xp.clip(mpars[(WEIGHT_NAME,)], min=1e-10))
         c = self.coord_names[0]
-        eps = xp.finfo(mpars[(WEIGHT_NAME,)].dtype).eps  # TOOD: or tiny?
-        # lnlik = TorchNormal(mpars[c, "mu"], xp.clip(mpars[c, "sigma"], min=eps)).log_prob(data[c])  # noqa: ERA001, E501
         lnlik = norm_logpdf(
-            data[c], mpars[c, "mu"], xp.clip(mpars[c, "sigma"], min=eps)
+            data[c], mpars[c, "mu"], xp.clip(mpars[c, "sigma"], min=1e-10)
         )
-        return xp.log(xp.clip(mpars[(WEIGHT_NAME,)], min=eps)) + lnlik
+        return ln_wgt + lnlik
