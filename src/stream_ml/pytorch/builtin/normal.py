@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 
 import torch as xp
 
-# from torch.distributions.normal import Normal as TorchNormal  # noqa: ERA001
 from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
 from stream_ml.core.setup_package import WEIGHT_NAME
@@ -27,7 +26,7 @@ __all__: list[str] = []
 _logsqrt2pi = math.log(math.sqrt(2 * math.pi))
 
 
-def norm_logpdf(value: Array, loc: Array, var: Array) -> Array:
+def norm_logpdf(value: Array, loc: Array, sigma: Array, *, xp: ArrayNamespace) -> Array:
     r"""Log of the probability density function of the normal distribution.
 
     Parameters
@@ -36,16 +35,17 @@ def norm_logpdf(value: Array, loc: Array, var: Array) -> Array:
         Value at which to evaluate the PDF.
     loc : Array
         Mean of the distribution.
-    var : Array
+    sigma : Array
         variance of the distribution.
+    xp : ArrayNamespace
+        Array namespace.
 
     Returns
     -------
     Array
         Log of the PDF.
     """
-    # compute the variance
-    return -((value - loc) ** 2) / (2 * var) - var.sqrt().log() - _logsqrt2pi
+    return -0.5 * ((value - loc) / sigma) ** 2 - xp.log(xp.abs(sigma)) - _logsqrt2pi
 
 
 @dataclass(unsafe_hash=True)
@@ -124,10 +124,8 @@ class Normal(ModelBase):
         data = self.data_scaler.transform(
             data[self.data_scaler.names], names=self.data_scaler.names
         )
-
-        ln_wgt = xp.log(xp.clip(mpars[(WEIGHT_NAME,)], min=1e-10))
         c = self.coord_names[0]
         lnlik = norm_logpdf(
-            data[c], mpars[c, "mu"], xp.clip(mpars[c, "sigma"], min=1e-10)
+            data[c], mpars[c, "mu"], xp.clip(mpars[c, "sigma"], min=1e-10), xp=self.xp
         )
-        return ln_wgt + lnlik
+        return xp.log(xp.clip(mpars[(WEIGHT_NAME,)], min=1e-10)) + lnlik
