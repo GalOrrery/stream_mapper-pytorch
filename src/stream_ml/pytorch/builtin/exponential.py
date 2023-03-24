@@ -152,7 +152,7 @@ class Exponential(ModelBase):
             )
         )
 
-        return ln_wgt + (indicator * lnliks).sum(dim=1, keepdim=True)
+        return ln_wgt + (indicator * lnliks).sum(1, keepdim=True)
 
     # ========================================================================
     # ML
