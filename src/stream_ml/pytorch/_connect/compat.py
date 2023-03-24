@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 
 import torch as xp
 
@@ -23,7 +23,7 @@ class ArrayAt:
         self.array = array
         self.idx = idx
 
-    def set(self, value: Array | Literal[0]) -> Array:  # noqa: A003
+    def set(self, value: Array | float) -> Array:  # noqa: A003
         """Set the value at the index, in-place."""
         self.array[self.idx] = value
         return self.array
