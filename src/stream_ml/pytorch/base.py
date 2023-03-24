@@ -64,6 +64,4 @@ class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
         data = self.data_scaler.transform(
             data[self.data_scaler.names], names=self.data_scaler.names
         )
-        return self._forward_priors(
-            self.net(data[:, self.indep_coord_names, 0]), data=data
-        )
+        return self._forward_priors(self.net(data[:, self.indep_coord_names, 0]), data)
