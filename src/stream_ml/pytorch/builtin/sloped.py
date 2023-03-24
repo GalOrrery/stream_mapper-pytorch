@@ -56,20 +56,18 @@ class Sloped(ModelBase):
     def __post_init__(self, array_namespace: ArrayNamespace[Array]) -> None:
         super().__post_init__(array_namespace=array_namespace)
 
-        # Pre-compute the associated constant factors
-        self._bma = self.xp.asarray(
-            [
-                (b - a)
-                for k, (a, b) in self.coord_bounds.items()
-                if k in self.param_names.top_level
-            ]
-        )
-
+        _bma = []  # Pre-compute the associated constant factors
         # Add the slope param_names to the coordinate bounds
         # TODO! instead un-freeze then
         # re-freeze.
         for k, (a, b) in self.coord_bounds.items():
-            bv = 2 / (b - a) ** 2  # absolute value of the bound
+            a_ = self.data_scaler.transform(a, names=(k,))
+            b_ = self.data_scaler.transform(b, names=(k,))
+
+            if k in self.param_names.top_level:
+                _bma.append(b_ - a_)
+
+            bv = 2 / (b_ - a_) ** 2  # absolute value of the bound
 
             if k in self.param_bounds and isinstance(self.param_bounds[k], FrozenDict):
                 pb = self.param_bounds[k, "slope"]
@@ -77,6 +75,8 @@ class Sloped(ModelBase):
                 self.param_bounds[k]._dict["slope"] = replace(
                     pb, lower=-max(pb.lower, bv), upper=min(pb.upper, bv)
                 )
+
+        self._bma = self.xp.asarray(_bma)
 
     def _net_init_default(self) -> NNModel:
         # Initialize the network
@@ -139,11 +139,15 @@ class Sloped(ModelBase):
         # Compute the log-likelihood, columns are coordinates.
         ln_lks = self.xp.zeros((len(ln_wgt), len(self.coord_bounds)))
         for i, (k, (a, b)) in enumerate(self.coord_bounds.items()):
+            a_ = self.data_scaler.transform(a, names=(k,))
+            b_ = self.data_scaler.transform(b, names=(k,))
             # Get the slope from `mpars` we check param_names to see if the
             # slope is a parameter. If it is not, then we assume it is 0.
             # When the slope is 0, the log-likelihood reduces to a Uniform.
             m = mpars[(k, "slope")] if (k, "slope") in self.param_names.flats else 0
-            ln_lks[:, i] = self.xp.log(m * (data[k][:, 0] - (a + b) / 2) + 1 / (b - a))
+            ln_lks[:, i] = self.xp.log(
+                m * (data[k][:, 0] - (a_ + b_) / 2) + 1 / (b_ - a_)
+            )
 
         return ln_wgt + (indicator * ln_lks).sum(1, keepdim=True)
 
