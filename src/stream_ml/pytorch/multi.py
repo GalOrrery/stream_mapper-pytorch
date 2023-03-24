@@ -65,9 +65,9 @@ class ModelsBase(nn.Module, CoreModelsBase[Array, NNModel]):
 
         # There's no need to call the parameter bounds prior here, since
         # the parameters are already constrained by each component.
-
         # TODO: a better way to do the order of the priors.
         # Call the prior to limit the range of the parameters.
+        # FIXME! need to scale the data
         for prior in self.priors:
             pred = prior(pred, data, self)
 

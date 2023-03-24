@@ -66,6 +66,8 @@ class Sloped(ModelBase):
         )
 
         # Add the slope param_names to the coordinate bounds
+        # TODO! instead un-freeze then
+        # re-freeze.
         for k, (a, b) in self.coord_bounds.items():
             bv = 2 / (b - a) ** 2  # absolute value of the bound
 
@@ -135,18 +137,15 @@ class Sloped(ModelBase):
             # This has shape (N, 1) so will broadcast correctly.
 
         # Compute the log-likelihood, columns are coordinates.
-        lnliks = self.xp.zeros((len(ln_wgt), len(self.coord_bounds)))
-        # TODO! vectorize, like Exponentials
-        for i, (k, b) in enumerate(self.coord_bounds.items()):
+        ln_lks = self.xp.zeros((len(ln_wgt), len(self.coord_bounds)))
+        for i, (k, (a, b)) in enumerate(self.coord_bounds.items()):
             # Get the slope from `mpars` we check param_names to see if the
             # slope is a parameter. If it is not, then we assume it is 0.
             # When the slope is 0, the log-likelihood reduces to a Uniform.
             m = mpars[(k, "slope")] if (k, "slope") in self.param_names.flats else 0
-            lnliks[:, i] = (
-                self.xp.log(m * (data[k] - (b[0] + b[1]) / 2) + 1 / (b[1] - b[0]))
-            )[:, 0]
+            ln_lks[:, i] = self.xp.log(m * (data[k][:, 0] - (a + b) / 2) + 1 / (b - a))
 
-        return ln_wgt + (indicator * lnliks).sum(dim=1, keepdim=True)
+        return ln_wgt + (indicator * ln_lks).sum(1, keepdim=True)
 
     # ========================================================================
     # ML
