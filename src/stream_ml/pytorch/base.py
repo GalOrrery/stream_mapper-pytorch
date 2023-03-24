@@ -61,7 +61,5 @@ class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
             fraction, mean, sigma
         """
         # The forward step runs on the normalized coordinates
-        data = self.data_scaler.transform(
-            data[self.data_scaler.names], names=self.data_scaler.names
-        )
+        data = self.data_scaler.transform(data, names=self.data_scaler.names)
         return self._forward_priors(self.net(data[:, self.indep_coord_names, 0]), data)

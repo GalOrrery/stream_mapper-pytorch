@@ -148,7 +148,10 @@ class MultivariateMissingNormal(MultivariateNormal):  # (MultivariateNormal)
         data = self.data_scaler.transform(
             data[self.data_scaler.names], names=self.data_scaler.names
         )
+        # Mixture
+        ln_wgt = xp.log(xp.clip(mpars[(WEIGHT_NAME,)], min=1e-10))
 
+        # Normal
         datav = data[:, self.coord_names, 0]
         mu = xp.hstack([mpars[c, "mu"] for c in self.coord_names])
         sigma = xp.hstack([mpars[c, "sigma"] for c in self.coord_names])
@@ -163,7 +166,6 @@ class MultivariateMissingNormal(MultivariateNormal):  # (MultivariateNormal)
             # shape (1, F) so that it can broadcast with (N, F)
 
         # misc
-        eps = xp.finfo(datav.dtype).eps  # TODO: or tiny?
         dimensionality = indicator.sum(dim=1, keepdim=True)  # (N, 1)
 
         # Data - model
@@ -173,7 +175,7 @@ class MultivariateMissingNormal(MultivariateNormal):  # (MultivariateNormal)
         cov = indicator * sigma**2  # (N, 4) positive definite  # TODO: add eps
         det = (cov + (1 - indicator)).prod(dim=1, keepdims=True)  # (N, 1)
 
-        return xp.log(xp.clip(mpars[(WEIGHT_NAME,)], min=eps)) - 0.5 * (
+        return ln_wgt - 0.5 * (
             dimensionality * _log2pi  # dim of data
             + xp.log(det)
             + (  # TODO: speed up
