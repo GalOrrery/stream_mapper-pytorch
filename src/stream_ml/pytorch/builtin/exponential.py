@@ -114,7 +114,7 @@ class Exponential(ModelBase):
             data[self.data_scaler.names], names=self.data_scaler.names
         )
 
-        ln_wgt = self.xp.log(self.xp.clip(mpars[(WEIGHT_NAME,)], 1e-10))  # TODO: eps
+        ln_wgt = self.xp.log(self.xp.clip(mpars[(WEIGHT_NAME,)], 1e-10))
 
         # The mask is used to indicate which data points are available. If the
         # mask is not provided, then all data points are assumed to be
