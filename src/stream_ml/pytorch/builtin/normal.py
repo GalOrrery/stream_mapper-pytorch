@@ -73,7 +73,7 @@ class Normal(ModelBase):
     param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array](
         {  # reasonable guess for parameter bounds
             WEIGHT_NAME: SigmoidBounds(1e-10, 0.5),
-            ...: {"mu": SigmoidBounds(-5.0, 5.0), "sigma": SigmoidBounds(0.05, 1.5)},
+            # ...: {"mu": SigmoidBounds(-5.0, 5.0), "sigma": SigmoidBounds(0.05, 1.5)},
         }
     )
 

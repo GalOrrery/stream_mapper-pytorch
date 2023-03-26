@@ -56,11 +56,12 @@ class SigmoidBounds(CorePriorBounds[Array]):
 
     def __post_init__(self) -> None:
         """Post-init."""
-        self._lower_torch: Array
-        self._upper_torch: Array
+        super().__post_init__()
 
-        object.__setattr__(self, "_lower_torch", xp.asarray([self.lower]))
-        object.__setattr__(self, "_upper_torch", xp.asarray([self.upper]))
+        self.lower: Array
+        self.upper: Array
+        object.__setattr__(self, "lower", xp.asarray([self.lower]))
+        object.__setattr__(self, "upper", xp.asarray([self.upper]))
 
     def __call__(self, pred: Array, data: Data[Array], model: Model[Array], /) -> Array:
         """Evaluate the forward step in the prior."""
@@ -68,7 +69,5 @@ class SigmoidBounds(CorePriorBounds[Array]):
 
         # Get column
         col = model.param_names.flats.index(self.param_name)
-        pred[:, col] = scaled_sigmoid(
-            pred[:, col], lower=self._lower_torch, upper=self._upper_torch
-        )
+        pred[:, col] = scaled_sigmoid(pred[:, col], *self.scaled_bounds)
         return pred
