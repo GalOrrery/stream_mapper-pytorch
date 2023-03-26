@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import KW_ONLY, dataclass
-from math import inf
 from typing import TYPE_CHECKING, ClassVar
 
 from torch import nn
@@ -13,9 +12,8 @@ from stream_ml.core.multi.bases import ModelsBase as CoreModelsBase
 from stream_ml.core.multi.independent import IndependentModels as CoreIndependentModels
 from stream_ml.core.multi.mixture import MixtureModel as CoreMixtureModel
 from stream_ml.core.prior.base import PriorBase  # noqa: TCH001
-from stream_ml.core.prior.bounds import PriorBounds  # noqa: TCH001
+from stream_ml.core.prior.bounds import NoBounds, PriorBounds
 from stream_ml.core.utils.frozen_dict import FrozenDictField
-from stream_ml.pytorch.prior.bounds import SigmoidBounds
 from stream_ml.pytorch.typing import Array, NNModel
 
 __all__: list[str] = []
@@ -33,7 +31,7 @@ class ModelsBase(nn.Module, CoreModelsBase[Array, NNModel]):
     _: KW_ONLY
     priors: tuple[PriorBase[Array], ...] = ()
 
-    DEFAULT_BOUNDS: ClassVar[PriorBounds] = SigmoidBounds(-inf, inf)
+    DEFAULT_BOUNDS: ClassVar[PriorBounds] = NoBounds()
 
     def __post_init__(self) -> None:
         super().__post_init__()

@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from cmath import inf
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 from torch import nn
 
 from stream_ml.core.base import ModelBase as CoreModelBase
-from stream_ml.pytorch.prior.bounds import SigmoidBounds
+from stream_ml.core.prior.bounds import NoBounds
 from stream_ml.pytorch.typing import Array, NNModel
 
 __all__: list[str] = []
@@ -28,7 +27,7 @@ if TYPE_CHECKING:
 class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
     """Model base class."""
 
-    DEFAULT_BOUNDS: ClassVar[PriorBounds] = SigmoidBounds(-inf, inf)
+    DEFAULT_BOUNDS: ClassVar[PriorBounds] = NoBounds()
 
     def __new__(cls: type[Self], *args: Any, **kwargs: Any) -> Self:  # noqa: D102
         self: Self = super().__new__(cls, *args, **kwargs)  # <- CoreModelBase
