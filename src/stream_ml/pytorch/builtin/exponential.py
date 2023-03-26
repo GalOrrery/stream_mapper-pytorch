@@ -61,13 +61,19 @@ class Exponential(ModelBase):
         super().__post_init__(array_namespace=array_namespace)
 
         # Pre-compute the associated constant factors
-        self._a, self._bma = self.xp.asarray(
-            [
-                (a, b - a)
-                for k, (a, b) in self.coord_bounds.items()
-                if k in self.param_names.top_level
-            ]
-        ).T
+        _a, _bma = [], []
+        for k, (a, b) in self.coord_bounds.items():
+            if k not in self.param_names.top_level:
+                continue
+
+            a_ = self.data_scaler.transform(a, names=(k,))
+            b_ = self.data_scaler.transform(b, names=(k,))
+
+            _a.append(a_)
+            _bma.append(b_ - a_)
+
+        self._a = self.xp.asarray(_a)
+        self._bma = self.xp.asarray(_bma)
 
     def _net_init_default(self) -> NNModel:
         # Initialize the network
