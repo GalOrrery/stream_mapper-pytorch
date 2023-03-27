@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING, Any
 
+from stream_ml.core.utils.scale.utils import rescale
 from stream_ml.pytorch.base import ModelBase
 
 if TYPE_CHECKING:
@@ -92,6 +93,7 @@ class WithWeightModel(ModelBase):
         **kwargs : Any
             Keyword arguments.
         """
+        mpars = rescale(self, mpars)
         return self.xp.log(mpars[("weight",)]) + self.net.ln_likelihood(
             mpars, data, **kwargs
         )
