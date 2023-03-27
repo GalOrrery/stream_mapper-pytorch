@@ -38,7 +38,8 @@ def norm_logpdf(value: Array, loc: Array, sigma: Array, *, xp: ArrayNamespace) -
         Mean of the distribution.
     sigma : Array
         variance of the distribution.
-    xp : ArrayNamespace
+
+    xp : ArrayNamespace, keyword-only
         Array namespace.
 
     Returns
@@ -122,8 +123,8 @@ class Normal(ModelBase):
         -------
         Array
         """
-        data = self.data_scaler.transform(data, names=self.data_scaler.names)
-        mpars = rescale(self, mpars)
+        # data = self.data_scaler.transform(data, names=self.data_scaler.names)
+        # mpars = rescale(self, mpars)
 
         c = self.coord_names[0]
         lnlik = norm_logpdf(
