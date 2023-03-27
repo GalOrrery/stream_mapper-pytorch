@@ -56,9 +56,7 @@ class FlowModel(ModelBase):
         -------
         Array
         """
-        data = self.data_scaler.transform(
-            data[self.data_scaler.names], names=self.data_scaler.names
-        )
+        data = self.data_scaler.transform(data, names=self.data_scaler.names)
 
         ln_weight = (
             self.xp.log(mpars[(WEIGHT_NAME,)])
