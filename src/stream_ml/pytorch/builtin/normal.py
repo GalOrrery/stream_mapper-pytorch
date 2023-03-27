@@ -160,4 +160,5 @@ class Normal(ModelBase):
             lnp = lnp + bounds.logpdf(mpars, data, self, lnp, xp=self.xp)
         # Priors
         for prior in self.priors:
-            lnp = lnp + prior.logpdf(mpars, data, self, lnp, xp=self.xp) 
+            lnp = lnp + prior.logpdf(mpars, data, self, lnp, xp=self.xp)
+        return lnp
