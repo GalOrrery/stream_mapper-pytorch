@@ -122,10 +122,7 @@ class Normal(ModelBase):
         Returns
         -------
         Array
-        """
-        # data = self.data_scaler.transform(data, names=self.data_scaler.names)
-        # mpars = rescale(self, mpars)
-
+        """ 
         c = self.coord_names[0]
         lnlik = norm_logpdf(
             data[c], mpars[c, "mu"], xp.clip(mpars[c, "sigma"], min=1e-10), xp=self.xp
