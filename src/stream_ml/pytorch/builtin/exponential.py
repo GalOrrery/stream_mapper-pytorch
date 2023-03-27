@@ -116,10 +116,7 @@ class Exponential(ModelBase):
         -------
         Array
         """
-        data = self.data_scaler.transform(
-            data[self.data_scaler.names], names=self.data_scaler.names
-        )
-
+        data = self.data_scaler.transform(data, names=self.coord_names)  # TODO!
         ln_wgt = self.xp.log(self.xp.clip(mpars[(WEIGHT_NAME,)], 1e-10))
 
         # The mask is used to indicate which data points are available. If the
@@ -177,9 +174,7 @@ class Exponential(ModelBase):
             fraction, mean, sigma
         """
         # The forward step runs on the normalized coordinates
-        data = self.data_scaler.transform(
-            data[self.data_scaler.names], names=self.data_scaler.names
-        )
+        data = self.data_scaler.transform(data, names=self.data_scaler.names)
         pred = self.xp.hstack(
             (
                 self.xp.zeros((len(data), 1)),  # add the weight
