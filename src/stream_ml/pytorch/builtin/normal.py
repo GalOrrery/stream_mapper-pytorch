@@ -131,3 +131,33 @@ class Normal(ModelBase):
             data[c], mpars[c, "mu"], xp.clip(mpars[c, "sigma"], min=1e-10), xp=self.xp
         )
         return xp.log(xp.clip(mpars[(WEIGHT_NAME,)], min=1e-10)) + lnlik
+
+    def ln_prior(
+        self, mpars: Params[Array], data: Data[Array], current_lnp: Array | None = None
+    ) -> Array:
+        """Log prior.
+
+        Parameters
+        ----------
+        mpars : Params[Array], positional-only
+            Model parameters. Note that these are different from the ML
+            parameters.
+        data : Data[Array]
+            Data (phi1, phi2).
+        current_lnp : Array | None, optional
+            Current value of the log prior, by default `None`.
+
+        Returns
+        -------
+        Array
+        """
+        lnp: Array = self.xp.zeros(()) if current_lnp is None else current_lnp
+
+        # Coordinate Bounds
+        lnp = lnp + self._ln_prior_coord_bnds(mpars, data)
+        # Parameter Bounds
+        for bounds in self.param_bounds.flatvalues():
+            lnp = lnp + bounds.logpdf(mpars, data, self, lnp, xp=self.xp)
+        # Priors
+        for prior in self.priors:
+            lnp = lnp + prior.logpdf(mpars, data, self, lnp, xp=self.xp) 
