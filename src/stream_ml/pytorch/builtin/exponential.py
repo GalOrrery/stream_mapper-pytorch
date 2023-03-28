@@ -63,13 +63,15 @@ class Exponential(ModelBase):
         super().__post_init__(array_namespace=array_namespace)
 
         # Pre-compute the associated constant factors
-        self._a, self._bma = self.xp.asarray(
-            [
-                (a, b-a)
-                for k, (a, b) in self.coord_bounds.items()
-                if k in self.param_names.top_level
-            ]
-        ).T
+        _a, _bma = [], []
+        for k, (a, b) in self.coord_bounds.items():
+            if k not in self.param_names.top_level:
+                continue
+            _a.append(a)
+            _bma.append(b - a)
+
+        self._a = self.xp.asarray(_a)
+        self._bma = self.xp.asarray(_bma)
 
     def _net_init_default(self) -> NNModel:
         # Initialize the network
@@ -112,6 +114,9 @@ class Exponential(ModelBase):
         -------
         Array
         """
+        # data = self.data_scaler.transform(data, names=self.coord_names)  # TODO!
+        # mpars = rescale(self, mpars)
+
         ln_wgt = self.xp.log(self.xp.clip(mpars[(WEIGHT_NAME,)], 1e-10))
 
         # The mask is used to indicate which data points are available. If the
