@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
+from stream_ml.core.prior.bounds import ClippedBounds
 from stream_ml.core.setup_package import WEIGHT_NAME
 from stream_ml.core.utils.scale.utils import rescale
 from stream_ml.pytorch.base import ModelBase
@@ -52,7 +53,7 @@ class Exponential(ModelBase):
     )
     param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array](
         {
-            WEIGHT_NAME: SigmoidBounds(1e-10, 1.0, param_name=(WEIGHT_NAME,)),
+            WEIGHT_NAME: ClippedBounds(1e-10, 1.0, param_name=(WEIGHT_NAME,)),
             ...: {"slope": SigmoidBounds(-1.0, 1.0)},  # param_name is filled in later
         }
     )
