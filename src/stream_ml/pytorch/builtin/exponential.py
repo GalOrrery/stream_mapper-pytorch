@@ -142,7 +142,7 @@ class Exponential(ModelBase):
             )
         )
         # log-likelihood
-        lnliks = self.xp.clip(  # FIXME! higher order, not clip.
+        liks = self.xp.clip(  # FIXME! higher order, not clip.
             1 / self._bma
             + (ms * (0.5 - d_arr / self._bma))
             + (ms**2 / 2 * (self._bma / 6 - d_arr + d_arr**2 / self._bma))
