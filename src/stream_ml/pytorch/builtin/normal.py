@@ -11,7 +11,6 @@ import torch as xp
 from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
 from stream_ml.core.setup_package import WEIGHT_NAME
-from stream_ml.core.utils.scale.utils import rescale
 from stream_ml.pytorch.base import ModelBase
 from stream_ml.pytorch.prior.bounds import SigmoidBounds
 from stream_ml.pytorch.typing import Array, NNModel
@@ -122,10 +121,9 @@ class Normal(ModelBase):
         Returns
         -------
         Array
-        """ 
+        """
         c = self.coord_names[0]
         lnlik = norm_logpdf(
             data[c], mpars[c, "mu"], xp.clip(mpars[c, "sigma"], min=1e-10), xp=self.xp
         )
         return xp.log(xp.clip(mpars[(WEIGHT_NAME,)], min=1e-10)) + lnlik
-

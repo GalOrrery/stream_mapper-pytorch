@@ -9,7 +9,6 @@ from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
 from stream_ml.core.prior.bounds import ClippedBounds
 from stream_ml.core.setup_package import WEIGHT_NAME
-from stream_ml.core.utils.scale.utils import rescale
 from stream_ml.pytorch.base import ModelBase
 from stream_ml.pytorch.prior.bounds import SigmoidBounds
 from stream_ml.pytorch.typing import Array, NNModel
@@ -147,7 +146,11 @@ class Exponential(ModelBase):
         lnliks = self.xp.zeros_like(d_arr)
         lnliks[~n0] = -self.xp.log(self._bma)
         # TODO! this can be a little numerically unstable as m->0
-        lnliks[n0] = self.xp.log(ms[n0]) + ms[n0] * d_arr[n0] - self.xp.log(self.xp.expm1(ms[n0] * self._bma))
+        lnliks[n0] = (
+            self.xp.log(ms[n0])
+            + ms[n0] * d_arr[n0]
+            - self.xp.log(self.xp.expm1(ms[n0] * self._bma))
+        )
 
         return ln_wgt + (indicator * lnliks).sum(1, keepdim=True)
 
