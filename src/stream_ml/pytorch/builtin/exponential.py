@@ -63,15 +63,15 @@ class Exponential(ModelBase):
         super().__post_init__(array_namespace=array_namespace)
 
         # Pre-compute the associated constant factors
-        _a, _bma = [], []
+        _b, _bma = [], []
         for k, (a, b) in self.coord_bounds.items():
             if k not in self.param_names.top_level:
                 continue
-            _a.append(a)
+            _b.append(b)
             _bma.append(b - a)
 
-        self._a = self.xp.asarray(_a)
-        self._bma = self.xp.asarray(_bma)
+        self._b = self.xp.asarray(_b)[None, :]
+        self._bma = self.xp.asarray(_bma)[None, :]
 
     def _net_init_default(self) -> NNModel:
         # Initialize the network
@@ -129,7 +129,7 @@ class Exponential(ModelBase):
             # This has shape (N, 1) so will broadcast correctly.
 
         # Data is x - a
-        d_arr = data[:, self.coord_names, 0] - self._a
+        d_arr = self._b - data[:, self.coord_names, 0]
         # Get the slope from `mpars` we check param_names to see if the
         # slope is a parameter. If it is not, then we assume it is 0.
         # When the slope is 0, the log-likelihood reduces to a Uniform.
@@ -143,20 +143,10 @@ class Exponential(ModelBase):
         )
 
         # log-likelihood
-        # lnliks = self.xp.zeros_like(d_arr)
-        # lnliks[~n0] = -self.xp.log(self._bma)
-        # lnliks[n0] = self.xp.log(ms[n0]) - ms[n0] * d_arr[n0] - (1 - self.xp.exp(-ms[n0] * self._bma))
-        liks = self.xp.clip(  # FIXME! higher order, not clip.
-            1 / self._bma
-            + (ms * (0.5 - d_arr / self._bma))
-            + (ms**2 / 2 * (self._bma / 6 - d_arr + d_arr**2 / self._bma))
-            + (
-                (ms**3 * (2 * d_arr - self._bma) * d_arr * (self._bma - d_arr))
-                / (12 * self._bma)
-            ),
-            1e-50
-        )
-        lnliks = self.xp.log(liks)
+        lnliks = self.xp.zeros_like(d_arr)
+        lnliks[~n0] = -self.xp.log(self._bma)
+        # TODO! this can be a little numerically unstable as m->0
+        lnliks[n0] = self.xp.log(ms[n0]) + ms[n0] * d_arr[n0] - self.xp.log(self.xp.expm1(ms[n0] * self._bma))
 
         return ln_wgt + (indicator * lnliks).sum(1, keepdim=True)
 
