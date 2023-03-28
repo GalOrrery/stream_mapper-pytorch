@@ -68,8 +68,10 @@ class Exponential(ModelBase):
             if k not in self.param_names.top_level:
                 continue
 
-            a_ = self.data_scaler.transform(a, names=(k,))
-            b_ = self.data_scaler.transform(b, names=(k,))
+            # a_ = self.data_scaler.transform(a, names=(k,))
+            # b_ = self.data_scaler.transform(b, names=(k,))
+            a_ = a
+            b_ = b
 
             _a.append(a_)
             _bma.append(b_ - a_)
@@ -118,8 +120,8 @@ class Exponential(ModelBase):
         -------
         Array
         """
-        data = self.data_scaler.transform(data, names=self.coord_names)  # TODO!
-        mpars = rescale(self, mpars)
+        # data = self.data_scaler.transform(data, names=self.coord_names)  # TODO!
+        # mpars = rescale(self, mpars)
 
         ln_wgt = self.xp.log(self.xp.clip(mpars[(WEIGHT_NAME,)], 1e-10))
 
