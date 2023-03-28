@@ -69,7 +69,6 @@ class Exponential(ModelBase):
                 continue
             _a.append(a)
             _bma.append(b - a)
-
         self._a = self.xp.asarray(_a)
         self._bma = self.xp.asarray(_bma)
 
@@ -141,18 +140,13 @@ class Exponential(ModelBase):
                 for k in self.coord_names
             )
         )
+        n0 = ms != 0
+
         # log-likelihood
-        liks = self.xp.clip(  # FIXME! higher order, not clip.
-            1 / self._bma
-            + (ms * (0.5 - d_arr / self._bma))
-            + (ms**2 / 2 * (self._bma / 6 - d_arr + d_arr**2 / self._bma))
-            + (
-                (ms**3 * (2 * d_arr - self._bma) * d_arr * (self._bma - d_arr))
-                / (12 * self._bma)
-            ),
-            0
-        )
-        lnliks = self.xp.log(liks)
+        # When m->0 this numerically diverges, but has an analytic simplification.
+        lnliks = self.xp.zeros_like(d_arr)
+        lnliks[~n0] = -self.xp.log(self._bma)
+        lnliks[n0] = self.xp.log(ms[n0]) - ms[n0] * d_arr[n0] - (1 - self.xp.exp(-ms[n0] * self._bma))
 
         return ln_wgt + (indicator * lnliks).sum(1, keepdim=True)
 
