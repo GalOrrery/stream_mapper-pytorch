@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import torch as xp
 
 from stream_ml.core.setup_package import WEIGHT_NAME
-from stream_ml.core.utils.scale.utils import rescale
+from stream_ml.core.utils.scale.utils import scale_params
 from stream_ml.pytorch.base import ModelBase
 
 __all__: list[str] = []
@@ -58,7 +58,7 @@ class FlowModel(ModelBase):
         Array
         """
         data = self.data_scaler.transform(data, names=self.data_scaler.names)
-        mpars = rescale(self, mpars)
+        mpars = scale_params(self, mpars)
 
         ln_weight = (
             self.xp.log(mpars[(WEIGHT_NAME,)])
