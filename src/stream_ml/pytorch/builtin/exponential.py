@@ -114,9 +114,6 @@ class Exponential(ModelBase):
         -------
         Array
         """
-        # data = self.data_scaler.transform(data, names=self.coord_names)  # TODO!
-        # mpars = rescale(self, mpars)
-
         ln_wgt = self.xp.log(self.xp.clip(mpars[(WEIGHT_NAME,)], 1e-10))
 
         # The mask is used to indicate which data points are available. If the
@@ -145,15 +142,17 @@ class Exponential(ModelBase):
             )
         )
         # log-likelihood
-        lnliks = self.xp.log(
+        lnliks = self.xp.clip(  # FIXME! higher order, not clip.
             1 / self._bma
             + (ms * (0.5 - d_arr / self._bma))
             + (ms**2 / 2 * (self._bma / 6 - d_arr + d_arr**2 / self._bma))
             + (
                 (ms**3 * (2 * d_arr - self._bma) * d_arr * (self._bma - d_arr))
                 / (12 * self._bma)
-            )
+            ),
+            0
         )
+        lnliks = self.xp.log(liks)
 
         return ln_wgt + (indicator * lnliks).sum(1, keepdim=True)
 
