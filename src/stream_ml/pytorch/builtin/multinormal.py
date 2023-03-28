@@ -91,9 +91,6 @@ class MultivariateNormal(ModelBase):
         -------
         Array
         """
-        data = self.data_scaler.transform(data, names=self.data_scaler.names)
-        mpars = rescale(self, mpars)
-
         ln_wgt = xp.log(xp.clip(mpars[(WEIGHT_NAME,)], 1e-10))
         datav = data[:, self.coord_names, 0]
 
@@ -145,9 +142,6 @@ class MultivariateMissingNormal(MultivariateNormal):  # (MultivariateNormal)
         **kwargs : Array
             Additional arguments.
         """
-        data = self.data_scaler.transform(data, names=self.data_scaler.names)
-        mpars = rescale(self, mpars)
-
         # Mixture
         ln_wgt = xp.log(xp.clip(mpars[(WEIGHT_NAME,)], min=1e-10))
 
