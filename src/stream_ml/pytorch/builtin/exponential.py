@@ -141,7 +141,6 @@ class Exponential(ModelBase):
                 for k in self.coord_names
             )
         )
-        n0 = ms != 0
 
         # log-likelihood
         # lnliks = self.xp.zeros_like(d_arr)
@@ -155,7 +154,7 @@ class Exponential(ModelBase):
                 (ms**3 * (2 * d_arr - self._bma) * d_arr * (self._bma - d_arr))
                 / (12 * self._bma)
             ),
-            0
+            1e-50
         )
         lnliks = self.xp.log(liks)
 
