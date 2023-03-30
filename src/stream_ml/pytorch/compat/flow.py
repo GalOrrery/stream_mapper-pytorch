@@ -17,7 +17,6 @@ __all__: list[str] = []
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
     from stream_ml.core.params import Params
-    from stream_ml.core.typing import ArrayNamespace
     from stream_ml.pytorch.typing import Array
 
 
@@ -25,14 +24,11 @@ if TYPE_CHECKING:
 class FlowModel(ModelBase):
     """Normalizing flow model."""
 
-    # net: NNField[Flow] = NNField[Flow](default=None)  # noqa: ERA001
+    # net: NNField[Flow] = NNField[Flow](default=None)
 
     _: KW_ONLY
     with_grad: bool = True
     context_coord_names: tuple[str, ...] | None = None
-
-    def __post_init__(self, array_namespace: ArrayNamespace[Array]) -> None:
-        super().__post_init__(array_namespace=array_namespace)
 
     def ln_likelihood(
         self,

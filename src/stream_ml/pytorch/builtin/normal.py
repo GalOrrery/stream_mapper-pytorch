@@ -78,8 +78,8 @@ class Normal(ModelBase):
         }
     )
 
-    def __post_init__(self, array_namespace: ArrayNamespace[Array]) -> None:
-        super().__post_init__(array_namespace=array_namespace)
+    def __post_init__(self) -> None:
+        super().__post_init__()
 
         # Validate the coord_names
         if len(self.coord_names) != 1:

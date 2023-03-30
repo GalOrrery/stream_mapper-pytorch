@@ -19,7 +19,6 @@ __all__: list[str] = []
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
     from stream_ml.core.params import Params
-    from stream_ml.core.typing import ArrayNamespace
 
 
 @dataclass(unsafe_hash=True)
@@ -54,8 +53,8 @@ class Sloped(ModelBase):
     )
     require_mask: bool = False
 
-    def __post_init__(self, array_namespace: ArrayNamespace[Array]) -> None:
-        super().__post_init__(array_namespace=array_namespace)
+    def __post_init__(self) -> None:
+        super().__post_init__()
 
         _bma = []  # Pre-compute the associated constant factors
         # Add the slope param_names to the coordinate bounds

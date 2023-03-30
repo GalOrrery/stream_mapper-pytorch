@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
+import torch as xp
 from torch import nn
 
 from stream_ml.core.base import ModelBase as CoreModelBase
@@ -29,6 +30,9 @@ class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
 
     DEFAULT_BOUNDS: ClassVar[PriorBounds] = NoBounds()
 
+    _: KW_ONLY
+    array_namespace: ArrayNamespace[Array] = xp
+
     def __new__(cls: type[Self], *args: Any, **kwargs: Any) -> Self:  # noqa: D102
         self: Self = super().__new__(cls, *args, **kwargs)  # <- CoreModelBase
 
@@ -36,8 +40,8 @@ class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
         nn.Module.__init__(self)
         return self
 
-    def __post_init__(self, array_namespace: ArrayNamespace[Array]) -> None:
-        super().__post_init__(array_namespace=array_namespace)
+    def __post_init__(self) -> None:
+        super().__post_init__()
 
         # Net needs to added to ensure that it's registered as a module.
         # TODO! not need to overwrite the descriptor.
