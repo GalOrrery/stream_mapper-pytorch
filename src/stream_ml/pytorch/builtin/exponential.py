@@ -146,9 +146,8 @@ class Exponential(ModelBase):
         lnliks[~n0] = -self.xp.log(self._bma)
         # TODO! this can be a little numerically unstable as m->0
         lnliks[n0] = (
-            self.xp.log(ms[n0])
-            + ms[n0] * d_arr[n0]
-            - self.xp.log(self.xp.expm1(ms[n0] * self._bma))
+            self.xp.log(ms[n0] / self.xp.expm1(ms[n0] * self._bma))
+            + self.xp.abs(ms[n0]) * d_arr[n0]  # TODO! should it be abs of m?
         )
 
         return ln_wgt + (indicator * lnliks).sum(1, keepdim=True)
