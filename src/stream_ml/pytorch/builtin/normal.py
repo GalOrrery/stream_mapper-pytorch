@@ -11,7 +11,6 @@ import torch as xp
 from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
 from stream_ml.core.setup_package import WEIGHT_NAME
-from stream_ml.core.utils.scale.utils import rescale
 from stream_ml.pytorch.base import ModelBase
 from stream_ml.pytorch.prior.bounds import SigmoidBounds
 from stream_ml.pytorch.typing import Array, NNModel
@@ -38,7 +37,8 @@ def norm_logpdf(value: Array, loc: Array, sigma: Array, *, xp: ArrayNamespace) -
         Mean of the distribution.
     sigma : Array
         variance of the distribution.
-    xp : ArrayNamespace
+
+    xp : ArrayNamespace, keyword-only
         Array namespace.
 
     Returns
@@ -78,8 +78,8 @@ class Normal(ModelBase):
         }
     )
 
-    def __post_init__(self, array_namespace: ArrayNamespace[Array]) -> None:
-        super().__post_init__(array_namespace=array_namespace)
+    def __post_init__(self) -> None:
+        super().__post_init__()
 
         # Validate the coord_names
         if len(self.coord_names) != 1:
@@ -122,9 +122,6 @@ class Normal(ModelBase):
         -------
         Array
         """
-        data = self.data_scaler.transform(data, names=self.data_scaler.names)
-        mpars = rescale(self, mpars)
-
         c = self.coord_names[0]
         lnlik = norm_logpdf(
             data[c], mpars[c, "mu"], xp.clip(mpars[c, "sigma"], min=1e-10), xp=self.xp

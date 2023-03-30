@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING
 
 from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
+from stream_ml.core.prior.bounds import ClippedBounds
 from stream_ml.core.setup_package import WEIGHT_NAME
-from stream_ml.core.utils.scale.utils import rescale
 from stream_ml.pytorch.base import ModelBase
 from stream_ml.pytorch.prior.bounds import SigmoidBounds
 from stream_ml.pytorch.typing import Array, NNModel
@@ -19,7 +19,6 @@ __all__: list[str] = []
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
     from stream_ml.core.params import Params
-    from stream_ml.core.typing import ArrayNamespace
 
 
 @dataclass(unsafe_hash=True)
@@ -52,29 +51,25 @@ class Exponential(ModelBase):
     )
     param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array](
         {
-            WEIGHT_NAME: SigmoidBounds(1e-10, 1.0, param_name=(WEIGHT_NAME,)),
+            WEIGHT_NAME: ClippedBounds(1e-10, 1.0, param_name=(WEIGHT_NAME,)),
             ...: {"slope": SigmoidBounds(-1.0, 1.0)},  # param_name is filled in later
         }
     )
     require_mask: bool = False
 
-    def __post_init__(self, array_namespace: ArrayNamespace[Array]) -> None:
-        super().__post_init__(array_namespace=array_namespace)
+    def __post_init__(self) -> None:
+        super().__post_init__()
 
         # Pre-compute the associated constant factors
-        _a, _bma = [], []
+        _b, _bma = [], []
         for k, (a, b) in self.coord_bounds.items():
             if k not in self.param_names.top_level:
                 continue
+            _b.append(b)
+            _bma.append(b - a)
 
-            a_ = self.data_scaler.transform(a, names=(k,))
-            b_ = self.data_scaler.transform(b, names=(k,))
-
-            _a.append(a_)
-            _bma.append(b_ - a_)
-
-        self._a = self.xp.asarray(_a)
-        self._bma = self.xp.asarray(_bma)
+        self._b = self.xp.asarray(_b)[None, :]
+        self._bma = self.xp.asarray(_bma)[None, :]
 
     def _net_init_default(self) -> NNModel:
         # Initialize the network
@@ -117,9 +112,6 @@ class Exponential(ModelBase):
         -------
         Array
         """
-        data = self.data_scaler.transform(data, names=self.coord_names)  # TODO!
-        mpars = rescale(self, mpars)
-
         ln_wgt = self.xp.log(self.xp.clip(mpars[(WEIGHT_NAME,)], 1e-10))
 
         # The mask is used to indicate which data points are available. If the
@@ -135,7 +127,7 @@ class Exponential(ModelBase):
             # This has shape (N, 1) so will broadcast correctly.
 
         # Data is x - a
-        d_arr = data[:, self.coord_names, 0] - self._a
+        d_arr = self._b - data[:, self.coord_names, 0]
         # Get the slope from `mpars` we check param_names to see if the
         # slope is a parameter. If it is not, then we assume it is 0.
         # When the slope is 0, the log-likelihood reduces to a Uniform.
@@ -147,15 +139,15 @@ class Exponential(ModelBase):
                 for k in self.coord_names
             )
         )
+        n0 = ms != 0
+
         # log-likelihood
-        lnliks = self.xp.log(
-            1 / self._bma
-            + (ms * (0.5 - d_arr / self._bma))
-            + (ms**2 / 2 * (self._bma / 6 - d_arr + d_arr**2 / self._bma))
-            + (
-                (ms**3 * (2 * d_arr - self._bma) * d_arr * (self._bma - d_arr))
-                / (12 * self._bma)
-            )
+        lnliks = self.xp.zeros_like(d_arr)
+        lnliks[~n0] = -self.xp.log(self._bma)
+        # TODO! this can be a little numerically unstable as m->0
+        lnliks[n0] = (
+            self.xp.log(ms[n0] / self.xp.expm1(ms[n0] * self._bma))
+            + self.xp.abs(ms[n0]) * d_arr[n0]  # TODO! should it be abs of m?
         )
 
         return ln_wgt + (indicator * lnliks).sum(1, keepdim=True)

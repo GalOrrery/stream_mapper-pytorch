@@ -7,8 +7,9 @@ from typing import TYPE_CHECKING
 
 import torch as xp
 
+from stream_ml.core.params.names import ParamNamesField
 from stream_ml.core.setup_package import WEIGHT_NAME
-from stream_ml.core.utils.scale.utils import rescale
+from stream_ml.core.utils.scale.utils import scale_params
 from stream_ml.pytorch.base import ModelBase
 
 __all__: list[str] = []
@@ -17,7 +18,6 @@ __all__: list[str] = []
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
     from stream_ml.core.params import Params
-    from stream_ml.core.typing import ArrayNamespace
     from stream_ml.pytorch.typing import Array
 
 
@@ -25,20 +25,15 @@ if TYPE_CHECKING:
 class FlowModel(ModelBase):
     """Normalizing flow model."""
 
-    # net: NNField[Flow] = NNField[Flow](default=None)  # noqa: ERA001
+    # net: NNField[Flow] = NNField[Flow](default=None)
 
     _: KW_ONLY
     with_grad: bool = True
     context_coord_names: tuple[str, ...] | None = None
-
-    def __post_init__(self, array_namespace: ArrayNamespace[Array]) -> None:
-        super().__post_init__(array_namespace=array_namespace)
+    param_names: ParamNamesField = ParamNamesField((WEIGHT_NAME,))
 
     def ln_likelihood(
-        self,
-        mpars: Params[Array],
-        data: Data[Array],
-        **kwargs: Array,
+        self, mpars: Params[Array], data: Data[Array], **kwargs: Array
     ) -> Array:
         """Log-likelihood of the array.
 
@@ -46,7 +41,8 @@ class FlowModel(ModelBase):
         ----------
         mpars : Params[Array], positional-only
             Model parameters. Note that these are different from the ML
-            parameters.
+            parameters. The flow has an internal weight, so we don't use the
+            weight, if passed.
         data : Data[Array]
             Data (phi1, phi2).
 
@@ -58,18 +54,19 @@ class FlowModel(ModelBase):
         Array
         """
         data = self.data_scaler.transform(data, names=self.data_scaler.names)
-        mpars = rescale(self, mpars)
+        mpars = scale_params(self, mpars)
 
-        ln_weight = (
-            self.xp.log(mpars[(WEIGHT_NAME,)])
-            if WEIGHT_NAME in mpars
-            else self.xp.asarray(0)
-        )
+        # ln_weight = (
+        #     self.xp.log(mpars[(WEIGHT_NAME,)])
+        #     if WEIGHT_NAME in mpars
+        #     else self.xp.asarray(0)
+        # )
+        ln_wgt = self.xp.asarray(0)  # TODO! have some way to turn on the weight.
 
         if not self.with_grad:
             with xp.no_grad():
                 return (
-                    ln_weight
+                    ln_wgt
                     + self.net.log_prob(
                         inputs=data[:, self.coord_names, 0],
                         context=data[:, self.context_coord_names, 0]
@@ -79,7 +76,7 @@ class FlowModel(ModelBase):
                 )
 
         return (
-            ln_weight
+            ln_wgt
             + self.net.log_prob(
                 inputs=data[:, self.coord_names, 0],
                 context=data[:, self.context_coord_names, 0]
@@ -100,4 +97,4 @@ class FlowModel(ModelBase):
         -------
         Array
         """
-        return xp.asarray([])
+        return xp.ones((len(data), 1))  # the weight

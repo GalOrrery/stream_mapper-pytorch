@@ -1,8 +1,11 @@
 """Stream models."""
 
-from dataclasses import make_dataclass
+from dataclasses import field, make_dataclass
+
+import torch as xp
 
 from stream_ml.core.builtin.uniform import Uniform as CoreUniform
+from stream_ml.core.typing import ArrayNamespace
 from stream_ml.pytorch.base import ModelBase
 from stream_ml.pytorch.builtin.exponential import Exponential
 from stream_ml.pytorch.builtin.multinormal import (
@@ -24,5 +27,8 @@ __all__ = [
 
 
 Uniform = make_dataclass(
-    "Uniform", [], bases=(CoreUniform[Array, NNModel], ModelBase), unsafe_hash=True
+    "Uniform",
+    [("array_namespace", ArrayNamespace[Array], field(default=xp))],
+    bases=(CoreUniform[Array, NNModel], ModelBase),
+    unsafe_hash=True,
 )

@@ -11,7 +11,6 @@ from torch.distributions import MultivariateNormal as TorchMultivariateNormal
 from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
 from stream_ml.core.setup_package import WEIGHT_NAME
-from stream_ml.core.utils.scale.utils import rescale
 from stream_ml.pytorch.base import ModelBase
 from stream_ml.pytorch.prior.bounds import SigmoidBounds
 from stream_ml.pytorch.typing import Array, NNModel
@@ -91,9 +90,6 @@ class MultivariateNormal(ModelBase):
         -------
         Array
         """
-        data = self.data_scaler.transform(data, names=self.data_scaler.names)
-        mpars = rescale(self, mpars)
-
         ln_wgt = xp.log(xp.clip(mpars[(WEIGHT_NAME,)], 1e-10))
         datav = data[:, self.coord_names, 0]
 
@@ -145,9 +141,6 @@ class MultivariateMissingNormal(MultivariateNormal):  # (MultivariateNormal)
         **kwargs : Array
             Additional arguments.
         """
-        data = self.data_scaler.transform(data, names=self.data_scaler.names)
-        mpars = rescale(self, mpars)
-
         # Mixture
         ln_wgt = xp.log(xp.clip(mpars[(WEIGHT_NAME,)], min=1e-10))
 

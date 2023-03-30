@@ -9,7 +9,7 @@ from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
 from stream_ml.core.setup_package import WEIGHT_NAME
 from stream_ml.core.utils.frozen_dict import FrozenDict
-from stream_ml.core.utils.scale.utils import rescale
+from stream_ml.core.utils.scale.utils import scale_params
 from stream_ml.pytorch.base import ModelBase
 from stream_ml.pytorch.prior.bounds import SigmoidBounds
 from stream_ml.pytorch.typing import Array, NNModel
@@ -19,7 +19,6 @@ __all__: list[str] = []
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
     from stream_ml.core.params import Params
-    from stream_ml.core.typing import ArrayNamespace
 
 
 @dataclass(unsafe_hash=True)
@@ -54,8 +53,8 @@ class Sloped(ModelBase):
     )
     require_mask: bool = False
 
-    def __post_init__(self, array_namespace: ArrayNamespace[Array]) -> None:
-        super().__post_init__(array_namespace=array_namespace)
+    def __post_init__(self) -> None:
+        super().__post_init__()
 
         _bma = []  # Pre-compute the associated constant factors
         # Add the slope param_names to the coordinate bounds
@@ -121,7 +120,7 @@ class Sloped(ModelBase):
         Array
         """
         data = self.data_scaler.transform(data, names=self.data_scaler.names)
-        mpars = rescale(self, mpars)
+        mpars = scale_params(self, mpars)
 
         ln_wgt = self.xp.log(self.xp.clip(mpars[(WEIGHT_NAME,)], 1e-10))
         # The mask is used to indicate which data points are available. If the
