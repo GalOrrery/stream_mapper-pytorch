@@ -171,7 +171,7 @@ class Exponential(ModelBase):
         # The forward step runs on the normalized coordinates
         data = self.data_scaler.transform(data, names=self.data_scaler.names)
         pred = self.xp.hstack(
-            (
+            (  # FIXME! have an option for the weight
                 self.xp.zeros((len(data), 1)),  # add the weight
                 self.net(data[:, self.indep_coord_names, 0]),
             )

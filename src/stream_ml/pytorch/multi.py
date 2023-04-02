@@ -57,6 +57,7 @@ class ModelsBase(nn.Module, CoreModelsBase[Array, NNModel]):
         Array
             fraction, mean, sigma.
         """
+        # The 0-th element is the weight.
         pred = self.xp.concatenate(
             [model(data) for model in self.components.values()], dim=1
         )
@@ -100,6 +101,39 @@ class IndependentModels(ModelsBase, CoreIndependentModels[Array, NNModel]):
         on parameters across models, e.g. the background and stream models in a
         mixture model.
     """
+
+    def forward(self, data: Data[Array], /) -> Array:
+        """Forward pass.
+
+        Parameters
+        ----------
+        data : Data
+            Input.
+
+        Returns
+        -------
+        Array
+            fraction, mean, sigma.
+        """
+        # The 0-th element is the weight.
+        # We need to cut out all other weights
+        pred = self.xp.concatenate(
+            [
+                model(data)[:, int(self.has_weight[k] and i != 0) :]
+                for i, (k, model) in enumerate(self.components.items())
+            ],
+            dim=1,
+        )
+
+        # There's no need to call the parameter bounds prior here, since
+        # the parameters are already constrained by each component.
+        # TODO: a better way to do the order of the priors.
+        # Call the prior to limit the range of the parameters.
+        # FIXME! need to scale the data
+        for prior in self.priors:
+            pred = prior(pred, data, self)
+
+        return pred
 
 
 @dataclass(unsafe_hash=True)
