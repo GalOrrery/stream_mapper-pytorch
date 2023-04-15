@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from contextlib import nullcontext
 from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING
 
@@ -29,6 +30,7 @@ class FlowModel(ModelBase):
 
     _: KW_ONLY
     with_grad: bool = True
+    with_weight: bool = False
     context_coord_names: tuple[str, ...] | None = None
     param_names: ParamNamesField = ParamNamesField((WEIGHT_NAME,))
 
@@ -56,34 +58,22 @@ class FlowModel(ModelBase):
         data = self.data_scaler.transform(data, names=self.data_scaler.names)
         mpars = scale_params(self, mpars)
 
-        # ln_weight = (
-        #     self.xp.log(mpars[(WEIGHT_NAME,)])
-        #     if WEIGHT_NAME in mpars
-        #     else self.xp.asarray(0)
-        # )
-        ln_wgt = self.xp.asarray(0)  # TODO! have some way to turn on the weight.
-
-        if not self.with_grad:
-            with xp.no_grad():
-                return (
-                    ln_wgt
-                    + self.net.log_prob(
-                        inputs=data[:, self.coord_names, 0],
-                        context=data[:, self.context_coord_names, 0]
-                        if self.context_coord_names is not None
-                        else None,
-                    )[:, None]
-                )
-
-        return (
-            ln_wgt
-            + self.net.log_prob(
-                inputs=data[:, self.coord_names, 0],
-                context=data[:, self.context_coord_names, 0]
-                if self.context_coord_names is not None
-                else None,
-            )[:, None]
+        ln_wgt = (
+            self.xp.log(mpars[(WEIGHT_NAME,)])
+            if self.with_weight
+            else self.xp.asarray(0)
         )
+
+        with nullcontext() if self.with_grad else xp.no_grad():
+            return (
+                ln_wgt
+                + self.net.log_prob(
+                    inputs=data[:, self.coord_names, 0],
+                    context=data[:, self.context_coord_names, 0]
+                    if self.context_coord_names is not None
+                    else None,
+                )[:, None]
+            )
 
     def forward(self, data: Data[Array]) -> Array:
         """Forward pass.

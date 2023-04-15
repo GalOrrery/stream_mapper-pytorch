@@ -4,7 +4,7 @@ from dataclasses import field, make_dataclass
 
 import torch as xp
 
-from stream_ml.core.builtin.uniform import Uniform as CoreUniform
+from stream_ml.core.builtin._uniform import Uniform as CoreUniform
 from stream_ml.core.typing import ArrayNamespace
 from stream_ml.pytorch.base import ModelBase
 from stream_ml.pytorch.builtin._exponential import Exponential

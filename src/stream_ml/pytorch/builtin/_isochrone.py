@@ -71,7 +71,7 @@ class IsochroneMVNorm(ModelBase):
     _: KW_ONLY
     gamma_edges: Array
     isochrone_spl: CubicSpline
-    isochrone_err_spl: CubicSpline
+    isochrone_err_spl: CubicSpline | None = None
 
     param_names: ParamNamesField = ParamNamesField(MISSING)
     indep_coord_names: tuple[str, ...] = ("phi1",)
@@ -92,8 +92,11 @@ class IsochroneMVNorm(ModelBase):
         isochrone_locs = xp.asarray(self.isochrone_spl(self._gamma_points))
         self._isochrone_locs = isochrone_locs[None, :, :]
         # And errors  ([N], I, F, F)
-        isochrone_err = xp.asarray(self.isochrone_err_spl(self._gamma_points))
-        self._isochrone_cov = xp.diag_embed(isochrone_err[None, :, :])
+        if self.isochrone_err_spl is None:
+            self._isochrone_cov = 0
+        else:
+            isochrone_err = xp.asarray(self.isochrone_err_spl(self._gamma_points))
+            self._isochrone_cov = xp.diag_embed(isochrone_err[None, :, :])
 
     def _net_init_default(self) -> Module:
         # return self.xpnn.Identity()

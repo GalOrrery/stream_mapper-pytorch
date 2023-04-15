@@ -8,9 +8,9 @@ from typing import TYPE_CHECKING, ClassVar
 from torch import nn
 
 from stream_ml.core.api import Model  # noqa: TCH001
-from stream_ml.core.multi.bases import ModelsBase as CoreModelsBase
-from stream_ml.core.multi.independent import IndependentModels as CoreIndependentModels
-from stream_ml.core.multi.mixture import MixtureModel as CoreMixtureModel
+from stream_ml.core.multi import IndependentModels as CoreIndependentModels
+from stream_ml.core.multi import MixtureModel as CoreMixtureModel
+from stream_ml.core.multi import ModelsBase as CoreModelsBase
 from stream_ml.core.prior.base import PriorBase  # noqa: TCH001
 from stream_ml.core.prior.bounds import NoBounds, PriorBounds
 from stream_ml.core.utils.frozen_dict import FrozenDictField
@@ -92,7 +92,7 @@ class IndependentModels(ModelsBase, CoreIndependentModels[Array, NNModel]):
     name : str or None, optional keyword-only
         The (internal) name of the model, e.g. 'stream' or 'background'. Note
         that this can be different from the name of the model when it is used in
-        a mixture model (see :class:`~stream_ml.core.core.IndependentModels`).
+        a mixture model (see :class:`~stream_ml.core.IndependentModels`).
 
     priors : tuple[PriorBase, ...], optional keyword-only
         Mapping of parameter names to priors. This is useful for setting priors
