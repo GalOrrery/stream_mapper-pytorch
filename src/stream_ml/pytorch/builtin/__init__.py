@@ -7,14 +7,14 @@ import torch as xp
 from stream_ml.core.builtin.uniform import Uniform as CoreUniform
 from stream_ml.core.typing import ArrayNamespace
 from stream_ml.pytorch.base import ModelBase
-from stream_ml.pytorch.builtin.exponential import Exponential
-from stream_ml.pytorch.builtin.isochrone import IsochroneMVNorm
-from stream_ml.pytorch.builtin.multinormal import (
+from stream_ml.pytorch.builtin._exponential import Exponential
+from stream_ml.pytorch.builtin._isochrone import IsochroneMVNorm
+from stream_ml.pytorch.builtin._multinormal import (
     MultivariateMissingNormal,
     MultivariateNormal,
 )
-from stream_ml.pytorch.builtin.normal import Normal
-from stream_ml.pytorch.builtin.sloped import Sloped
+from stream_ml.pytorch.builtin._normal import Normal
+from stream_ml.pytorch.builtin._sloped import Sloped
 from stream_ml.pytorch.typing import Array, NNModel
 
 __all__ = [
