@@ -8,6 +8,7 @@ from stream_ml.core.builtin.uniform import Uniform as CoreUniform
 from stream_ml.core.typing import ArrayNamespace
 from stream_ml.pytorch.base import ModelBase
 from stream_ml.pytorch.builtin.exponential import Exponential
+from stream_ml.pytorch.builtin.isochrone import IsochroneMVNorm
 from stream_ml.pytorch.builtin.multinormal import (
     MultivariateMissingNormal,
     MultivariateNormal,
@@ -20,6 +21,7 @@ __all__ = [
     "Uniform",
     "Sloped",
     "Exponential",
+    "IsochroneMVNorm",
     "Normal",
     "MultivariateNormal",
     "MultivariateMissingNormal",
