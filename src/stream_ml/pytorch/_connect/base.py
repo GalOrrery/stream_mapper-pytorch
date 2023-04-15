@@ -3,7 +3,7 @@
 import torch as xp
 from torch import nn
 
-from stream_ml.core.base import NN_NAMESPACE
+from stream_ml.core._base import NN_NAMESPACE
 
 __all__: list[str] = []
 
