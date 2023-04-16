@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from torch import nn
 
-from stream_ml.core.api import Model  # noqa: TCH001
+from stream_ml.core import Model  # noqa: TCH001
 from stream_ml.core.multi import IndependentModels as CoreIndependentModels
 from stream_ml.core.multi import MixtureModel as CoreMixtureModel
 from stream_ml.core.multi import ModelsBase as CoreModelsBase

@@ -12,7 +12,7 @@ from stream_ml.core.prior.base import PriorBase
 from stream_ml.pytorch.typing import Array
 
 if TYPE_CHECKING:
-    from stream_ml.core.api import Model
+    from stream_ml.core import Model
     from stream_ml.core.params.core import Params
     from stream_ml.core.typing import ArrayNamespace
 
