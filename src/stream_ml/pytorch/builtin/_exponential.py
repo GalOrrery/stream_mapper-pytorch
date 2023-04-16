@@ -9,7 +9,7 @@ from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
 from stream_ml.core.prior.bounds import ClippedBounds
 from stream_ml.core.setup_package import WEIGHT_NAME
-from stream_ml.pytorch.base import ModelBase
+from stream_ml.pytorch._base import ModelBase
 from stream_ml.pytorch.prior.bounds import SigmoidBounds
 from stream_ml.pytorch.typing import Array, NNModel
 

@@ -11,7 +11,7 @@ import torch as xp
 from stream_ml.core.params.names import ParamNamesField
 from stream_ml.core.setup_package import WEIGHT_NAME
 from stream_ml.core.utils.scale.utils import scale_params
-from stream_ml.pytorch.base import ModelBase
+from stream_ml.pytorch._base import ModelBase
 
 __all__: list[str] = []
 

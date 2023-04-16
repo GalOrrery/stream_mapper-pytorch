@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING, Any
 
-from stream_ml.pytorch.base import ModelBase
+from stream_ml.pytorch._base import ModelBase
 
 if TYPE_CHECKING:
     from torch import nn

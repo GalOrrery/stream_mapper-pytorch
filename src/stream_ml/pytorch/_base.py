@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 import torch as xp
 from torch import nn
 
-from stream_ml.core.base import ModelBase as CoreModelBase
+from stream_ml.core import ModelBase as CoreModelBase
 from stream_ml.core.prior.bounds import NoBounds
 from stream_ml.pytorch.typing import Array, NNModel
 
@@ -33,7 +33,7 @@ class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
     _: KW_ONLY
     array_namespace: ArrayNamespace[Array] = xp
 
-    def __new__(cls: type[Self], *args: Any, **kwargs: Any) -> Self:  # noqa: D102
+    def __new__(cls: type[Self], *args: Any, **kwargs: Any) -> Self:
         self: Self = super().__new__(cls, *args, **kwargs)  # <- CoreModelBase
 
         # PyTorch needs to be initialized before attributes are assigned.

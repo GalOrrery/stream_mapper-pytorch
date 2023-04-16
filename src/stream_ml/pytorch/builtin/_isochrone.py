@@ -13,7 +13,7 @@ from stream_ml.core.params.names import ParamNamesField
 from stream_ml.core.setup_package import WEIGHT_NAME
 from stream_ml.core.utils.funcs import pairwise_distance
 from stream_ml.core.utils.sentinel import MISSING
-from stream_ml.pytorch.base import ModelBase
+from stream_ml.pytorch._base import ModelBase
 from stream_ml.pytorch.nn import lin_tanh
 
 __all__: list[str] = []
