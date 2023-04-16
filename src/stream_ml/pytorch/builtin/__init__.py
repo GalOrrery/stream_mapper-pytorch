@@ -15,6 +15,7 @@ from stream_ml.pytorch.builtin._multinormal import (
 )
 from stream_ml.pytorch.builtin._normal import Normal
 from stream_ml.pytorch.builtin._sloped import Sloped
+from stream_ml.pytorch.builtin._wrapper import WithWeightModel
 from stream_ml.pytorch.typing import Array, NNModel
 
 __all__ = [
@@ -25,6 +26,7 @@ __all__ = [
     "Normal",
     "MultivariateNormal",
     "MultivariateMissingNormal",
+    "WithWeightModel",
 ]
 
 
