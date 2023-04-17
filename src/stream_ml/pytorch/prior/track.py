@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import torch as xp
 
 from stream_ml.core.data import Data  # noqa: TCH001
-from stream_ml.core.prior.base import PriorBase
+from stream_ml.core.prior import PriorBase
 from stream_ml.pytorch.typing import Array
 
 if TYPE_CHECKING:
