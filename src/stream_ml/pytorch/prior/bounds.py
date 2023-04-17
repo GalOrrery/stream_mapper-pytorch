@@ -11,7 +11,7 @@ from stream_ml.core.prior.bounds import PriorBounds as CorePriorBounds
 from stream_ml.pytorch.typing import Array
 
 if TYPE_CHECKING:
-    from stream_ml.core.api import Model
+    from stream_ml.core import Model
     from stream_ml.core.data import Data
 
 __all__: list[str] = []

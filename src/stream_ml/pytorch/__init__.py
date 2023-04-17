@@ -2,6 +2,7 @@
 
 from stream_ml.core.data import Data
 from stream_ml.pytorch import builtin, compat, nn, params, prior, utils
+from stream_ml.pytorch._base import ModelBase
 from stream_ml.pytorch.multi import IndependentModels, MixtureModel
 
 __all__ = [
@@ -15,6 +16,7 @@ __all__ = [
     "prior",
     "utils",
     # model classes
+    "ModelBase",
     "MixtureModel",
     "IndependentModels",
 ]

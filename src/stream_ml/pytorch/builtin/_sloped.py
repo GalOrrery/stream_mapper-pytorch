@@ -2,19 +2,19 @@
 
 from __future__ import annotations
 
-from dataclasses import KW_ONLY, dataclass
+from dataclasses import KW_ONLY, dataclass, replace
 from typing import TYPE_CHECKING
 
 from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
-from stream_ml.core.prior.bounds import ClippedBounds
 from stream_ml.core.setup_package import WEIGHT_NAME
-from stream_ml.pytorch.base import ModelBase
+from stream_ml.core.utils.frozen_dict import FrozenDict
+from stream_ml.core.utils.scale.utils import scale_params
+from stream_ml.pytorch._base import ModelBase
 from stream_ml.pytorch.prior.bounds import SigmoidBounds
 from stream_ml.pytorch.typing import Array, NNModel
 
 __all__: list[str] = []
-
 
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
@@ -22,27 +22,23 @@ if TYPE_CHECKING:
 
 
 @dataclass(unsafe_hash=True)
-class Exponential(ModelBase):
+class Sloped(ModelBase):
     r"""Tilted separately in each dimension.
 
-    In each dimension the background is an exponential distribution between
-    points ``a`` and ``b``. The rate parameter is ``m``.
+    In each dimension the background is a sloped straight line between points
+    ``a`` and ``b``. The slope is ``m``.
 
     The non-zero portion of the PDF, where :math:`a < x < b` is
 
     .. math::
 
-        f(x) = \frac{m * e^{-m * (x -a)}}{1 - e^{-m * (b - a)}}
+        f(x) = m(x - \frac{a + b}{2}) + \frac{1}{b-a}
 
-    However, we use the order-3 Taylor expansion of the exponential function
-    around m=0, to avoid the m=0 indeterminancy.
-
-    .. math::
-
-        f(x) =   \frac{1}{b-a}
-               + m * (0.5 - \frac{x-a}{b-a})
-               + \frac{m^2}{2} * (\frac{b-a}{6} - (x-a) + \frac{(x-a)^2}{b-a})
-               + \frac{m^3}{12(b-a)} (2(x-a)-(b-a))(x-a)(b-x)
+    Parameters
+    ----------
+    net : nn.Module, keyword-only
+        The network to use. If not provided, a new one will be created. Must be
+        a layer with 1 input and ``len(param_names)-1`` outputs.
     """
 
     _: KW_ONLY
@@ -51,7 +47,7 @@ class Exponential(ModelBase):
     )
     param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array](
         {
-            WEIGHT_NAME: ClippedBounds(1e-10, 1.0, param_name=(WEIGHT_NAME,)),
+            WEIGHT_NAME: SigmoidBounds(1e-10, 1.0, param_name=(WEIGHT_NAME,)),
             ...: {"slope": SigmoidBounds(-1.0, 1.0)},  # param_name is filled in later
         }
     )
@@ -60,16 +56,27 @@ class Exponential(ModelBase):
     def __post_init__(self) -> None:
         super().__post_init__()
 
-        # Pre-compute the associated constant factors
-        _b, _bma = [], []
+        _bma = []  # Pre-compute the associated constant factors
+        # Add the slope param_names to the coordinate bounds
+        # TODO! instead un-freeze then
+        # re-freeze.
         for k, (a, b) in self.coord_bounds.items():
-            if k not in self.param_names.top_level:
-                continue
-            _b.append(b)
-            _bma.append(b - a)
+            a_ = self.data_scaler.transform(a, names=(k,))
+            b_ = self.data_scaler.transform(b, names=(k,))
 
-        self._b = self.xp.asarray(_b)[None, :]
-        self._bma = self.xp.asarray(_bma)[None, :]
+            if k in self.param_names.top_level:
+                _bma.append(b_ - a_)
+
+            bv = 2 / (b_ - a_) ** 2  # absolute value of the bound
+
+            if k in self.param_bounds and isinstance(self.param_bounds[k], FrozenDict):
+                pb = self.param_bounds[k, "slope"]
+                # Mutate the underlying dictionary
+                self.param_bounds[k]._dict["slope"] = replace(
+                    pb, lower=-max(pb.lower, bv), upper=min(pb.upper, bv)
+                )
+
+        self._bma = self.xp.asarray(_bma)
 
     def _net_init_default(self) -> NNModel:
         # Initialize the network
@@ -112,8 +119,10 @@ class Exponential(ModelBase):
         -------
         Array
         """
-        ln_wgt = self.xp.log(self.xp.clip(mpars[(WEIGHT_NAME,)], 1e-10))
+        data = self.data_scaler.transform(data, names=self.data_scaler.names)
+        mpars = scale_params(self, mpars)
 
+        ln_wgt = self.xp.log(self.xp.clip(mpars[(WEIGHT_NAME,)], 1e-10))
         # The mask is used to indicate which data points are available. If the
         # mask is not provided, then all data points are assumed to be
         # available.
@@ -126,31 +135,20 @@ class Exponential(ModelBase):
             indicator = self.xp.ones_like(ln_wgt, dtype=self.xp.int)
             # This has shape (N, 1) so will broadcast correctly.
 
-        # Data is x - a
-        d_arr = self._b - data[:, self.coord_names, 0]
-        # Get the slope from `mpars` we check param_names to see if the
-        # slope is a parameter. If it is not, then we assume it is 0.
-        # When the slope is 0, the log-likelihood reduces to a Uniform.
-        ms = self.xp.hstack(
-            tuple(
-                mpars[(k, "slope")]
-                if (k, "slope") in self.param_names.flats
-                else self.xp.zeros((len(d_arr), 1))
-                for k in self.coord_names
+        # Compute the log-likelihood, columns are coordinates.
+        ln_lks = self.xp.zeros((len(ln_wgt), len(self.coord_bounds)))
+        for i, (k, (a, b)) in enumerate(self.coord_bounds.items()):
+            a_ = self.data_scaler.transform(a, names=(k,))
+            b_ = self.data_scaler.transform(b, names=(k,))
+            # Get the slope from `mpars` we check param_names to see if the
+            # slope is a parameter. If it is not, then we assume it is 0.
+            # When the slope is 0, the log-likelihood reduces to a Uniform.
+            m = mpars[(k, "slope")] if (k, "slope") in self.param_names.flats else 0
+            ln_lks[:, i] = self.xp.log(
+                m * (data[k][:, 0] - (a_ + b_) / 2) + 1 / (b_ - a_)
             )
-        )
-        n0 = ms != 0
 
-        # log-likelihood
-        lnliks = self.xp.zeros_like(d_arr)
-        lnliks[~n0] = -self.xp.log(self._bma)
-        # TODO! this can be a little numerically unstable as m->0
-        lnliks[n0] = (
-            self.xp.log(ms[n0] / self.xp.expm1(ms[n0] * self._bma))
-            + self.xp.abs(ms[n0]) * d_arr[n0]  # TODO! should it be abs of m?
-        )
-
-        return ln_wgt + (indicator * lnliks).sum(1, keepdim=True)
+        return ln_wgt + (indicator * ln_lks).sum(1, keepdim=True)
 
     # ========================================================================
     # ML
@@ -171,9 +169,9 @@ class Exponential(ModelBase):
         # The forward step runs on the normalized coordinates
         data = self.data_scaler.transform(data, names=self.data_scaler.names)
         pred = self.xp.hstack(
-            (  # FIXME! have an option for the weight
-                self.xp.zeros((len(data), 1)),  # add the weight
-                self.net(data[:, self.indep_coord_names, 0]),
+            (
+                self.xp.zeros((len(data), 1)),  # weight placeholder
+                (self.net(data[:, self.indep_coord_names, 0]) - 0.5) / self._bma,
             )
         )
         return self._forward_priors(pred, data)
