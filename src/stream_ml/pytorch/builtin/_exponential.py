@@ -7,8 +7,6 @@ from typing import TYPE_CHECKING
 
 from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
-from stream_ml.core.prior.bounds import ClippedBounds
-from stream_ml.core.setup_package import WEIGHT_NAME
 from stream_ml.pytorch._base import ModelBase
 from stream_ml.pytorch.prior.bounds import SigmoidBounds
 from stream_ml.pytorch.typing import Array, NNModel
@@ -47,13 +45,10 @@ class Exponential(ModelBase):
 
     _: KW_ONLY
     param_names: ParamNamesField = ParamNamesField(
-        (WEIGHT_NAME, (..., ("slope",))), requires_all_coordinates=False
+        ((..., ("slope",)),), requires_all_coordinates=False
     )
     param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array](
-        {
-            WEIGHT_NAME: ClippedBounds(1e-10, 1.0, param_name=(WEIGHT_NAME,)),
-            ...: {"slope": SigmoidBounds(-1.0, 1.0)},  # param_name is filled in later
-        }
+        {...: {"slope": SigmoidBounds(-1.0, 1.0)}}  # param_name is filled in later
     )
     require_mask: bool = False
 
@@ -149,29 +144,3 @@ class Exponential(ModelBase):
         )
 
         return (indicator * lnliks).sum(1, keepdim=True)
-
-    # ========================================================================
-    # ML
-
-    def forward(self, data: Data[Array]) -> Array:
-        """Forward pass.
-
-        Parameters
-        ----------
-        data : Data[Array]
-            Input.
-
-        Returns
-        -------
-        Array
-            fraction, mean, sigma
-        """
-        # The forward step runs on the normalized coordinates
-        data = self.data_scaler.transform(data, names=self.data_scaler.names)
-        pred = self.xp.hstack(
-            (  # FIXME! have an option for the weight
-                self.xp.zeros((len(data), 1)),  # add the weight
-                self.net(data[:, self.indep_coord_names, 0]),
-            )
-        )
-        return self._forward_priors(pred, data)

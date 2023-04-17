@@ -8,9 +8,7 @@ from typing import TYPE_CHECKING
 
 from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
-from stream_ml.core.setup_package import WEIGHT_NAME
 from stream_ml.pytorch._base import ModelBase
-from stream_ml.pytorch.prior.bounds import SigmoidBounds
 from stream_ml.pytorch.typing import Array, NNModel
 
 if TYPE_CHECKING:
@@ -66,12 +64,9 @@ class Normal(ModelBase):
     """
 
     _: KW_ONLY
-    param_names: ParamNamesField = ParamNamesField(
-        (WEIGHT_NAME, (..., ("mu", "sigma")))
-    )
+    param_names: ParamNamesField = ParamNamesField(((..., ("mu", "sigma")),))
     param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array](
         {  # reasonable guess for parameter bounds
-            WEIGHT_NAME: SigmoidBounds(1e-10, 0.5),
             # ...: {"mu": SigmoidBounds(-5.0, 5.0), "sigma": SigmoidBounds(0.05, 1.5)},
         }
     )
@@ -95,7 +90,7 @@ class Normal(ModelBase):
             self.xpnn.Tanh(),
             self.xpnn.Linear(36, 36),
             self.xpnn.Tanh(),
-            self.xpnn.Linear(36, 3),
+            self.xpnn.Linear(36, 2),
         )
 
     # ========================================================================
