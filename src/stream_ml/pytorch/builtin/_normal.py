@@ -6,8 +6,6 @@ from dataclasses import KW_ONLY, dataclass
 import math
 from typing import TYPE_CHECKING
 
-import torch as xp
-
 from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
 from stream_ml.core.setup_package import WEIGHT_NAME
@@ -23,7 +21,7 @@ if TYPE_CHECKING:
 __all__: list[str] = []
 
 
-_logsqrt2pi = math.log(math.sqrt(2 * math.pi))
+_logsqrt2pi = math.log(2 * math.pi) / 2
 
 
 def norm_logpdf(value: Array, loc: Array, sigma: Array, *, xp: ArrayNamespace) -> Array:
@@ -123,7 +121,9 @@ class Normal(ModelBase):
         Array
         """
         c = self.coord_names[0]
-        lnlik = norm_logpdf(
-            data[c], mpars[c, "mu"], xp.clip(mpars[c, "sigma"], min=1e-10), xp=self.xp
+        return norm_logpdf(
+            data[c],
+            mpars[c, "mu"],
+            self.xp.clip(mpars[c, "sigma"], min=1e-10),
+            xp=self.xp,
         )
-        return xp.log(xp.clip(mpars[(WEIGHT_NAME,)], min=1e-10)) + lnlik
