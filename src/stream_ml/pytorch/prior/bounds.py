@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 
 import torch as xp
 
+from stream_ml.core.prior import bounds
+from stream_ml.core.prior.bounds import *  # noqa: F403
 from stream_ml.core.prior.bounds import PriorBounds as CorePriorBounds
 from stream_ml.pytorch.typing import Array
 
@@ -14,7 +16,8 @@ if TYPE_CHECKING:
     from stream_ml.core import Model
     from stream_ml.core.data import Data
 
-__all__: list[str] = []
+__all__ = ["SigmoidBounds"]
+__all__ += bounds.__all__  # noqa: PLE0605
 
 
 _0 = xp.asarray(0)
