@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
     """Model base class."""
 
-    DEFAULT_BOUNDS: ClassVar[PriorBounds] = NoBounds()
+    DEFAULT_PARAM_BOUNDS: ClassVar[PriorBounds] = NoBounds()
 
     _: KW_ONLY
     array_namespace: ArrayNamespace[Array] = xp

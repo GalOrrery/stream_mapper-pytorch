@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING
 
 from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
+from stream_ml.core.params.scales import scale_params
 from stream_ml.core.setup_package import WEIGHT_NAME
 from stream_ml.core.utils.frozen_dict import FrozenDict
-from stream_ml.core.utils.scale.utils import scale_params
 from stream_ml.pytorch._base import ModelBase
 from stream_ml.pytorch.prior.bounds import SigmoidBounds
 from stream_ml.pytorch.typing import Array, NNModel
@@ -72,7 +72,7 @@ class Sloped(ModelBase):
             if k in self.param_bounds and isinstance(self.param_bounds[k], FrozenDict):
                 pb = self.param_bounds[k, "slope"]
                 # Mutate the underlying dictionary
-                self.param_bounds[k]._dict["slope"] = replace(
+                self.param_bounds[k]._dict["slope"] = replace(  # noqa: SLF001
                     pb, lower=-max(pb.lower, bv), upper=min(pb.upper, bv)
                 )
 
