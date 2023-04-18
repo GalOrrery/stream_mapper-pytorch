@@ -10,7 +10,6 @@ import torch as xp
 from torch.distributions import MultivariateNormal
 
 from stream_ml.core.params.names import ParamNamesField
-from stream_ml.core.setup_package import WEIGHT_NAME
 from stream_ml.core.utils.funcs import pairwise_distance
 from stream_ml.core.utils.sentinel import MISSING
 from stream_ml.pytorch._base import ModelBase
@@ -143,11 +142,8 @@ class IsochroneMVNorm(ModelBase):
         lnliks = mvn.log_prob(mdata[:, None, :])[..., None]  # (N, I)
 
         # log PDF: the (log)-Reimannian sum over the isochrone (log)-pdfs:
-        ln_wgt = xp.log(xp.clip(mpars[(WEIGHT_NAME,)], min=xp.tensor(1e-10)))
         # sum_i(deltagamma_i PDF(gamma_i)) / sum_i(deltagamma_i)  -> translated
         # to log_pdfs
-        return (
-            ln_wgt
-            + xp.logsumexp(lnliks + xp.log(self._gamma_pdist), 1)
-            - xp.log(self._gamma_pdist.sum(1))  # should be log(1)
-        )
+        iso_int = xp.logsumexp(xp.log(self._gamma_pdist) + lnliks, 1)
+        gamstepsum = xp.log(self._gamma_pdist.sum(1))  # should be log(1)
+        return iso_int - gamstepsum

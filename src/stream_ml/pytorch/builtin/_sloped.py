@@ -122,7 +122,6 @@ class Sloped(ModelBase):
         data = self.data_scaler.transform(data, names=self.data_scaler.names)
         mpars = scale_params(self, mpars)
 
-        ln_wgt = self.xp.log(self.xp.clip(mpars[(WEIGHT_NAME,)], 1e-10))
         # The mask is used to indicate which data points are available. If the
         # mask is not provided, then all data points are assumed to be
         # available.
@@ -132,11 +131,11 @@ class Sloped(ModelBase):
             msg = "mask is required"
             raise ValueError(msg)
         else:
-            indicator = self.xp.ones_like(ln_wgt, dtype=self.xp.int)
+            indicator = self.xp.ones((len(data), 1), dtype=self.xp.int)
             # This has shape (N, 1) so will broadcast correctly.
 
         # Compute the log-likelihood, columns are coordinates.
-        ln_lks = self.xp.zeros((len(ln_wgt), len(self.coord_bounds)))
+        ln_lks = self.xp.zeros((len(data), len(self.coord_bounds)))
         for i, (k, (a, b)) in enumerate(self.coord_bounds.items()):
             a_ = self.data_scaler.transform(a, names=(k,))
             b_ = self.data_scaler.transform(b, names=(k,))
@@ -148,7 +147,7 @@ class Sloped(ModelBase):
                 m * (data[k][:, 0] - (a_ + b_) / 2) + 1 / (b_ - a_)
             )
 
-        return ln_wgt + (indicator * ln_lks).sum(1, keepdim=True)
+        return (indicator * ln_lks).sum(1, keepdim=True)
 
     # ========================================================================
     # ML
