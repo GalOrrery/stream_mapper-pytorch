@@ -72,7 +72,7 @@ class Sloped(ModelBase):
             if k in self.param_bounds and isinstance(self.param_bounds[k], FrozenDict):
                 pb = self.param_bounds[k, "slope"]
                 # Mutate the underlying dictionary
-                self.param_bounds[k]._dict["slope"] = replace(
+                self.param_bounds[k]._dict["slope"] = replace(  # noqa: SLF001
                     pb, lower=-max(pb.lower, bv), upper=min(pb.upper, bv)
                 )
 
