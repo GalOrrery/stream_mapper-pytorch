@@ -112,8 +112,6 @@ class Exponential(ModelBase):
         -------
         Array
         """
-        ln_wgt = self.xp.log(self.xp.clip(mpars[(WEIGHT_NAME,)], 1e-10))
-
         # The mask is used to indicate which data points are available. If the
         # mask is not provided, then all data points are assumed to be
         # available.
@@ -123,7 +121,7 @@ class Exponential(ModelBase):
             msg = "mask is required"
             raise ValueError(msg)
         else:
-            indicator = self.xp.ones_like(ln_wgt, dtype=self.xp.int)
+            indicator = self.xp.ones((len(data), 1), dtype=self.xp.int)
             # This has shape (N, 1) so will broadcast correctly.
 
         # Data is x - a
@@ -150,7 +148,7 @@ class Exponential(ModelBase):
             + self.xp.abs(ms[n0]) * d_arr[n0]  # TODO! should it be abs of m?
         )
 
-        return ln_wgt + (indicator * lnliks).sum(1, keepdim=True)
+        return (indicator * lnliks).sum(1, keepdim=True)
 
     # ========================================================================
     # ML
