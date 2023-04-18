@@ -90,17 +90,12 @@ class MultivariateNormal(ModelBase):
         -------
         Array
         """
-        ln_wgt = xp.log(xp.clip(mpars[(WEIGHT_NAME,)], 1e-10))
-        datav = data[:, self.coord_names, 0]
-
-        lik = TorchMultivariateNormal(
+        return TorchMultivariateNormal(
             xp.hstack([mpars[c, "mu"] for c in self.coord_names]),
             covariance_matrix=xp.diag_embed(
                 xp.hstack([mpars[c, "sigma"] for c in self.coord_names]) ** 2
             ),
-        ).log_prob(datav)
-
-        return ln_wgt + lik[:, None]
+        ).log_prob(data[:, self.coord_names, 0])[:, None]
 
 
 ##############################################################################
@@ -141,9 +136,6 @@ class MultivariateMissingNormal(MultivariateNormal):  # (MultivariateNormal)
         **kwargs : Array
             Additional arguments.
         """
-        # Mixture
-        ln_wgt = xp.log(xp.clip(mpars[(WEIGHT_NAME,)], min=1e-10))
-
         # Normal
         datav = data[:, self.coord_names, 0]
         mu = xp.hstack([mpars[c, "mu"] for c in self.coord_names])
@@ -168,7 +160,7 @@ class MultivariateMissingNormal(MultivariateNormal):  # (MultivariateNormal)
         cov = indicator * sigma**2  # (N, 4) positive definite  # TODO: add eps
         det = (cov + (1 - indicator)).prod(dim=1, keepdims=True)  # (N, 1)
 
-        return ln_wgt - 0.5 * (
+        return -0.5 * (
             dimensionality * _log2pi  # dim of data
             + xp.log(det)
             + (  # TODO: speed up
