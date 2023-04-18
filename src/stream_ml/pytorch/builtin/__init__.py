@@ -32,7 +32,7 @@ __all__ = [
 
 Uniform = make_dataclass(
     "Uniform",
-    [("array_namespace", ArrayNamespace[Array], field(default=xp))],
+    [("array_namespace", ArrayNamespace[Array], field(default=xp, kw_only=True))],
     bases=(CoreUniform[Array, NNModel], ModelBase),
     unsafe_hash=True,
 )
