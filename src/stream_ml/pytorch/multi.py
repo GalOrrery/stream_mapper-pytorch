@@ -31,7 +31,7 @@ class ModelsBase(nn.Module, CoreModelsBase[Array, NNModel]):
     _: KW_ONLY
     priors: tuple[PriorBase[Array], ...] = ()
 
-    DEFAULT_BOUNDS: ClassVar[PriorBounds] = NoBounds()
+    DEFAULT_PARAM_BOUNDS: ClassVar[PriorBounds] = NoBounds()
 
     def __post_init__(self) -> None:
         super().__post_init__()

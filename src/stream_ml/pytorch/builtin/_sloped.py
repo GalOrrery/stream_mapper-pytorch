@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING
 
 from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
+from stream_ml.core.params.scales import scale_params
 from stream_ml.core.setup_package import WEIGHT_NAME
 from stream_ml.core.utils.frozen_dict import FrozenDict
-from stream_ml.core.utils.scale.utils import scale_params
 from stream_ml.pytorch._base import ModelBase
 from stream_ml.pytorch.prior.bounds import SigmoidBounds
 from stream_ml.pytorch.typing import Array, NNModel
