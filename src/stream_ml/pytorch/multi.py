@@ -11,7 +11,7 @@ from stream_ml.core import Model  # noqa: TCH001
 from stream_ml.core.multi import IndependentModels as CoreIndependentModels
 from stream_ml.core.multi import MixtureModel as CoreMixtureModel
 from stream_ml.core.multi import ModelsBase as CoreModelsBase
-from stream_ml.core.prior.base import PriorBase  # noqa: TCH001
+from stream_ml.core.prior import PriorBase  # noqa: TCH001
 from stream_ml.core.prior.bounds import NoBounds, PriorBounds
 from stream_ml.core.utils.frozen_dict import FrozenDictField
 from stream_ml.pytorch.typing import Array, NNModel
