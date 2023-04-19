@@ -92,11 +92,9 @@ class IndependentModels(ModelsBase, CoreIndependentModels[Array, NNModel]):
             fraction, mean, sigma.
         """
         pred = self.xp.concatenate(
-            [model(data) for model in self.components.values()], dim=1
+            tuple(model(data) for model in self.components.values()), dim=1
         )
-
-        # There's no need to call the parameter bounds prior here, since
-        # the parameters are already constrained by each component.
+        # There are no prameter bounds for the independent models.
         # TODO: a better way to do the order of the priors.
         for prior in self.priors:
             pred = prior(pred, data, self)
@@ -148,32 +146,36 @@ class MixtureModel(ModelsBase, CoreMixtureModel[Array, NNModel]):
         # TODO! need forward priors
         weights = self.net(scaled_data[:, self.indep_coord_names, 0])  # (N, K, ...)
 
-        # Parameter bounds, skipping the background weight if present.
-        for bnd in self.param_bounds.flatvalues()[: -int(self._includes_bkg) or None]:
-            weights = bnd(weights, scaled_data, self)
+        # Parameter bounds, skipping the background weight (if present),
+        # since the Mixture NN should not predict it.
+        for i, bnd in enumerate(self.param_bounds.flatvalues()[self._bkg_slc]):
+            weights = bnd(weights[:, i : i + 1], scaled_data, self)
 
         # Predict the parameters for each component.
         # The weight is added
-        tuple(self.components.keys())
-        preds = []
+        preds: list[Array] = []
+        wgt_is: list[int] = [-1] * len(self.components)
+        counter: int = 0
         for i, (name, model) in enumerate(self.components.items()):
-            if name == BACKGROUND_KEY:
-                weight = 1 - weights.sum(1, keepdims=True)
-            else:
-                weight = weights[:, i, None]
+            weight = (
+                weights[:, i, None]
+                if name != BACKGROUND_KEY
+                else 1 - weights.sum(1, keepdims=True)
+            )
+            wgt_is[i] = counter
 
-            preds.append(weight)
-            preds.append(model(data))
+            pred = model(data)
+            preds.extend((weight, pred))
+            counter += 1 + (pred.shape[1] if len(pred.shape) > 1 else 0)
 
-        pred = self.xp.concatenate(preds, dim=1)
+        out = self.xp.concatenate(preds, dim=1)
 
         # Other priors  # TODO: a better way to do the order of the priors.
         for prior in self.priors:
-            pred = prior(pred, scaled_data, self)
+            out = prior(out, scaled_data, self)
 
-        # go around again to ensure that the background weight is 1 - sum(weights)
+        # Ensure that the background weight is 1 - sum(weights)
         if self._includes_bkg:
-            i = tuple(self.components.keys()).index(BACKGROUND_KEY)
-            pred[:, i] = 1 - weights.sum(1)
+            out[:, wgt_is[-1]] = 1 - out[:, wgt_is[:-1]].sum(1)
 
-        return pred
+        return out
