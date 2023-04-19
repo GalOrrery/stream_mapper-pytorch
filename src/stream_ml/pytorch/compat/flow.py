@@ -27,7 +27,6 @@ class FlowModel(ModelBase):
 
     _: KW_ONLY
     with_grad: bool = True
-    context_coord_names: tuple[str, ...] | None = None
     param_names: ParamNamesField = ParamNamesField(())
 
     def ln_likelihood(
@@ -57,8 +56,8 @@ class FlowModel(ModelBase):
         with nullcontext() if self.with_grad else xp.no_grad():
             return self.net.log_prob(
                 inputs=data[:, self.coord_names, 0],
-                context=data[:, self.context_coord_names, 0]
-                if self.context_coord_names is not None
+                context=data[:, self.indep_coord_names, 0]
+                if self.indep_coord_names is not None
                 else None,
             )[:, None]
 
