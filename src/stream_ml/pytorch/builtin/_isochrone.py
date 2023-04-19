@@ -138,8 +138,8 @@ class IsochroneMVNorm(ModelBase):
         cov = cov_data + self._isochrone_cov + cov_dm
 
         mvn = MultivariateNormal(mean, covariance_matrix=cov)
-        mdata = data[:, self.mag_names, 0]  # (N, F)
-        lnliks = mvn.log_prob(mdata[:, None, :])[..., None]  # (N, I)
+        mdata = data[:, self.mag_names, 0][:, None, :]  # (N, [I], F)
+        lnliks = mvn.log_prob(mdata)[..., None]  # (N, [I])
 
         # log PDF: the (log)-Reimannian sum over the isochrone (log)-pdfs:
         # sum_i(deltagamma_i PDF(gamma_i)) / sum_i(deltagamma_i)  -> translated
