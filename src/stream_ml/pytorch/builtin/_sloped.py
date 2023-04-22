@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
 from stream_ml.core.params.scales import scale_params
-from stream_ml.core.setup_package import WEIGHT_NAME
 from stream_ml.core.utils.frozen_dict import FrozenDict
 from stream_ml.pytorch._base import ModelBase
 from stream_ml.pytorch.prior.bounds import SigmoidBounds
@@ -43,11 +42,10 @@ class Sloped(ModelBase):
 
     _: KW_ONLY
     param_names: ParamNamesField = ParamNamesField(
-        (WEIGHT_NAME, (..., ("slope",))), requires_all_coordinates=False
+        ((..., ("slope",)),), requires_all_coordinates=False
     )
     param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array](
         {
-            WEIGHT_NAME: SigmoidBounds(1e-10, 1.0, param_name=(WEIGHT_NAME,)),
             ...: {"slope": SigmoidBounds(-1.0, 1.0)},  # param_name is filled in later
         }
     )

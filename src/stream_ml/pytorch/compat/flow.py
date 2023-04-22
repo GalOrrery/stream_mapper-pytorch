@@ -10,7 +10,6 @@ import torch as xp
 
 from stream_ml.core.params.names import ParamNamesField
 from stream_ml.core.params.scales import scale_params
-from stream_ml.core.setup_package import WEIGHT_NAME
 from stream_ml.pytorch._base import ModelBase
 
 __all__: list[str] = []
@@ -26,12 +25,9 @@ if TYPE_CHECKING:
 class FlowModel(ModelBase):
     """Normalizing flow model."""
 
-    # net: NNField[Flow] = NNField[Flow](default=None)
-
     _: KW_ONLY
     with_grad: bool = True
-    context_coord_names: tuple[str, ...] | None = None
-    param_names: ParamNamesField = ParamNamesField((WEIGHT_NAME,))
+    param_names: ParamNamesField = ParamNamesField(())
 
     def ln_likelihood(
         self, mpars: Params[Array], data: Data[Array], **kwargs: Array
@@ -60,8 +56,8 @@ class FlowModel(ModelBase):
         with nullcontext() if self.with_grad else xp.no_grad():
             return self.net.log_prob(
                 inputs=data[:, self.coord_names, 0],
-                context=data[:, self.context_coord_names, 0]
-                if self.context_coord_names is not None
+                context=data[:, self.indep_coord_names, 0]
+                if self.indep_coord_names is not None
                 else None,
             )[:, None]
 
