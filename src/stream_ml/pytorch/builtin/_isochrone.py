@@ -9,11 +9,8 @@ from scipy.interpolate import CubicSpline  # noqa: TCH002
 import torch as xp
 from torch.distributions import MultivariateNormal
 
-from stream_ml.core.params.names import ParamNamesField
 from stream_ml.core.utils.funcs import pairwise_distance
-from stream_ml.core.utils.sentinel import MISSING
 from stream_ml.pytorch._base import ModelBase
-from stream_ml.pytorch.nn import lin_tanh
 
 __all__: list[str] = []
 
@@ -72,8 +69,6 @@ class IsochroneMVNorm(ModelBase):
     isochrone_spl: CubicSpline
     isochrone_err_spl: CubicSpline | None = None
 
-    param_names: ParamNamesField = ParamNamesField(MISSING)
-    indep_coord_names: tuple[str, ...] = ("phi1",)
     coord_names: tuple[str, ...] = ()
     mag_names: tuple[str, ...] = ("g", "r")
     mag_err_names: tuple[str, ...] = ("g_err", "r_err")
@@ -82,24 +77,21 @@ class IsochroneMVNorm(ModelBase):
         super().__post_init__(*args, **kwargs)
         # Pairwise distance along gamma  # ([N], I, 1)
         gamma_pdist = pairwise_distance(self.gamma_edges, axis=0, xp=self.xp)
-        self._gamma_pdist = gamma_pdist[None, :, None]
+        self._ln_gamma_pdist = self.xp.log(gamma_pdist[None, :, None])
         # Midpoint of gamma edges array
-        self._gamma_points: Array = (
-            self.gamma_edges[:-1] + self._gamma_pdist[0, :, 0] / 2
-        )
+        self._gamma_points: Array = self.gamma_edges[:-1] + gamma_pdist / 2
         # Points on the isochrone along gamma  # ([N], I, F)
         isochrone_locs = xp.asarray(self.isochrone_spl(self._gamma_points))
         self._isochrone_locs = isochrone_locs[None, :, :]
         # And errors  ([N], I, F, F)
         if self.isochrone_err_spl is None:
-            self._isochrone_cov = 0
+            self._isochrone_cov = self.xp.asarray([0])[None, None, None]
         else:
             isochrone_err = xp.asarray(self.isochrone_err_spl(self._gamma_points))
             self._isochrone_cov = xp.diag_embed(isochrone_err[None, :, :])
 
-    def _net_init_default(self) -> Module:
-        # return self.xpnn.Identity()
-        return lin_tanh(n_in=1, n_hidden=10, n_layers=2, n_out=3)
+    def _net_init_default(self) -> Module | None:
+        return None
 
     def ln_likelihood(
         self, mpars: Params[Array], data: Data[Array], **kwargs: Array
@@ -137,13 +129,14 @@ class IsochroneMVNorm(ModelBase):
         cov_dm = xp.diag_embed(xp.ones((len(data), 2)) * dm_sigma**2)[:, None, :, :]
         cov = cov_data + self._isochrone_cov + cov_dm
 
+        # Log-likelihood of the multivariate normal
         mvn = MultivariateNormal(mean, covariance_matrix=cov)
         mdata = data[:, self.mag_names, 0][:, None, :]  # (N, [I], F)
-        lnliks = mvn.log_prob(mdata)[..., None]  # (N, [I])
+        lnliks = mvn.log_prob(mdata)[..., None]  # (N, I)
 
         # log PDF: the (log)-Reimannian sum over the isochrone (log)-pdfs:
-        # sum_i(deltagamma_i PDF(gamma_i)) / sum_i(deltagamma_i)  -> translated
+        # sum_i(deltagamma_i PDF(gamma_i))  -> translated
         # to log_pdfs
-        iso_int = xp.logsumexp(xp.log(self._gamma_pdist) + lnliks, 1)
-        gamstepsum = xp.log(self._gamma_pdist.sum(1))  # should be log(1)
-        return iso_int - gamstepsum
+        # return xp.logsumexp(self._ln_gamma_pdist + lnliks, 1)
+        # FIXME! approximating the marginalization with a delta function
+        return lnliks[xp.arange(0, len(lnliks)), xp.argmax(lnliks, 1)[:, 0]]
