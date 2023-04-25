@@ -137,11 +137,9 @@ class Exponential(ModelBase):
 
         # log-likelihood
         lnliks = self.xp.zeros_like(d_arr)
-        lnliks[~n0] = -self.xp.log(bma[~n0])
-        # TODO! this can be a little numerically unstable as m->0
+        lnliks[~n0] = -self.xp.log(bma[~n0])  # Uniform
         lnliks[n0] = (
-            self.xp.log(ms[n0] / self.xp.expm1(ms[n0] * bma[n0]))
-            + self.xp.abs(ms[n0]) * d_arr[n0]  # TODO! should it be abs of m?
+            self.xp.log(ms[n0] / self.xp.expm1(ms[n0] * bma[n0])) + ms[n0] * d_arr[n0]
         )
 
         return (indicator * lnliks).sum(1, keepdim=True)
