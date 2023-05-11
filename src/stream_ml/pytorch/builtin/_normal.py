@@ -20,6 +20,7 @@ __all__: list[str] = []
 
 
 _logsqrt2pi = math.log(2 * math.pi) / 2
+_sqrt2 = math.sqrt(2)
 
 
 def norm_logpdf(value: Array, loc: Array, sigma: Array, *, xp: ArrayNamespace) -> Array:
@@ -80,18 +81,7 @@ class Normal(ModelBase):
             raise ValueError(msg)
 
     def _net_init_default(self) -> NNModel:
-        # Initialize the network
-        # Note; would prefer nn.Parameter(xp.zeros((1, n_slopes)) + 1e-5)
-        # as that has 1/2 as many params, but it's not callable.
-        # TODO: ensure n_out == n_slopes
-        # TODO! for jax need to bundle into 1 arg. Detect this!
-        return self.xpnn.Sequential(
-            self.xpnn.Linear(1, 36),
-            self.xpnn.Tanh(),
-            self.xpnn.Linear(36, 36),
-            self.xpnn.Tanh(),
-            self.xpnn.Linear(36, 2),
-        )
+        raise NotImplementedError
 
     # ========================================================================
     # Statistics
@@ -120,5 +110,85 @@ class Normal(ModelBase):
             data[c],
             mpars[c, "mu"],
             self.xp.clip(mpars[c, "sigma"], min=1e-10),
+            xp=self.xp,
+        )
+
+
+# ============================================================================
+
+
+def log_truncation_term(
+    ab: tuple[Array, Array], /, loc: Array, sigma: Array, *, xp: ArrayNamespace
+) -> Array:
+    """Log of integral from a to b of normal."""
+    erfa = xp.erf((ab[0] - loc) / sigma / _sqrt2)
+    erfb = xp.erf((ab[1] - loc) / sigma / _sqrt2)
+    return xp.log(erfb - erfa) - xp.log(4)
+
+
+def truncnorm_logpdf(
+    value: Array,
+    /,
+    loc: Array,
+    sigma: Array,
+    ab: tuple[float | Array, float | Array],
+    *,
+    xp: ArrayNamespace,
+) -> Array:
+    return norm_logpdf(value, loc=loc, sigma=sigma, xp=xp) - log_truncation_term(
+        ab, loc=loc, sigma=sigma, xp=xp
+    )
+
+
+@dataclass(unsafe_hash=True)
+class TruncatedNormal(Normal):
+    r"""1D Gaussian with mixture weight.
+
+    :math:`(weight, \mu, \sigma)(\phi1)`
+
+    Parameters
+    ----------
+    n_layers : int, optional
+        Number of hidden layers, by default 3.
+    hidden_features : int, optional
+        Number of hidden features, by default 50.
+    sigma_upper_limit : float, optional keyword-only
+        Upper limit on sigma, by default 0.3.
+    fraction_upper_limit : float, optional keyword-only
+        Upper limit on fraction, by default 0.45.s
+    """
+
+    _: KW_ONLY
+    param_names: ParamNamesField = ParamNamesField(((..., ("mu", "sigma")),))
+    param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array]({})
+
+    # ========================================================================
+    # Statistics
+
+    def ln_likelihood(
+        self, mpars: Params[Array], data: Data[Array], **kwargs: Array
+    ) -> Array:
+        """Log-likelihood of the distribution.
+
+        Parameters
+        ----------
+        mpars : Params[Array], positional-only
+            Model parameters. Note that these are different from the ML
+            parameters.
+        data : Data[Array]
+            Data (phi1, phi2).
+        **kwargs : Array
+            Additional arguments.
+
+        Returns
+        -------
+        Array
+        """
+        c = self.coord_names[0]
+        return truncnorm_logpdf(
+            data[c],
+            loc=mpars[c, "mu"],
+            sigma=self.xp.clip(mpars[c, "sigma"], 1e-10),
+            ab=self.coord_bounds[self.coord_names[0]],
             xp=self.xp,
         )
