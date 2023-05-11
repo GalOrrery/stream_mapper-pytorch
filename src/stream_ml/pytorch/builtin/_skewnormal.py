@@ -129,32 +129,13 @@ def log_truncation_term(
     *,
     xp: ArrayNamespace,
 ) -> Array:
-    r"""Integral of skew-normal from a to b.
-
-    Parameters
-    ----------
-    ab : tuple[Array, Array]
-        lower, upper at which to evaluate the CDF.
-    loc : Array
-        Mean of the distribution.
-    sigma : Array
-        Variance of the distribution.
-    skew : Array
-        Skewness of the distribution.
-
-    xp : ArrayNamespace, keyword-only
-        Array namespace.
-
-    Returns
-    -------
-    Array
-    """
-    erfa = xp.erf((ab[0] - loc) / sigma / _sqrt2)
-    erfb = xp.erf((ab[1] - loc) / sigma / _sqrt2)
+    """Log of integral from a to b of skew-normal."""
+    erfa = xp.erf(skew * (ab[0] - loc) / sigma / _sqrt2)
+    erfb = xp.erf(skew * (ab[1] - loc) / sigma / _sqrt2)
     return xp.log(erfb - erfa) + xp.log(erfb + erfa + 2) - xp.log(4)
 
 
-def truncatedskewnorm_logpdf(
+def truncskewnorm_logpdf(
     value: Array,
     /,
     loc: Array,
@@ -247,7 +228,7 @@ class TruncatedSkewNormal(ModelBase):
         Array
         """
         c = self.coord_names[0]
-        return truncatedskewnorm_logpdf(
+        return truncskewnorm_logpdf(
             data[c],
             loc=mpars[c, "mu"],
             sigma=self.xp.clip(mpars[c, "sigma"], 1e-10),
