@@ -73,6 +73,8 @@ class IsochroneMVNorm(ModelBase):
     mag_names: tuple[str, ...] = ("g", "r")
     mag_err_names: tuple[str, ...] = ("g_err", "r_err")
 
+    approx_closest: bool = False  # Delta approximation
+
     def __post_init__(self, *args: Any, **kwargs: Any) -> None:
         super().__post_init__(*args, **kwargs)
         # Pairwise distance along gamma  # ([N], I, 1)
@@ -137,6 +139,7 @@ class IsochroneMVNorm(ModelBase):
         # log PDF: the (log)-Reimannian sum over the isochrone (log)-pdfs:
         # sum_i(deltagamma_i PDF(gamma_i))  -> translated
         # to log_pdfs
-        # return xp.logsumexp(self._ln_gamma_pdist + lnliks, 1)
-        # FIXME! approximating the marginalization with a delta function
-        return lnliks[xp.arange(0, len(lnliks)), xp.argmax(lnliks, 1)[:, 0]]
+        # OR approximating the marginalization with a delta function
+        if self.approx_closest:
+            return lnliks[xp.arange(0, len(lnliks)), xp.argmax(lnliks, 1)[:, 0]]
+        return xp.logsumexp(self._ln_gamma_pdist + lnliks, 1)

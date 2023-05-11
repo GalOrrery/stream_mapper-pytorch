@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable  # noqa: TCH003
 from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING
 
@@ -14,8 +15,6 @@ __all__: list[str] = []
 
 
 if TYPE_CHECKING:
-    from scipy.stats import gaussian_kde
-
     from stream_ml.core.data import Data
     from stream_ml.core.params import Params
     from stream_ml.pytorch.typing import Array
@@ -23,17 +22,28 @@ if TYPE_CHECKING:
 
 @dataclass(unsafe_hash=True)
 class KDEModel(ModelBase):
-    """Normalizing flow model."""
+    """Kernel Density Estimate model."""
 
     _: KW_ONLY
-    kernel: gaussian_kde
+    kernel: Callable[[Array], Array]
     param_names: ParamNamesField = ParamNamesField(())
+
+    transpose: bool
+    include_indep_coords: bool
 
     def __post_init__(self) -> None:
         """Post-initialization hook."""
         if self.net is not None:
             msg = "Cannot pass `net` to KDEModel."
             raise ValueError(msg)
+
+        self._all_coord_names: tuple[str, ...]
+        object.__setattr__(
+            self,
+            "_all_coord_names",
+            (self.indep_coord_names if self.include_indep_coords else ())
+            + self.coord_names,
+        )
 
     def ln_likelihood(
         self, mpars: Params[Array], data: Data[Array], **kwargs: Array
@@ -47,7 +57,7 @@ class KDEModel(ModelBase):
             parameters. The flow has an internal weight, so we don't use the
             weight, if passed.
         data : Data[Array]
-            Data (phi1, phi2).
+            Data.
 
         **kwargs : Array
             Additional arguments.
@@ -57,9 +67,11 @@ class KDEModel(ModelBase):
         Array
         """
         with xp.no_grad():
-            return xp.log(xp.asarray(self.kernel(data[:, self.coord_names, 0].T)))[
-                :, None
-            ]
+            return xp.log(
+                xp.clip(
+                    xp.asarray(self.kernel(data[:, self._all_coord_names, 0])), min=0
+                )
+            )[:, None]
 
     def forward(self, data: Data[Array]) -> Array:
         """Forward pass.
