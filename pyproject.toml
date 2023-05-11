@@ -148,6 +148,9 @@ ignore = [
   "COM812",  # TrailingCommaMissing
   "COM818",  # TrailingCommaOnBareTupleProhibited
   "COM819",  # TrailingCommaProhibited
+
+  # ruff (RUF)
+  "RUF009",  # do not perform function call in dataclass defaults
 ]
 
 [tool.ruff.flake8-tidy-imports]
