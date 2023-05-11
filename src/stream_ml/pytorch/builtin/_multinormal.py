@@ -69,7 +69,7 @@ class MultivariateNormal(ModelBase):
     def ln_likelihood(
         self, mpars: Params[Array], data: Data[Array], **kwargs: Array
     ) -> Array:
-        """Log-likelihood of the stream.
+        """Log-likelihood of the distribution.
 
         Parameters
         ----------
