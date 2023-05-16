@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from stream_ml.core.params.bounds import ParamBoundsField
 from stream_ml.core.params.names import ParamNamesField
 from stream_ml.pytorch._base import ModelBase
+from stream_ml.pytorch.builtin._normal import norm_logpdf
 from stream_ml.pytorch.typing import Array, NNModel
 
 if TYPE_CHECKING:
@@ -19,11 +20,12 @@ if TYPE_CHECKING:
 __all__: list[str] = []
 
 
-_logsqrt2pi = math.log(2 * math.pi) / 2
 _sqrt2 = math.sqrt(2)
 
 
-def norm_logpdf(value: Array, loc: Array, sigma: Array, *, xp: ArrayNamespace) -> Array:
+def skewnorm_logpdf(
+    value: Array, /, loc: Array, sigma: Array, skew: Array, *, xp: ArrayNamespace
+) -> Array:
     r"""Log of the probability density function of the normal distribution.
 
     Parameters
@@ -33,7 +35,9 @@ def norm_logpdf(value: Array, loc: Array, sigma: Array, *, xp: ArrayNamespace) -
     loc : Array
         Mean of the distribution.
     sigma : Array
-        variance of the distribution.
+        Variance of the distribution.
+    skew : Array
+        Skewness of the distribution.
 
     xp : ArrayNamespace, keyword-only
         Array namespace.
@@ -43,11 +47,13 @@ def norm_logpdf(value: Array, loc: Array, sigma: Array, *, xp: ArrayNamespace) -
     Array
         Log of the PDF.
     """
-    return -0.5 * ((value - loc) / sigma) ** 2 - xp.log(xp.abs(sigma)) - _logsqrt2pi
+    return norm_logpdf(value, loc=loc, sigma=sigma, xp=xp) + xp.log(
+        1 + xp.erf(skew * (value - loc) / sigma / _sqrt2)
+    )
 
 
 @dataclass(unsafe_hash=True)
-class Normal(ModelBase):
+class SkewNormal(ModelBase):
     r"""1D Gaussian with mixture weight.
 
     :math:`(weight, \mu, \sigma)(\phi1)`
@@ -65,12 +71,8 @@ class Normal(ModelBase):
     """
 
     _: KW_ONLY
-    param_names: ParamNamesField = ParamNamesField(((..., ("mu", "sigma")),))
-    param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array](
-        {  # reasonable guess for parameter bounds
-            # ...: {"mu": SigmoidBounds(-5.0, 5.0), "sigma": SigmoidBounds(0.05, 1.5)},
-        }
-    )
+    param_names: ParamNamesField = ParamNamesField(((..., ("mu", "sigma", "skew")),))
+    param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array]({})
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -106,10 +108,11 @@ class Normal(ModelBase):
         Array
         """
         c = self.coord_names[0]
-        return norm_logpdf(
+        return skewnorm_logpdf(
             data[c],
-            mpars[c, "mu"],
-            self.xp.clip(mpars[c, "sigma"], min=1e-10),
+            loc=mpars[c, "mu"],
+            sigma=self.xp.clip(mpars[c, "sigma"], 1e-10),
+            skew=self.xp.clip(mpars[c, "skew"], 1e-10),
             xp=self.xp,
         )
 
@@ -118,30 +121,59 @@ class Normal(ModelBase):
 
 
 def log_truncation_term(
-    ab: tuple[Array, Array], /, loc: Array, sigma: Array, *, xp: ArrayNamespace
+    ab: tuple[float | Array, float | Array],
+    /,
+    loc: Array,
+    sigma: Array,
+    skew: Array,
+    *,
+    xp: ArrayNamespace,
 ) -> Array:
-    """Log of integral from a to b of normal."""
-    erfa = xp.erf((ab[0] - loc) / sigma / _sqrt2)
-    erfb = xp.erf((ab[1] - loc) / sigma / _sqrt2)
-    return xp.log(erfb - erfa) - xp.log(4)
+    """Log of integral from a to b of skew-normal."""
+    erfa = xp.erf(skew * (ab[0] - loc) / sigma / _sqrt2)
+    erfb = xp.erf(skew * (ab[1] - loc) / sigma / _sqrt2)
+    return xp.log(erfb - erfa) + xp.log(erfb + erfa + 2) - xp.log(4)
 
 
-def truncnorm_logpdf(
+def truncskewnorm_logpdf(
     value: Array,
     /,
     loc: Array,
     sigma: Array,
+    skew: Array,
     ab: tuple[float | Array, float | Array],
     *,
     xp: ArrayNamespace,
 ) -> Array:
-    return norm_logpdf(value, loc=loc, sigma=sigma, xp=xp) - log_truncation_term(
-        ab, loc=loc, sigma=sigma, xp=xp
-    )
+    r"""Integral of skew-normal from a to b.
+
+    Parameters
+    ----------
+    value : Array
+        Value at which to evaluate the PDF.
+    loc : Array
+        Mean of the distribution.
+    sigma : Array
+        Variance of the distribution.
+    skew : Array
+        Skewness of the distribution.
+    ab : tuple[Array, Array]
+        lower, upper at which to evaluate the CDF.
+
+    xp : ArrayNamespace, keyword-only
+        Array namespace.
+
+    Returns
+    -------
+    Array
+    """
+    return skewnorm_logpdf(
+        value, loc=loc, sigma=sigma, skew=skew, xp=xp
+    ) - log_truncation_term(ab, loc=loc, sigma=sigma, skew=skew, xp=xp)
 
 
 @dataclass(unsafe_hash=True)
-class TruncatedNormal(Normal):
+class TruncatedSkewNormal(ModelBase):
     r"""1D Gaussian with mixture weight.
 
     :math:`(weight, \mu, \sigma)(\phi1)`
@@ -159,8 +191,19 @@ class TruncatedNormal(Normal):
     """
 
     _: KW_ONLY
-    param_names: ParamNamesField = ParamNamesField(((..., ("mu", "sigma")),))
+    param_names: ParamNamesField = ParamNamesField(((..., ("mu", "sigma", "skew")),))
     param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array]({})
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+        # Validate the coord_names
+        if len(self.coord_names) != 1:
+            msg = "Only one coordinate is supported, e.g ('phi2',)"
+            raise ValueError(msg)
+
+    def _net_init_default(self) -> NNModel:
+        raise NotImplementedError
 
     # ========================================================================
     # Statistics
@@ -185,10 +228,11 @@ class TruncatedNormal(Normal):
         Array
         """
         c = self.coord_names[0]
-        return truncnorm_logpdf(
+        return truncskewnorm_logpdf(
             data[c],
             loc=mpars[c, "mu"],
             sigma=self.xp.clip(mpars[c, "sigma"], 1e-10),
+            skew=self.xp.clip(mpars[c, "skew"], 1e-10),
             ab=self.coord_bounds[self.coord_names[0]],
             xp=self.xp,
         )

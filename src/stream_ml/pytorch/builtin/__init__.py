@@ -13,7 +13,8 @@ from stream_ml.pytorch.builtin._multinormal import (
     MultivariateMissingNormal,
     MultivariateNormal,
 )
-from stream_ml.pytorch.builtin._normal import Normal
+from stream_ml.pytorch.builtin._normal import Normal, TruncatedNormal
+from stream_ml.pytorch.builtin._skewnormal import SkewNormal, TruncatedSkewNormal
 from stream_ml.pytorch.builtin._sloped import Sloped
 from stream_ml.pytorch.typing import Array, NNModel
 
@@ -23,6 +24,9 @@ __all__ = [
     "Exponential",
     "IsochroneMVNorm",
     "Normal",
+    "TruncatedNormal",
+    "SkewNormal",
+    "TruncatedSkewNormal",
     "MultivariateNormal",
     "MultivariateMissingNormal",
 ]
