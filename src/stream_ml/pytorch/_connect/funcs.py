@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from stream_ml.pytorch.typing import Array
 
 
-@within_bounds.register(xp.Tensor)  # type: ignore[misc]
+@within_bounds.register(xp.Tensor)
 def _within_bounds_pytorch(
     value: Array,
     /,

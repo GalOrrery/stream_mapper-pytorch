@@ -7,13 +7,14 @@ from typing import TYPE_CHECKING
 
 import torch as xp
 
-from stream_ml.core.data import Data  # noqa: TCH001
 from stream_ml.core.prior import PriorBase
-from stream_ml.pytorch.typing import Array
+
+from stream_ml.pytorch.typing import Array, NNModel
 
 if TYPE_CHECKING:
-    from stream_ml.core import Model
-    from stream_ml.core.params.core import Params
+    from stream_ml.core import ModelAPI
+    from stream_ml.core.data import Data
+    from stream_ml.core.params import Params
     from stream_ml.core.typing import ArrayNamespace
 
 __all__: list[str] = []
@@ -34,7 +35,7 @@ class TrackPriorBase(PriorBase[Array]):
     """Track Prior Base."""
 
     control_points: Data[Array]
-    lamda: float = 0.05  # TODO? as a trainable Parameter.
+    lamda: float = 0.05
     _: KW_ONLY
     coord_name: str = "phi1"
     component_param_name: str = "mu"
@@ -50,6 +51,7 @@ class TrackPriorBase(PriorBase[Array]):
         dep_names: tuple[str, ...] = tuple(
             n for n in self.control_points.names if n != self.coord_name
         )
+        self._y_names: tuple[str, ...]
         object.__setattr__(self, "_y_names", dep_names)
 
         self._y: Array
@@ -74,7 +76,7 @@ class ControlPoints(TrackPriorBase):
         self,
         mpars: Params[Array],
         data: Data[Array],
-        model: Model[Array],
+        model: ModelAPI[Array, NNModel],
         current_lnpdf: Array | None = None,
         /,
         *,
@@ -108,7 +110,7 @@ class ControlPoints(TrackPriorBase):
             The logpdf.
         """
         # Get the model parameters evaluated at the control points. shape (C, 1).
-        cmpars = model.unpack_params_from_arr(model(self._x))
+        cmpars = model.unpack_params_from_arr(model(self._x))  # type: ignore[call-overload]  # noqa: E501
         cmp_arr = xp.hstack(  # (C, F)
             tuple(cmpars[(n, self.component_param_name)] for n in self._y_names)
         )
@@ -171,7 +173,7 @@ class ControlRegions(TrackPriorBase):
         self,
         mpars: Params[Array],
         data: Data[Array],
-        model: Model[Array],
+        model: ModelAPI[Array, NNModel],
         current_lnpdf: Array | None = None,
         /,
         *,
@@ -205,7 +207,7 @@ class ControlRegions(TrackPriorBase):
             The logpdf.
         """
         # Get model parameters evaluated at the control points. shape (C, 1).
-        cmpars = model.unpack_params_from_arr(model(self._x))
+        cmpars = model.unpack_params_from_arr(model(self._x))  # type: ignore[call-overload]  # noqa: E501
         cmp_arr = xp.hstack(  # (C, F)
             tuple(cmpars[(n, self.component_param_name)] for n in self._y_names)
         )

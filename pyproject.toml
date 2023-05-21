@@ -22,6 +22,7 @@
     "Programming Language :: Python :: 3",
   ]
   dependencies = [
+    "scipy>=1.7",
     "stream_ml.core @ git+https://github.com/nstarman/stream_ml-core.git",
     "torch>=1.13",
     "nflows",
@@ -123,12 +124,18 @@ where = ["src"]
   plugins = ["numpy.typing.mypy_plugin",]
 
   [[tool.mypy.overrides]]
-    module = "*/tests/*"
+    module = [
+      "*/tests/*",
+      "tests/*"
+    ]
     ignore_errors = true
 
   [[tool.mypy.overrides]]
-    module = "tests/*"
-    ignore_errors = true
+    module = [
+      "scipy.*",
+      "torch.*",
+    ]
+    ignore_missing_imports = true
 
 
 [tool.ruff]
@@ -161,8 +168,9 @@ ban-relative-imports = "all"
 
 [tool.ruff.isort]
 force-sort-within-sections = true
-known-first-party = ["stream_ml"]
-known-third-party = ["numpy", "pytest", "torch", "flax", "jax"]
+known-third-party = ["numpy", "pytest", "torch"]
+known-first-party = ["stream_ml.core"]
+known-local-folder = ["stream_ml.pytorch"]
 
 [tool.ruff.pylint]
 max-args = 6

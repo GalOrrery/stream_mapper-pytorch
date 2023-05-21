@@ -5,11 +5,10 @@ from __future__ import annotations
 from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING
 
-from stream_ml.core.params.bounds import ParamBoundsField
-from stream_ml.core.params.names import ParamNamesField
+from stream_ml.core.params._field import ModelParametersField
+
 from stream_ml.pytorch._base import ModelBase
-from stream_ml.pytorch.prior.bounds import SigmoidBounds
-from stream_ml.pytorch.typing import Array, NNModel
+from stream_ml.pytorch.typing import Array
 
 __all__: list[str] = []
 
@@ -44,12 +43,7 @@ class Exponential(ModelBase):
     """
 
     _: KW_ONLY
-    param_names: ParamNamesField = ParamNamesField(
-        ((..., ("slope",)),), requires_all_coordinates=False
-    )
-    param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array](
-        {...: {"slope": SigmoidBounds(-1.0, 1.0)}}  # param_name is filled in later
-    )
+    params: ModelParametersField[Array] = ModelParametersField[Array]()
     require_mask: bool = False
 
     def __post_init__(self) -> None:
@@ -65,16 +59,6 @@ class Exponential(ModelBase):
 
         self._b = self.xp.asarray(_b)[None, :]
         self._bma = self.xp.asarray(_bma)[None, :]
-
-    def _net_init_default(self) -> NNModel:
-        # Initialize the network
-        # Note; would prefer nn.Parameter(xp.zeros((1, n_slopes)) + 1e-5)
-        # as that has 1/2 as many params, but it's not callable.
-        # TODO: ensure n_out == n_slopes
-        # TODO! for jax need to bundle into 1 arg. Detect this!
-        return self.xpnn.Sequential(
-            self.xpnn.Linear(1, len(self.param_names) - 1), self.xpnn.Sigmoid()
-        )
 
     # ========================================================================
     # Statistics
@@ -116,7 +100,7 @@ class Exponential(ModelBase):
             msg = "mask is required"
             raise ValueError(msg)
         else:
-            indicator = self.xp.ones((len(data), 1), dtype=self.xp.int)
+            indicator = self.xp.ones((len(data), 1), dtype=int)
             # This has shape (N, 1) so will broadcast correctly.
 
         # Data is x - a

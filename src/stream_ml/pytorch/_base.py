@@ -3,22 +3,20 @@
 from __future__ import annotations
 
 from dataclasses import KW_ONLY, dataclass
-from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 import torch as xp
 from torch import nn
 
 from stream_ml.core import ModelBase as CoreModelBase
-from stream_ml.core.prior.bounds import NoBounds
+
 from stream_ml.pytorch.typing import Array, NNModel
 
 __all__: list[str] = []
 
 
 if TYPE_CHECKING:
-    from stream_ml.core.base import NNField
     from stream_ml.core.data import Data
-    from stream_ml.core.prior.bounds import PriorBounds
     from stream_ml.core.typing import ArrayNamespace
 
     Self = TypeVar("Self", bound="ModelBase")
@@ -27,8 +25,6 @@ if TYPE_CHECKING:
 @dataclass(unsafe_hash=True)
 class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
     """Model base class."""
-
-    DEFAULT_PARAM_BOUNDS: ClassVar[PriorBounds] = NoBounds()
 
     _: KW_ONLY
     array_namespace: ArrayNamespace[Array] = xp
@@ -45,7 +41,7 @@ class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
 
         # Net needs to added to ensure that it's registered as a module.
         # TODO! not need to overwrite the descriptor.
-        self.net: NNField[NNModel] = self.net
+        self.net: NNModel = self.net
 
     # ========================================================================
     # ML
@@ -60,11 +56,9 @@ class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
 
         Returns
         -------
-        Array
+        (N, 3) Array
             fraction, mean, sigma
         """
-        if self.net is None:
-            return self.xp.asarray([])
         # The forward step runs on the normalized coordinates
         scaled_data = self.data_scaler.transform(data, names=data.names)
         return self._forward_priors(

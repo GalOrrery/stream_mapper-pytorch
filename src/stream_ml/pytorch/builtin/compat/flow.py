@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable  # noqa: TCH003
+from contextlib import nullcontext
 from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING
 
 import torch as xp
 
-from stream_ml.core.params.names import ParamNamesField
+from stream_ml.core.params import ModelParametersField
+from stream_ml.core.params.scaler import scale_params
+
 from stream_ml.pytorch._base import ModelBase
+from stream_ml.pytorch.typing import Array
 
 __all__: list[str] = []
 
@@ -17,33 +20,15 @@ __all__: list[str] = []
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
     from stream_ml.core.params import Params
-    from stream_ml.pytorch.typing import Array
 
 
 @dataclass(unsafe_hash=True)
-class KDEModel(ModelBase):
-    """Kernel Density Estimate model."""
+class FlowModel(ModelBase):
+    """Normalizing flow model."""
 
     _: KW_ONLY
-    kernel: Callable[[Array], Array]
-    param_names: ParamNamesField = ParamNamesField(())
-
-    transpose: bool
-    include_indep_coords: bool
-
-    def __post_init__(self) -> None:
-        """Post-initialization hook."""
-        if self.net is not None:
-            msg = "Cannot pass `net` to KDEModel."
-            raise ValueError(msg)
-
-        self._all_coord_names: tuple[str, ...]
-        object.__setattr__(
-            self,
-            "_all_coord_names",
-            (self.indep_coord_names if self.include_indep_coords else ())
-            + self.coord_names,
-        )
+    with_grad: bool = True
+    params: ModelParametersField[Array] = ModelParametersField[Array]()
 
     def ln_likelihood(
         self, mpars: Params[Array], data: Data[Array], **kwargs: Array
@@ -57,7 +42,7 @@ class KDEModel(ModelBase):
             parameters. The flow has an internal weight, so we don't use the
             weight, if passed.
         data : Data[Array]
-            Data.
+            Data (phi1, phi2).
 
         **kwargs : Array
             Additional arguments.
@@ -66,11 +51,15 @@ class KDEModel(ModelBase):
         -------
         Array
         """
-        with xp.no_grad():
-            return xp.log(
-                xp.clip(
-                    xp.asarray(self.kernel(data[:, self._all_coord_names, 0])), min=0
-                )
+        data = self.data_scaler.transform(data, names=self.data_scaler.names)
+        mpars = scale_params(self, mpars)
+
+        with nullcontext() if self.with_grad else xp.no_grad():
+            return self.net.log_prob(
+                inputs=data[:, self.coord_names, 0],
+                context=data[:, self.indep_coord_names, 0]
+                if self.indep_coord_names is not None
+                else None,
             )[:, None]
 
     def forward(self, data: Data[Array]) -> Array:

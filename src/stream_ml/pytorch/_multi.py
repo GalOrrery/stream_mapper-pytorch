@@ -3,20 +3,19 @@
 from __future__ import annotations
 
 from dataclasses import KW_ONLY, dataclass
-from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from torch import nn
 
-from stream_ml.core import Model, NNField
-from stream_ml.core.multi import IndependentModels as CoreIndependentModels
-from stream_ml.core.multi import MixtureModel as CoreMixtureModel
-from stream_ml.core.multi import ModelsBase as CoreModelsBase
+from stream_ml.core import IndependentModels as CoreIndependentModels
+from stream_ml.core import MixtureModel as CoreMixtureModel
+from stream_ml.core import ModelAPI, NNField
+from stream_ml.core import ModelsBase as CoreModelsBase
 from stream_ml.core.prior import PriorBase  # noqa: TCH001
-from stream_ml.core.prior.bounds import NoBounds, PriorBounds
 from stream_ml.core.setup_package import BACKGROUND_KEY
 from stream_ml.core.utils.frozen_dict import FrozenDictField
 from stream_ml.core.utils.sentinel import MISSING
-from stream_ml.pytorch.prior.bounds import SigmoidBounds
+
 from stream_ml.pytorch.typing import Array, NNModel
 
 __all__: list[str] = []
@@ -31,12 +30,10 @@ if TYPE_CHECKING:
 class ModelsBase(nn.Module, CoreModelsBase[Array, NNModel]):
     """Multi-model base class."""
 
-    components: FrozenDictField[str, Model[Array]] = FrozenDictField()
+    components: FrozenDictField[str, ModelAPI[Array, NNModel]] = FrozenDictField()
 
     _: KW_ONLY
     priors: tuple[PriorBase[Array], ...] = ()
-
-    DEFAULT_PARAM_BOUNDS: ClassVar[PriorBounds] = NoBounds()
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -118,8 +115,6 @@ class MixtureModel(ModelsBase, CoreMixtureModel[Array, NNModel]):
     net: NNField[NNModel] = NNField(default=MISSING)
     _: KW_ONLY
 
-    DEFAULT_PARAM_BOUNDS: ClassVar = SigmoidBounds(0, 1)
-
     def __new__(cls: type[Self], *args: Any, **kwargs: Any) -> Self:  # noqa: ARG003
         """Initialize the model. This is needed for PyTorch."""
         self: Self = super().__new__(cls)
@@ -168,7 +163,7 @@ class MixtureModel(ModelsBase, CoreMixtureModel[Array, NNModel]):
             preds.extend((weight, pred))
             counter += 1 + (pred.shape[1] if len(pred.shape) > 1 else 0)
 
-        out = self.xp.concatenate(preds, dim=1)
+        out = self.xp.concatenate(preds, 1)
 
         # Other priors  # TODO: a better way to do the order of the priors.
         for prior in self.priors:

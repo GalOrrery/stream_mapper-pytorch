@@ -10,15 +10,15 @@ import torch as xp
 from torch.distributions import MultivariateNormal
 
 from stream_ml.core.utils.funcs import pairwise_distance
+
 from stream_ml.pytorch._base import ModelBase
 
 __all__: list[str] = []
 
 if TYPE_CHECKING:
-    from torch.nn import Module
-
     from stream_ml.core.data import Data
     from stream_ml.core.params import Params
+
     from stream_ml.pytorch.typing import Array
 
 dm_sigma_const: Final = 5 / xp.log(xp.asarray(10))
@@ -44,8 +44,8 @@ class IsochroneMVNorm(ModelBase):
         The isochrone spline for the one-to-one mapping of gamma to the
         magnitude errors.
 
-    param_names : ParamNamesField, optional
-        The names of the parameters.
+    params : ModelParametersField, optional
+        The parameters.
     indep_coord_names : tuple[str, ...], optional
         The names of the independent coordinates.
     coord_names : tuple[str, ...], optional
@@ -92,9 +92,6 @@ class IsochroneMVNorm(ModelBase):
             isochrone_err = xp.asarray(self.isochrone_err_spl(self._gamma_points))
             self._isochrone_cov = xp.diag_embed(isochrone_err[None, :, :])
 
-    def _net_init_default(self) -> Module | None:
-        return None
-
     def ln_likelihood(
         self, mpars: Params[Array], data: Data[Array], **kwargs: Array
     ) -> Array:
@@ -125,7 +122,7 @@ class IsochroneMVNorm(ModelBase):
         # ([N], I, F) + (N, [I], [F]) = (N, I, F)
         mean = self._isochrone_locs + dm.reshape((-1, 1, 1))
         # Covariance: star (N, [I], F, F)
-        cov_data = xp.diag_embed(data[:, self.mag_err_names, 0] ** 2)[:, None, :, :]
+        cov_data = xp.diag_embed(data[:, self.mag_err_names, 0] ** 2)[:, None, :, :]  # type: ignore[operator]  # noqa: E501
         # Covariance: isochrone ([N], I, F, F)
         # Covariance: distance modulus  (N, [I], F, F)
         cov_dm = xp.diag_embed(xp.ones((len(data), 2)) * dm_sigma**2)[:, None, :, :]

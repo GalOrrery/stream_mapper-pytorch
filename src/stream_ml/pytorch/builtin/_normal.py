@@ -6,10 +6,10 @@ from dataclasses import KW_ONLY, dataclass
 import math
 from typing import TYPE_CHECKING
 
-from stream_ml.core.params.bounds import ParamBoundsField
-from stream_ml.core.params.names import ParamNamesField
+from stream_ml.core.params import ModelParametersField
+
 from stream_ml.pytorch._base import ModelBase
-from stream_ml.pytorch.typing import Array, NNModel
+from stream_ml.pytorch.typing import Array
 
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
@@ -23,7 +23,9 @@ _logsqrt2pi = math.log(2 * math.pi) / 2
 _sqrt2 = math.sqrt(2)
 
 
-def norm_logpdf(value: Array, loc: Array, sigma: Array, *, xp: ArrayNamespace) -> Array:
+def norm_logpdf(
+    value: Array, loc: Array, sigma: Array, *, xp: ArrayNamespace[Array]
+) -> Array:
     r"""Log of the probability density function of the normal distribution.
 
     Parameters
@@ -65,12 +67,7 @@ class Normal(ModelBase):
     """
 
     _: KW_ONLY
-    param_names: ParamNamesField = ParamNamesField(((..., ("mu", "sigma")),))
-    param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array](
-        {  # reasonable guess for parameter bounds
-            # ...: {"mu": SigmoidBounds(-5.0, 5.0), "sigma": SigmoidBounds(0.05, 1.5)},
-        }
-    )
+    params: ModelParametersField[Array] = ModelParametersField[Array]()
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -79,9 +76,6 @@ class Normal(ModelBase):
         if len(self.coord_names) != 1:
             msg = "Only one coordinate is supported, e.g ('phi2',)"
             raise ValueError(msg)
-
-    def _net_init_default(self) -> NNModel:
-        raise NotImplementedError
 
     # ========================================================================
     # Statistics
@@ -109,7 +103,7 @@ class Normal(ModelBase):
         return norm_logpdf(
             data[c],
             mpars[c, "mu"],
-            self.xp.clip(mpars[c, "sigma"], min=1e-10),
+            self.xp.clip(mpars[c, "sigma"], 1e-10),
             xp=self.xp,
         )
 
@@ -118,11 +112,11 @@ class Normal(ModelBase):
 
 
 def log_truncation_term(
-    ab: tuple[Array, Array], /, loc: Array, sigma: Array, *, xp: ArrayNamespace
+    ab: tuple[Array, Array], /, loc: Array, sigma: Array, *, xp: ArrayNamespace[Array]
 ) -> Array:
     """Log of integral from a to b of normal."""
-    erfa = xp.erf((ab[0] - loc) / sigma / _sqrt2)
-    erfb = xp.erf((ab[1] - loc) / sigma / _sqrt2)
+    erfa = xp.erf((ab[0] - loc) / sigma / _sqrt2)  # type: ignore[attr-defined]
+    erfb = xp.erf((ab[1] - loc) / sigma / _sqrt2)  # type: ignore[attr-defined]
     return xp.log(erfb - erfa) - xp.log(4)
 
 
@@ -133,7 +127,7 @@ def truncnorm_logpdf(
     sigma: Array,
     ab: tuple[float | Array, float | Array],
     *,
-    xp: ArrayNamespace,
+    xp: ArrayNamespace[Array],
 ) -> Array:
     return norm_logpdf(value, loc=loc, sigma=sigma, xp=xp) - log_truncation_term(
         ab, loc=loc, sigma=sigma, xp=xp
@@ -159,8 +153,7 @@ class TruncatedNormal(Normal):
     """
 
     _: KW_ONLY
-    param_names: ParamNamesField = ParamNamesField(((..., ("mu", "sigma")),))
-    param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array]({})
+    params: ModelParametersField[Array] = ModelParametersField[Array]()
 
     # ========================================================================
     # Statistics
