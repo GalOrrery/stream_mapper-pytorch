@@ -160,3 +160,6 @@ ban-relative-imports = "all"
 force-sort-within-sections = true
 known-first-party = ["stream_ml"]
 known-third-party = ["numpy", "pytest", "torch", "flax", "jax"]
+
+[tool.ruff.pylint]
+max-args = 6
