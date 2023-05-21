@@ -151,6 +151,9 @@ ignore = [
 
   # ruff (RUF)
   "RUF009",  # do not perform function call in dataclass defaults
+
+  # flake8-todo (TD)  # TODO: fix these
+  "TD",
 ]
 
 [tool.ruff.flake8-tidy-imports]
@@ -160,3 +163,6 @@ ban-relative-imports = "all"
 force-sort-within-sections = true
 known-first-party = ["stream_ml"]
 known-third-party = ["numpy", "pytest", "torch", "flax", "jax"]
+
+[tool.ruff.pylint]
+max-args = 6
