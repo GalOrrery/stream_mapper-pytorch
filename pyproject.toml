@@ -151,6 +151,9 @@ ignore = [
 
   # ruff (RUF)
   "RUF009",  # do not perform function call in dataclass defaults
+
+  # flake8-todo (TD)  # TODO: fix these
+  "TD",
 ]
 
 [tool.ruff.flake8-tidy-imports]
