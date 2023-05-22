@@ -8,11 +8,9 @@ from typing import TYPE_CHECKING
 
 import torch as xp
 
-from stream_ml.core.params import ModelParametersField
 from stream_ml.core.params.scaler import scale_params
 
 from stream_ml.pytorch._base import ModelBase
-from stream_ml.pytorch.typing import Array
 
 __all__: list[str] = []
 
@@ -21,6 +19,8 @@ if TYPE_CHECKING:
     from stream_ml.core.data import Data
     from stream_ml.core.params import Params
 
+    from stream_ml.pytorch.typing import Array
+
 
 @dataclass(unsafe_hash=True)
 class FlowModel(ModelBase):
@@ -28,7 +28,6 @@ class FlowModel(ModelBase):
 
     _: KW_ONLY
     with_grad: bool = True
-    params: ModelParametersField[Array] = ModelParametersField[Array]()
 
     def ln_likelihood(
         self, mpars: Params[Array], data: Data[Array], **kwargs: Array

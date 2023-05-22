@@ -4,20 +4,19 @@ from __future__ import annotations
 
 __all__: list[str] = []
 
-from dataclasses import KW_ONLY, dataclass
+from dataclasses import dataclass
 import math
 from typing import TYPE_CHECKING
 
-from stream_ml.core.params import ModelParametersField
-
 from stream_ml.pytorch._base import ModelBase
 from stream_ml.pytorch.builtin._normal import norm_logpdf
-from stream_ml.pytorch.typing import Array
 
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
     from stream_ml.core.params import Params
     from stream_ml.core.typing import ArrayNamespace
+
+    from stream_ml.pytorch.typing import Array
 
 
 _sqrt2 = math.sqrt(2)
@@ -69,9 +68,6 @@ class SkewNormal(ModelBase):
     fraction_upper_limit : float, optional keyword-only
         Upper limit on fraction, by default 0.45.s
     """
-
-    _: KW_ONLY
-    params: ModelParametersField[Array] = ModelParametersField[Array]()
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -185,9 +181,6 @@ class TruncatedSkewNormal(ModelBase):
     fraction_upper_limit : float, optional keyword-only
         Upper limit on fraction, by default 0.45.s
     """
-
-    _: KW_ONLY
-    params: ModelParametersField[Array] = ModelParametersField[Array]()
 
     def __post_init__(self) -> None:
         super().__post_init__()

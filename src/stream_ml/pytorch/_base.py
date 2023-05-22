@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+__all__: list[str] = []
+
 from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING, Any, TypeVar
 
@@ -11,9 +13,6 @@ from torch import nn
 from stream_ml.core import ModelBase as CoreModelBase
 
 from stream_ml.pytorch.typing import Array, NNModel
-
-__all__: list[str] = []
-
 
 if TYPE_CHECKING:
     from stream_ml.core.data import Data

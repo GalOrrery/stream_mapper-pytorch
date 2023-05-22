@@ -143,8 +143,8 @@ class MixtureModel(ModelsBase, CoreMixtureModel[Array, NNModel]):
 
         # Parameter bounds, skipping the background weight (if present),
         # since the Mixture NN should not predict it.
-        for i, bnd in enumerate(self.param_bounds.flatvalues()[self._bkg_slc]):
-            weights = bnd(weights[:, i : i + 1], scaled_data, self)
+        for i, param in enumerate(self.params.flatvalues()[self._bkg_slc]):
+            weights = param.bounds(weights[:, i : i + 1], scaled_data, self)
 
         # Predict the parameters for each component.
         # The weight is added

@@ -5,10 +5,7 @@ from __future__ import annotations
 from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING
 
-from stream_ml.core.params._field import ModelParametersField
-
 from stream_ml.pytorch._base import ModelBase
-from stream_ml.pytorch.typing import Array
 
 __all__: list[str] = []
 
@@ -16,6 +13,8 @@ __all__: list[str] = []
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
     from stream_ml.core.params import Params
+
+    from stream_ml.pytorch.typing import Array
 
 
 @dataclass(unsafe_hash=True)
@@ -43,7 +42,6 @@ class Exponential(ModelBase):
     """
 
     _: KW_ONLY
-    params: ModelParametersField[Array] = ModelParametersField[Array]()
     require_mask: bool = False
 
     def __post_init__(self) -> None:
@@ -52,7 +50,7 @@ class Exponential(ModelBase):
         # Pre-compute the associated constant factors
         _b, _bma = [], []
         for k, (a, b) in self.coord_bounds.items():
-            if k not in self.param_names.top_level:
+            if k not in self.params.keys():
                 continue
             _b.append(b)
             _bma.append(b - a)
@@ -105,13 +103,13 @@ class Exponential(ModelBase):
 
         # Data is x - a
         d_arr = self._b - data[:, self.coord_names, 0]
-        # Get the slope from `mpars` we check param_names to see if the
+        # Get the slope from `mpars` we check param names to see if the
         # slope is a parameter. If it is not, then we assume it is 0.
         # When the slope is 0, the log-likelihood reduces to a Uniform.
         ms = self.xp.hstack(
             tuple(
                 mpars[(k, "slope")]
-                if (k, "slope") in self.param_names.flats
+                if (k, "slope") in self.params.flatskeys()
                 else self.xp.zeros((len(d_arr), 1))
                 for k in self.coord_names
             )

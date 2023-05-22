@@ -8,14 +8,13 @@ from typing import TYPE_CHECKING
 import torch as xp
 from torch.distributions import MultivariateNormal as TorchMultivariateNormal
 
-from stream_ml.core.params import ModelParametersField
-
 from stream_ml.pytorch._base import ModelBase
-from stream_ml.pytorch.typing import Array
 
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
     from stream_ml.core.params import Params
+
+    from stream_ml.pytorch.typing import Array
 
 __all__: list[str] = []
 
@@ -38,9 +37,6 @@ class MultivariateNormal(ModelBase):
     fraction_upper_limit : float, optional keyword-only
         Upper limit on fraction, by default 0.45.s
     """
-
-    _: KW_ONLY
-    params: ModelParametersField[Array] = ModelParametersField[Array]()
 
     # ========================================================================
     # Statistics
