@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 
 import torch as xp
 
-from stream_ml.core.params.names import ParamNamesField
 from stream_ml.pytorch._base import ModelBase
 
 __all__: list[str] = []
@@ -17,6 +16,7 @@ __all__: list[str] = []
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
     from stream_ml.core.params import Params
+
     from stream_ml.pytorch.typing import Array
 
 
@@ -26,7 +26,6 @@ class KDEModel(ModelBase):
 
     _: KW_ONLY
     kernel: Callable[[Array], Array]
-    param_names: ParamNamesField = ParamNamesField(())
 
     transpose: bool
     include_indep_coords: bool

@@ -2,29 +2,28 @@
 
 from __future__ import annotations
 
-from dataclasses import KW_ONLY, dataclass
+__all__: list[str] = []
+
+from dataclasses import dataclass
 import math
 from typing import TYPE_CHECKING
 
-from stream_ml.core.params.bounds import ParamBoundsField
-from stream_ml.core.params.names import ParamNamesField
 from stream_ml.pytorch._base import ModelBase
 from stream_ml.pytorch.builtin._normal import norm_logpdf
-from stream_ml.pytorch.typing import Array, NNModel
 
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
     from stream_ml.core.params import Params
     from stream_ml.core.typing import ArrayNamespace
 
-__all__: list[str] = []
+    from stream_ml.pytorch.typing import Array
 
 
 _sqrt2 = math.sqrt(2)
 
 
 def skewnorm_logpdf(
-    value: Array, /, loc: Array, sigma: Array, skew: Array, *, xp: ArrayNamespace
+    value: Array, /, loc: Array, sigma: Array, skew: Array, *, xp: ArrayNamespace[Array]
 ) -> Array:
     r"""Log of the probability density function of the normal distribution.
 
@@ -39,7 +38,7 @@ def skewnorm_logpdf(
     skew : Array
         Skewness of the distribution.
 
-    xp : ArrayNamespace, keyword-only
+    xp : ArrayNamespace[Array], keyword-only
         Array namespace.
 
     Returns
@@ -48,7 +47,7 @@ def skewnorm_logpdf(
         Log of the PDF.
     """
     return norm_logpdf(value, loc=loc, sigma=sigma, xp=xp) + xp.log(
-        1 + xp.erf(skew * (value - loc) / sigma / _sqrt2)
+        1 + xp.erf(skew * (value - loc) / sigma / _sqrt2)  # type: ignore[attr-defined]
     )
 
 
@@ -70,10 +69,6 @@ class SkewNormal(ModelBase):
         Upper limit on fraction, by default 0.45.s
     """
 
-    _: KW_ONLY
-    param_names: ParamNamesField = ParamNamesField(((..., ("mu", "sigma", "skew")),))
-    param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array]({})
-
     def __post_init__(self) -> None:
         super().__post_init__()
 
@@ -81,9 +76,6 @@ class SkewNormal(ModelBase):
         if len(self.coord_names) != 1:
             msg = "Only one coordinate is supported, e.g ('phi2',)"
             raise ValueError(msg)
-
-    def _net_init_default(self) -> NNModel:
-        raise NotImplementedError
 
     # ========================================================================
     # Statistics
@@ -127,11 +119,11 @@ def log_truncation_term(
     sigma: Array,
     skew: Array,
     *,
-    xp: ArrayNamespace,
+    xp: ArrayNamespace[Array],
 ) -> Array:
     """Log of integral from a to b of skew-normal."""
-    erfa = xp.erf(skew * (ab[0] - loc) / sigma / _sqrt2)
-    erfb = xp.erf(skew * (ab[1] - loc) / sigma / _sqrt2)
+    erfa = xp.erf(skew * (ab[0] - loc) / sigma / _sqrt2)  # type: ignore[attr-defined]
+    erfb = xp.erf(skew * (ab[1] - loc) / sigma / _sqrt2)  # type: ignore[attr-defined]
     return xp.log(erfb - erfa) + xp.log(erfb + erfa + 2) - xp.log(4)
 
 
@@ -143,7 +135,7 @@ def truncskewnorm_logpdf(
     skew: Array,
     ab: tuple[float | Array, float | Array],
     *,
-    xp: ArrayNamespace,
+    xp: ArrayNamespace[Array],
 ) -> Array:
     r"""Integral of skew-normal from a to b.
 
@@ -160,7 +152,7 @@ def truncskewnorm_logpdf(
     ab : tuple[Array, Array]
         lower, upper at which to evaluate the CDF.
 
-    xp : ArrayNamespace, keyword-only
+    xp : ArrayNamespace[Array], keyword-only
         Array namespace.
 
     Returns
@@ -190,10 +182,6 @@ class TruncatedSkewNormal(ModelBase):
         Upper limit on fraction, by default 0.45.s
     """
 
-    _: KW_ONLY
-    param_names: ParamNamesField = ParamNamesField(((..., ("mu", "sigma", "skew")),))
-    param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array]({})
-
     def __post_init__(self) -> None:
         super().__post_init__()
 
@@ -201,9 +189,6 @@ class TruncatedSkewNormal(ModelBase):
         if len(self.coord_names) != 1:
             msg = "Only one coordinate is supported, e.g ('phi2',)"
             raise ValueError(msg)
-
-    def _net_init_default(self) -> NNModel:
-        raise NotImplementedError
 
     # ========================================================================
     # Statistics

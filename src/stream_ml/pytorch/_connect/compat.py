@@ -29,7 +29,7 @@ class ArrayAt:
         return self.array
 
 
-@array_at.register(xp.Tensor)  # type: ignore[misc]
+@array_at.register(xp.Tensor)
 def _array_at_pytorch(array: Array, idx: Any, /, *, inplace: bool = True) -> ArrayAt:
     """Get the array at the index.
 

@@ -5,19 +5,18 @@ from __future__ import annotations
 from dataclasses import KW_ONLY, dataclass, replace
 from typing import TYPE_CHECKING
 
-from stream_ml.core.params.bounds import ParamBoundsField
-from stream_ml.core.params.names import ParamNamesField
-from stream_ml.core.params.scales import scale_params
 from stream_ml.core.utils.frozen_dict import FrozenDict
+
 from stream_ml.pytorch._base import ModelBase
-from stream_ml.pytorch.prior.bounds import SigmoidBounds
-from stream_ml.pytorch.typing import Array, NNModel
+from stream_ml.pytorch.params.scaler import scale_params
 
 __all__: list[str] = []
 
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
     from stream_ml.core.params import Params
+
+    from stream_ml.pytorch.typing import Array
 
 
 @dataclass(unsafe_hash=True)
@@ -37,18 +36,10 @@ class Sloped(ModelBase):
     ----------
     net : nn.Module, keyword-only
         The network to use. If not provided, a new one will be created. Must be
-        a layer with 1 input and ``len(param_names)-1`` outputs.
+        a layer with 1 input and ``len(param names)-1`` outputs.
     """
 
     _: KW_ONLY
-    param_names: ParamNamesField = ParamNamesField(
-        ((..., ("slope",)),), requires_all_coordinates=False
-    )
-    param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array](
-        {
-            ...: {"slope": SigmoidBounds(-1.0, 1.0)},  # param_name is filled in later
-        }
-    )
     require_mask: bool = False
 
     def __post_init__(self) -> None:
@@ -62,29 +53,21 @@ class Sloped(ModelBase):
             a_ = self.data_scaler.transform(a, names=(k,))
             b_ = self.data_scaler.transform(b, names=(k,))
 
-            if k in self.param_names.top_level:
+            if k in self.params:
                 _bma.append(b_ - a_)
 
             bv = 2 / (b_ - a_) ** 2  # absolute value of the bound
 
-            if k in self.param_bounds and isinstance(self.param_bounds[k], FrozenDict):
-                pb = self.param_bounds[k, "slope"]
+            if k in self.params and isinstance(self.params[k], FrozenDict):
+                pb = self.params[k, "slope"].bounds
                 # Mutate the underlying dictionary
-                self.param_bounds[k]._dict["slope"] = replace(  # noqa: SLF001
-                    pb, lower=-max(pb.lower, bv), upper=min(pb.upper, bv)
+                object.__setattr__(
+                    self.params[k, "slope"],
+                    "bounds",
+                    replace(pb, lower=-max(pb.lower, bv), upper=min(pb.upper, bv)),
                 )
 
         self._bma = self.xp.asarray(_bma)
-
-    def _net_init_default(self) -> NNModel:
-        # Initialize the network
-        # Note; would prefer nn.Parameter(xp.zeros((1, n_slopes)) + 1e-5)
-        # as that has 1/2 as many params, but it's not callable.
-        # TODO: ensure n_out == n_slopes
-        # TODO! for jax need to bundle into 1 arg. Detect this!
-        return self.xpnn.Sequential(
-            self.xpnn.Linear(1, len(self.param_names) - 1), self.xpnn.Sigmoid()
-        )
 
     # ========================================================================
     # Statistics
@@ -129,7 +112,7 @@ class Sloped(ModelBase):
             msg = "mask is required"
             raise ValueError(msg)
         else:
-            indicator = self.xp.ones((len(data), 1), dtype=self.xp.int)
+            indicator = self.xp.ones((len(data), 1), dtype=int)
             # This has shape (N, 1) so will broadcast correctly.
 
         # Compute the log-likelihood, columns are coordinates.
@@ -140,7 +123,7 @@ class Sloped(ModelBase):
             # Get the slope from `mpars` we check param_names to see if the
             # slope is a parameter. If it is not, then we assume it is 0.
             # When the slope is 0, the log-likelihood reduces to a Uniform.
-            m = mpars[(k, "slope")] if (k, "slope") in self.param_names.flats else 0
+            m = mpars[(k, "slope")] if (k, "slope") in self.params.flatskeys() else 0
             ln_lks[:, i] = self.xp.log(
                 m * (data[k][:, 0] - (a_ + b_) / 2) + 1 / (b_ - a_)
             )

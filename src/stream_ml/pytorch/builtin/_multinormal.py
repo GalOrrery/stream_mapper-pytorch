@@ -8,14 +8,13 @@ from typing import TYPE_CHECKING
 import torch as xp
 from torch.distributions import MultivariateNormal as TorchMultivariateNormal
 
-from stream_ml.core.params.bounds import ParamBoundsField
-from stream_ml.core.params.names import ParamNamesField
 from stream_ml.pytorch._base import ModelBase
-from stream_ml.pytorch.typing import Array, NNModel
 
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
     from stream_ml.core.params import Params
+
+    from stream_ml.pytorch.typing import Array
 
 __all__: list[str] = []
 
@@ -38,30 +37,6 @@ class MultivariateNormal(ModelBase):
     fraction_upper_limit : float, optional keyword-only
         Upper limit on fraction, by default 0.45.s
     """
-
-    _: KW_ONLY
-    param_names: ParamNamesField = ParamNamesField(((..., ("mu", "sigma")),))
-    param_bounds: ParamBoundsField[Array] = ParamBoundsField[Array](
-        {  # reasonable guess for parameter bounds
-            # ...: {"mu": SigmoidBounds(-5.0, 5.0), "sigma": SigmoidBounds(0.05, 1.5)},
-        }
-    )
-
-    def _net_init_default(self) -> NNModel:
-        # Initialize the network
-        # Note; would prefer nn.Parameter(xp.zeros((1, n_slopes)) + 1e-5)
-        # as that has 1/2 as many params, but it's not callable.
-        # TODO: ensure n_out == n_slopes
-        # TODO! for jax need to bundle into 1 arg. Detect this!
-        nout = 1 + 2 * len(self.coord_names)  # weight + (mu + sigma) * per coord
-
-        return self.xpnn.Sequential(
-            self.xpnn.Linear(1, 36),
-            self.xpnn.Tanh(),
-            self.xpnn.Linear(36, 36),
-            self.xpnn.Tanh(),
-            self.xpnn.Linear(36, nout),
-        )
 
     # ========================================================================
     # Statistics
@@ -136,6 +111,7 @@ class MultivariateMissingNormal(MultivariateNormal):  # (MultivariateNormal)
         mu = xp.hstack([mpars[c, "mu"] for c in self.coord_names])
         sigma = xp.hstack([mpars[c, "sigma"] for c in self.coord_names])
 
+        indicator: Array
         if mask is not None:
             indicator = mask[:, tuple(self.coord_bounds.keys()), 0]
         elif self.require_mask:
