@@ -93,7 +93,7 @@ class Exponential(ModelBase):
         # mask is not provided, then all data points are assumed to be
         # available.
         if mask is not None:
-            indicator = mask[:, tuple(self.coord_bounds.keys()), 0]
+            indicator = mask[tuple(self.coord_bounds.keys())].array[..., 0]
         elif self.require_mask:
             msg = "mask is required"
             raise ValueError(msg)
@@ -102,7 +102,7 @@ class Exponential(ModelBase):
             # This has shape (N, 1) so will broadcast correctly.
 
         # Data is x - a
-        d_arr = self._b - data[:, self.coord_names, 0]
+        d_arr = self._b - data[self.coord_names].array[..., 0]
         # Get the slope from `mpars` we check param names to see if the
         # slope is a parameter. If it is not, then we assume it is 0.
         # When the slope is 0, the log-likelihood reduces to a Uniform.

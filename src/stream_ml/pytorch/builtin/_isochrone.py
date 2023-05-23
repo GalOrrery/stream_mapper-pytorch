@@ -122,7 +122,9 @@ class IsochroneMVNorm(ModelBase):
         # ([N], I, F) + (N, [I], [F]) = (N, I, F)
         mean = self._isochrone_locs + dm.reshape((-1, 1, 1))
         # Covariance: star (N, [I], F, F)
-        cov_data = xp.diag_embed(data[:, self.mag_err_names, 0] ** 2)[:, None, :, :]  # type: ignore[operator]  # noqa: E501
+        cov_data = xp.diag_embed(data[self.mag_err_names].array[..., 0] ** 2)[
+            :, None, :, :
+        ]
         # Covariance: isochrone ([N], I, F, F)
         # Covariance: distance modulus  (N, [I], F, F)
         cov_dm = xp.diag_embed(xp.ones((len(data), 2)) * dm_sigma**2)[:, None, :, :]
@@ -130,7 +132,7 @@ class IsochroneMVNorm(ModelBase):
 
         # Log-likelihood of the multivariate normal
         mvn = MultivariateNormal(mean, covariance_matrix=cov)
-        mdata = data[:, self.mag_names, 0][:, None, :]  # (N, [I], F)
+        mdata = data[self.mag_names].array[..., 0][:, None, :]  # (N, [I], F)
         lnliks = mvn.log_prob(mdata)[..., None]  # (N, I)
 
         # log PDF: the (log)-Reimannian sum over the isochrone (log)-pdfs:
