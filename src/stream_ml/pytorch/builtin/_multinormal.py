@@ -65,7 +65,7 @@ class MultivariateNormal(ModelBase):
             covariance_matrix=xp.diag_embed(
                 xp.hstack([mpars[c, "sigma"] for c in self.coord_names]) ** 2
             ),
-        ).log_prob(data[:, self.coord_names, 0])[:, None]
+        ).log_prob(data[self.coord_names].array[..., 0])[:, None]
 
 
 ##############################################################################
@@ -107,13 +107,13 @@ class MultivariateMissingNormal(MultivariateNormal):  # (MultivariateNormal)
             Additional arguments.
         """
         # Normal
-        datav = data[:, self.coord_names, 0]
+        datav = data[self.coord_names].array[..., 0]
         mu = xp.hstack([mpars[c, "mu"] for c in self.coord_names])
         sigma = xp.hstack([mpars[c, "sigma"] for c in self.coord_names])
 
         indicator: Array
         if mask is not None:
-            indicator = mask[:, tuple(self.coord_bounds.keys()), 0]
+            indicator = mask[tuple(self.coord_bounds.keys())].array[..., 0]
         elif self.require_mask:
             msg = "mask is required"
             raise ValueError(msg)

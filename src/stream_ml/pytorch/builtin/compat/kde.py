@@ -24,6 +24,8 @@ if TYPE_CHECKING:
 class KDEModel(ModelBase):
     """Kernel Density Estimate model."""
 
+    net: None = None
+
     _: KW_ONLY
     kernel: Callable[[Array], Array]
 
@@ -33,7 +35,7 @@ class KDEModel(ModelBase):
     def __post_init__(self) -> None:
         """Post-initialization hook."""
         if self.net is not None:
-            msg = "Cannot pass `net` to KDEModel."
+            msg = "Cannot pass `net` to KDEModel."  # type: ignore[unreachable]
             raise ValueError(msg)
 
         self._all_coord_names: tuple[str, ...]
@@ -68,7 +70,8 @@ class KDEModel(ModelBase):
         with xp.no_grad():
             return xp.log(
                 xp.clip(
-                    xp.asarray(self.kernel(data[:, self._all_coord_names, 0])), min=0
+                    xp.asarray(self.kernel(data[self._all_coord_names].array[..., 0])),
+                    0,
                 )
             )[:, None]
 

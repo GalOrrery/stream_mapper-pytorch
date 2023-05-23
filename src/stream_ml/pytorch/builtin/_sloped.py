@@ -107,7 +107,7 @@ class Sloped(ModelBase):
         # mask is not provided, then all data points are assumed to be
         # available.
         if mask is not None:
-            indicator = mask[:, tuple(self.coord_bounds.keys()), 0]
+            indicator = mask[tuple(self.coord_bounds.keys())].array[..., 0]
         elif self.require_mask:
             msg = "mask is required"
             raise ValueError(msg)
@@ -151,7 +151,8 @@ class Sloped(ModelBase):
         pred = self.xp.hstack(
             (
                 self.xp.zeros((len(data), 1)),  # weight placeholder
-                (self.net(data[:, self.indep_coord_names, 0]) - 0.5) / self._bma,
+                (self.net(data[self.indep_coord_names].array[..., 0]) - 0.5)
+                / self._bma,
             )
         )
         return self._forward_priors(pred, data)
