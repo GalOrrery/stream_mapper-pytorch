@@ -6,7 +6,7 @@ __all__ = [
     # core
     "SigmoidBounds",
     # pytorch
-    "PriorBounds",
+    "ParameterBounds",
     "NoBounds",
     "ClippedBounds",
 ]
@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 
 import torch as xp
 
-from stream_ml.core.params.bounds import ClippedBounds, NoBounds, PriorBounds
+from stream_ml.core.params.bounds import ClippedBounds, NoBounds, ParameterBounds
 
 from stream_ml.pytorch.typing import Array, NNModel
 
@@ -58,7 +58,7 @@ def scaled_sigmoid(x: Array, /, lower: Array = _0, upper: Array = _1) -> Array:
 
 
 @dataclass(frozen=True)
-class SigmoidBounds(PriorBounds[Array]):
+class SigmoidBounds(ParameterBounds[Array]):
     """Base class for prior bounds."""
 
     def __post_init__(self) -> None:
