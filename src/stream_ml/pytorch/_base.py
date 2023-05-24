@@ -58,6 +58,8 @@ class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
         (N, 3) Array
             fraction, mean, sigma
         """
+        if self.net is None:
+            return self.xp.asarray([])
         # The forward step runs on the normalized coordinates
         scaled_data = self.data_scaler.transform(data, names=data.names)
         return self._forward_priors(
