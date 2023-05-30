@@ -42,8 +42,8 @@ def _within_bounds_pytorch(
     """
     inbounds = xp.ones_like(value, dtype=xp.bool)
     if lower_bound is not None:
-        inbounds &= value >= lower_bound if lower_inclusive else value > lower_bound
+        inbounds &= (value >= lower_bound) if lower_inclusive else (value > lower_bound)
     if upper_bound is not None:
-        inbounds &= value <= upper_bound if upper_inclusive else value < upper_bound
+        inbounds &= (value <= upper_bound) if upper_inclusive else (value < upper_bound)
 
     return inbounds

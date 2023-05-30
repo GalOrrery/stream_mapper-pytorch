@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import torch as xp
 
-from stream_ml.core.utils.compat import array_at
+from stream_ml.core.utils.compat import array_at, get_namespace
 
 if TYPE_CHECKING:
+    from stream_ml.core.typing import ArrayNamespace
+
     from stream_ml.pytorch.typing import Array
 
 
@@ -51,3 +53,19 @@ def _array_at_pytorch(array: Array, idx: Any, /, *, inplace: bool = True) -> Arr
         Setter.
     """
     return ArrayAt(array if inplace else array.clone(), idx)
+
+
+@get_namespace.register(xp.Tensor)
+def _get_namespace_pytorch(array: Array, /) -> ArrayNamespace[Array]:
+    """Get the namespace of the array.
+
+    Parameters
+    ----------
+    array : Array
+        Array to get the namespace of.
+
+    Returns
+    -------
+    ArrayNamespace[Array]
+    """
+    return cast("ArrayNamespace[Array]", xp)
