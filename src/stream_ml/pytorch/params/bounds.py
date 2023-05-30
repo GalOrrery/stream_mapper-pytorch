@@ -28,7 +28,7 @@ _0 = xp.asarray(0)
 _1 = xp.asarray(1)
 
 
-def scaled_sigmoid(x: Array, /, lower: Array = _0, upper: Array = _1) -> Array:
+def scaled_sigmoid(x: Array, /, lower: Array, upper: Array) -> Array:
     """Sigmoid function mapping ``(-inf, inf)`` to ``(lower, upper)``.
 
     Output for (lower, upper) is defined as:
@@ -40,10 +40,8 @@ def scaled_sigmoid(x: Array, /, lower: Array = _0, upper: Array = _1) -> Array:
     ----------
     x : Array
         X.
-    lower : Array
-        Lower.
-    upper : Array
-        Upper.
+    lower, upper : Array
+        Bounds.
 
     Returns
     -------
@@ -73,8 +71,6 @@ class SigmoidBounds(ParameterBounds[Array]):
     ) -> Array:
         """Evaluate the forward step in the prior."""
         pred = pred.clone()
-
-        # Get column
         col = model.params.flatskeys().index(self.param_name)
         pred[:, col] = scaled_sigmoid(pred[:, col], *self.scaled_bounds)
         return pred
