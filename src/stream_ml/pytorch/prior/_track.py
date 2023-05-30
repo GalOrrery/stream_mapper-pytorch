@@ -60,6 +60,9 @@ class TrackPriorBase(PriorBase[Array]):
         )
 
 
+#####################################################################
+
+
 @dataclass(frozen=True)
 class ControlPoints(TrackPriorBase):
     """Control points prior.
