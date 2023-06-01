@@ -27,6 +27,7 @@ class FlowModel(ModelBase):
     """Normalizing flow model."""
 
     _: KW_ONLY
+    jacobian_logdet: float  # Log of the Jacobian determinant
     with_grad: bool = True
 
     def ln_likelihood(
@@ -54,12 +55,15 @@ class FlowModel(ModelBase):
         mpars = scale_params(self, mpars)
 
         with nullcontext() if self.with_grad else xp.no_grad():
-            return self.net.log_prob(
-                inputs=data[self.coord_names].array[..., 0],
-                context=data[self.indep_coord_names].array[..., 0]
-                if self.indep_coord_names is not None
-                else None,
-            )[:, None]
+            return (
+                self.jacobian_logdet
+                + self.net.log_prob(
+                    inputs=data[self.coord_names].array[..., 0],
+                    context=data[self.indep_coord_names].array[..., 0]
+                    if self.indep_coord_names is not None
+                    else None,
+                )[:, None]
+            )
 
     def forward(self, data: Data[Array]) -> Array:
         """Forward pass.
