@@ -11,6 +11,7 @@ import torch as xp
 from stream_ml.core.params.scaler import scale_params
 
 from stream_ml.pytorch._base import ModelBase
+from stream_ml.pytorch.utils import names_intersect
 
 __all__: list[str] = []
 
@@ -51,7 +52,9 @@ class FlowModel(ModelBase):
         -------
         Array
         """
-        data = self.data_scaler.transform(data, names=self.data_scaler.names)
+        data = self.data_scaler.transform(
+            data, names=names_intersect(data, self.data_scaler)
+        )
         mpars = scale_params(self, mpars)
 
         with nullcontext() if self.with_grad else xp.no_grad():

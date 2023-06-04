@@ -13,6 +13,7 @@ from torch import nn
 from stream_ml.core import ModelBase as CoreModelBase
 
 from stream_ml.pytorch.typing import Array, NNModel
+from stream_ml.pytorch.utils import names_intersect
 
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
@@ -61,7 +62,9 @@ class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
         if self.net is None:
             return self.xp.asarray([])
         # The forward step runs on the normalized coordinates
-        scaled_data = self.data_scaler.transform(data, names=self.data_scaler.names)
+        scaled_data = self.data_scaler.transform(
+            data, names=names_intersect(data, self.data_scaler)
+        )
         return self._forward_priors(
             self.net(scaled_data[self.indep_coord_names].array[..., 0]), scaled_data
         )

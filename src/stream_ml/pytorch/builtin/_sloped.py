@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+__all__: list[str] = []
+
 from dataclasses import KW_ONLY, dataclass, replace
 from typing import TYPE_CHECKING
 
@@ -9,8 +11,7 @@ from stream_ml.core.utils.frozen_dict import FrozenDict
 
 from stream_ml.pytorch._base import ModelBase
 from stream_ml.pytorch.params.scaler import scale_params
-
-__all__: list[str] = []
+from stream_ml.pytorch.utils import names_intersect
 
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
@@ -100,7 +101,9 @@ class Sloped(ModelBase):
         -------
         Array
         """
-        data = self.data_scaler.transform(data, names=self.data_scaler.names)
+        data = self.data_scaler.transform(
+            data, names=names_intersect(data.names, self.data_scaler.names)
+        )
         mpars = scale_params(self, mpars)
 
         # The mask is used to indicate which data points are available. If the
@@ -147,7 +150,9 @@ class Sloped(ModelBase):
             fraction, mean, sigma
         """
         # The forward step runs on the normalized coordinates
-        data = self.data_scaler.transform(data, names=self.data_scaler.names)
+        data = self.data_scaler.transform(
+            data, names=names_intersect(data, self.data_scaler)
+        )
         pred = self.xp.hstack(
             (
                 self.xp.zeros((len(data), 1)),  # weight placeholder
