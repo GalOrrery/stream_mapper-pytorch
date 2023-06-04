@@ -17,6 +17,7 @@ from stream_ml.core.utils.frozen_dict import FrozenDictField
 from stream_ml.core.utils.sentinel import MISSING
 
 from stream_ml.pytorch.typing import Array, NNModel
+from stream_ml.pytorch.utils import names_intersect
 
 __all__: list[str] = []
 
@@ -137,7 +138,9 @@ class MixtureModel(ModelsBase, CoreMixtureModel[Array, NNModel]):
         """
         # Predict the weights, except the background weight, which is
         # always 1 - sum(weights).
-        scaled_data = self.data_scaler.transform(data, names=self.data_scaler.names)
+        scaled_data = self.data_scaler.transform(
+            data, names=names_intersect(data, self.data_scaler)
+        )
         # TODO! need forward priors
         weights = self.net(
             scaled_data[self.indep_coord_names].array[..., 0]
