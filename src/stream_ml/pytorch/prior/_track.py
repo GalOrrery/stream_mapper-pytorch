@@ -113,7 +113,7 @@ class ControlPoints(TrackPriorBase):
             The logpdf.
         """
         # Get the model parameters evaluated at the control points. shape (C, 1).
-        cmpars = model.unpack_params_from_arr(model(self._x))  # type: ignore[call-overload]  # noqa: E501
+        cmpars = model.unpack_params(model(self._x))
         cmp_arr = xp.hstack(  # (C, F)
             tuple(cmpars[(n, self.component_param_name)] for n in self._y_names)
         )
@@ -210,7 +210,7 @@ class ControlRegions(TrackPriorBase):
             The logpdf.
         """
         # Get model parameters evaluated at the control points. shape (C, 1).
-        cmpars = model.unpack_params_from_arr(model(self._x))  # type: ignore[call-overload]  # noqa: E501
+        cmpars = model.unpack_params(model(self._x))
         cmp_arr = xp.hstack(  # (C, F)
             tuple(cmpars[(n, self.component_param_name)] for n in self._y_names)
         )
