@@ -127,7 +127,9 @@ class IsochroneMVNorm(ModelBase):
         ]
         # Covariance: isochrone ([N], I, F, F)
         # Covariance: distance modulus  (N, [I], F, F)
-        cov_dm = xp.diag_embed(xp.ones((len(data), 2)) * dm_sigma**2)[:, None, :, :]
+        cov_dm = xp.diag_embed(
+            xp.ones((len(data), len(self.mag_names))) * dm_sigma**2
+        )[:, None, :, :]
         cov = cov_data + self._isochrone_cov + cov_dm
 
         # Log-likelihood of the multivariate normal
