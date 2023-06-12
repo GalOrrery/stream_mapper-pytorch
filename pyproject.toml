@@ -156,6 +156,9 @@ ignore = [
   "COM818",  # TrailingCommaOnBareTupleProhibited
   "COM819",  # TrailingCommaProhibited
 
+  # (FIX)
+  "FIX002",  # Line contains TODO
+
   # ruff (RUF)
   "RUF009",  # do not perform function call in dataclass defaults
 
