@@ -12,7 +12,7 @@ from stream_ml.core.prior import PriorBase
 from stream_ml.pytorch.typing import Array, NNModel
 
 if TYPE_CHECKING:
-    from stream_ml.core import ModelAPI
+    from stream_ml.core._core.api import Model as ModelAPI
     from stream_ml.core.data import Data
     from stream_ml.core.params import Params
     from stream_ml.core.typing import ArrayNamespace
@@ -113,7 +113,7 @@ class ControlPoints(TrackPriorBase):
             The logpdf.
         """
         # Get the model parameters evaluated at the control points. shape (C, 1).
-        cmpars = model.unpack_params(model(self._x))
+        cmpars = model.unpack_params(model(self._x))  # type: ignore[call-overload]  # noqa: E501
         cmp_arr = xp.hstack(  # (C, F)
             tuple(cmpars[(n, self.component_param_name)] for n in self._y_names)
         )
@@ -210,7 +210,7 @@ class ControlRegions(TrackPriorBase):
             The logpdf.
         """
         # Get model parameters evaluated at the control points. shape (C, 1).
-        cmpars = model.unpack_params(model(self._x))
+        cmpars = model.unpack_params(model(self._x))  # type: ignore[call-overload]  # noqa: E501
         cmp_arr = xp.hstack(  # (C, F)
             tuple(cmpars[(n, self.component_param_name)] for n in self._y_names)
         )
