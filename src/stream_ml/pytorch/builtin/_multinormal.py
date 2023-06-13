@@ -42,7 +42,7 @@ class MultivariateNormal(ModelBase):
     # Statistics
 
     def ln_likelihood(
-        self, mpars: Params[Array], data: Data[Array], **kwargs: Array
+        self, mpars: Params[Array], /, data: Data[Array], **kwargs: Array
     ) -> Array:
         """Log-likelihood of the distribution.
 
@@ -86,6 +86,7 @@ class MultivariateMissingNormal(MultivariateNormal):  # (MultivariateNormal)
     def ln_likelihood(
         self,
         mpars: Params[Array],
+        /,
         data: Data[Array],
         *,
         mask: Data[Array] | None = None,

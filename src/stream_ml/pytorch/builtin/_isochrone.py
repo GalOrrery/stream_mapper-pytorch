@@ -93,7 +93,7 @@ class IsochroneMVNorm(ModelBase):
             self._isochrone_cov = xp.diag_embed(isochrone_err[None, :, :])
 
     def ln_likelihood(
-        self, mpars: Params[Array], data: Data[Array], **kwargs: Array
+        self, mpars: Params[Array], /, data: Data[Array], **kwargs: Array
     ) -> Array:
         """Compute the log-likelihood.
 
