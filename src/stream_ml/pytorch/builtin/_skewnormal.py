@@ -124,7 +124,7 @@ def log_truncation_term(
     """Log of integral from a to b of skew-normal."""
     erfa = xp.erf(skew * (ab[0] - loc) / sigma / _sqrt2)  # type: ignore[attr-defined]
     erfb = xp.erf(skew * (ab[1] - loc) / sigma / _sqrt2)  # type: ignore[attr-defined]
-    return xp.log(erfb - erfa) + xp.log(erfb + erfa + 2) - xp.log(4)
+    return xp.log(erfb - erfa) + xp.log(erfb + erfa + 2) - xp.log(xp.Tensor(4.))
 
 
 def truncskewnorm_logpdf(
