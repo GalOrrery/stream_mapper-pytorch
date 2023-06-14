@@ -64,6 +64,7 @@ class Exponential(ModelBase):
     def ln_likelihood(
         self,
         mpars: Params[Array],
+        /,
         data: Data[Array],
         *,
         mask: Data[Array] | None = None,

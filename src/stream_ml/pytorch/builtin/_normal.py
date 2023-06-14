@@ -77,7 +77,7 @@ class Normal(ModelBase):
     # Statistics
 
     def ln_likelihood(
-        self, mpars: Params[Array], data: Data[Array], **kwargs: Array
+        self, mpars: Params[Array], /, data: Data[Array], **kwargs: Array
     ) -> Array:
         """Log-likelihood of the distribution.
 
@@ -152,7 +152,7 @@ class TruncatedNormal(Normal):
     # Statistics
 
     def ln_likelihood(
-        self, mpars: Params[Array], data: Data[Array], **kwargs: Array
+        self, mpars: Params[Array], /, data: Data[Array], **kwargs: Array
     ) -> Array:
         """Log-likelihood of the distribution.
 
