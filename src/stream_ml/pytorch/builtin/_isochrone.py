@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import KW_ONLY, dataclass
-from typing import TYPE_CHECKING, Any, Final
+from dataclasses import KW_ONLY, dataclass, field
+from typing import TYPE_CHECKING, Any, Final, Protocol
 
-from scipy.interpolate import CubicSpline  # noqa: TCH002
 import torch as xp
 from torch.distributions import MultivariateNormal
 
@@ -16,13 +15,33 @@ from stream_ml.pytorch._base import ModelBase
 __all__: list[str] = []
 
 if TYPE_CHECKING:
+    from scipy.interpolate import CubicSpline
+
     from stream_ml.core.data import Data
     from stream_ml.core.params import Params
+    from stream_ml.core.typing import ArrayNamespace
 
     from stream_ml.pytorch.typing import Array
 
 dm_sigma_const: Final = 5 / xp.log(xp.asarray(10))
 # Constant for first order error propagation of parallax -> distance modulus
+
+
+class ClusterMassFunction(Protocol):
+    """Cluster Mass Function.
+
+    Must be parametrized by gamma [0, 1], the normalized mass over the range of the
+    isochrone.
+    """
+
+    def __call__(self, gamma: Array, *, xp: ArrayNamespace[Array]) -> Array:
+        """Call."""
+        ...
+
+
+class UniformClusterMassFunction(ClusterMassFunction):
+    def __call__(self, gamma: Array, *, xp: ArrayNamespace[Array]) -> Array:
+        return xp.ones_like(gamma)
 
 
 @dataclass(unsafe_hash=True)
@@ -35,15 +54,6 @@ class IsochroneMVNorm(ModelBase):
         The network to use. If not provided, a new one will be created. Must map
         1->3 input to output.
 
-    gamma_edges : Array
-        The edges of the gamma bins. Must be 1D.
-    isochrone_spl : CubicSpline
-        The isochrone spline for the one-to-one mapping of gamma to the
-        magnitudes (``mag_names``).
-    isochrone_err_spl : CubicSpline
-        The isochrone spline for the one-to-one mapping of gamma to the
-        magnitude errors.
-
     params : ModelParametersField, optional
         The parameters.
     indep_coord_names : tuple[str, ...], optional
@@ -55,6 +65,20 @@ class IsochroneMVNorm(ModelBase):
     mag_err_names : tuple[str, ...], optional
         The names of the magnitude errors.
 
+    gamma_edges : Array
+        The edges of the gamma bins. Must be 1D.
+    isochrone_spl : CubicSpline
+        The isochrone spline for the one-to-one mapping of gamma to the
+        magnitudes (``mag_names``).
+    isochrone_err_spl : CubicSpline
+        The isochrone spline for the one-to-one mapping of gamma to the
+        magnitude errors.
+
+    cluster_mass_function : `ClusterMassFunction`, optional
+        The cluster mass function. Must be parametrized by gamma [0, 1], the
+        normalized mass over the range of the isochrone. Defaults to a uniform
+        distribution.
+
     Notes
     -----
     Ln-likelihood required parameters:
@@ -65,15 +89,17 @@ class IsochroneMVNorm(ModelBase):
     """
 
     _: KW_ONLY
-    gamma_edges: Array
-    isochrone_spl: CubicSpline
-    isochrone_err_spl: CubicSpline | None = None
-
     coord_names: tuple[str, ...] = ()
     mag_names: tuple[str, ...] = ("g", "r")
     mag_err_names: tuple[str, ...] = ("g_err", "r_err")
 
-    approx_closest: bool = False  # Delta approximation
+    gamma_edges: Array
+    isochrone_spl: CubicSpline
+    isochrone_err_spl: CubicSpline | None = None
+
+    cluster_mass_function: ClusterMassFunction = field(
+        default_factory=UniformClusterMassFunction
+    )
 
     def __post_init__(self, *args: Any, **kwargs: Any) -> None:
         super().__post_init__(*args, **kwargs)
@@ -135,10 +161,9 @@ class IsochroneMVNorm(ModelBase):
         mdata = data[self.mag_names].array[:, None, ...]  # (N, [I], F)
         lnliks = mvn.log_prob(mdata)  # (N, I)
 
+        # log prior: the cluster mass function
+        ln_cmf = self.cluster_mass_function(self._gamma_points, xp=self.xp)[None, :, None]  # noqa: E501
+
         # log PDF: the (log)-Reimannian sum over the isochrone (log)-pdfs:
-        # sum_i(deltagamma_i PDF(gamma_i))  -> translated
-        # to log_pdfs
-        # OR approximating the marginalization with a delta function
-        if self.approx_closest:
-            return lnliks[xp.arange(0, len(lnliks)), xp.argmax(lnliks, 1)]
-        return xp.logsumexp(self._ln_gamma_pdist + lnliks, 1)
+        # sum_i(deltagamma_i PDF(gamma_i))  -> translated to log_pdfs
+        return xp.logsumexp(self._ln_gamma_pdist + lnliks + ln_cmf, 1)
