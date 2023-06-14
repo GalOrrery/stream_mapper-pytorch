@@ -7,7 +7,7 @@ __all__: list[str] = []
 from dataclasses import dataclass
 import math
 from typing import TYPE_CHECKING
-
+from torch import Tensor
 from stream_ml.pytorch._base import ModelBase
 from stream_ml.pytorch.builtin._normal import norm_logpdf
 
@@ -124,7 +124,7 @@ def log_truncation_term(
     """Log of integral from a to b of skew-normal."""
     erfa = xp.erf(skew * (ab[0] - loc) / sigma / _sqrt2)  # type: ignore[attr-defined]
     erfb = xp.erf(skew * (ab[1] - loc) / sigma / _sqrt2)  # type: ignore[attr-defined]
-    return xp.log(erfb - erfa) + xp.log(erfb + erfa + 2) - xp.log(xp.Tensor(4.))
+    return xp.log(erfb - erfa) + xp.log(erfb + erfa + 2) - xp.log(Tensor(4.))
 
 
 def truncskewnorm_logpdf(
