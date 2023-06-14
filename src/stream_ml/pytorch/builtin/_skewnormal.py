@@ -8,8 +8,6 @@ from dataclasses import dataclass
 import math
 from typing import TYPE_CHECKING
 
-from torch import Tensor
-
 from stream_ml.pytorch._base import ModelBase
 from stream_ml.pytorch.builtin._normal import norm_logpdf
 
