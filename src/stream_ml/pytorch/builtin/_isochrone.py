@@ -77,9 +77,9 @@ class IsochroneMVNorm(ModelBase):
 
     def __post_init__(self, *args: Any, **kwargs: Any) -> None:
         super().__post_init__(*args, **kwargs)
-        # Pairwise distance along gamma  # ([N], I, 1)
+        # Pairwise distance along gamma  # ([N], I)
         gamma_pdist = pairwise_distance(self.gamma_edges, axis=0, xp=self.xp)
-        self._ln_gamma_pdist = self.xp.log(gamma_pdist[None, :, None])
+        self._ln_gamma_pdist = self.xp.log(gamma_pdist[None, :])
         # Midpoint of gamma edges array
         self._gamma_points: Array = self.gamma_edges[:-1] + gamma_pdist / 2
         # Points on the isochrone along gamma  # ([N], I, F)
@@ -115,32 +115,30 @@ class IsochroneMVNorm(ModelBase):
         -------
         Array[(N,)]
         """
-        dm = mpars[("distmod", "mu")].reshape((-1, 1))
-        dm_sigma = mpars[("distmod", "sigma")].reshape((-1, 1))
+        dm = mpars[("distmod", "mu")]  # (N,)
+        dm_sigma = mpars[("distmod", "sigma")]  # (N,)
 
         # Mean : isochrone + distance modulus
         # ([N], I, F) + (N, [I], [F]) = (N, I, F)
-        mean = self._isochrone_locs + dm.reshape((-1, 1, 1))
+        mean = self._isochrone_locs + dm[:, None, None]
         # Covariance: star (N, [I], F, F)
-        cov_data = xp.diag_embed(data[self.mag_err_names].array[..., 0] ** 2)[
-            :, None, :, :
-        ]
+        cov_data = xp.diag_embed(data[self.mag_err_names].array ** 2)[:, None, :, :]
         # Covariance: isochrone ([N], I, F, F)
         # Covariance: distance modulus  (N, [I], F, F)
         cov_dm = xp.diag_embed(
-            xp.ones((len(data), len(self.mag_names))) * dm_sigma**2
+            xp.ones((len(data), len(self.mag_names))) * dm_sigma[:, None] ** 2
         )[:, None, :, :]
         cov = cov_data + self._isochrone_cov + cov_dm
 
         # Log-likelihood of the multivariate normal
         mvn = MultivariateNormal(mean, covariance_matrix=cov)
-        mdata = data[self.mag_names].array[:, None, ..., 0]  # (N, [I], F)
-        lnliks = mvn.log_prob(mdata)[..., None]  # (N, I, 1)
+        mdata = data[self.mag_names].array[:, None, ...]  # (N, [I], F)
+        lnliks = mvn.log_prob(mdata)  # (N, I)
 
         # log PDF: the (log)-Reimannian sum over the isochrone (log)-pdfs:
         # sum_i(deltagamma_i PDF(gamma_i))  -> translated
         # to log_pdfs
         # OR approximating the marginalization with a delta function
         if self.approx_closest:
-            return lnliks[xp.arange(0, len(lnliks)), xp.argmax(lnliks, 1)[:, 0]]
+            return lnliks[xp.arange(0, len(lnliks)), xp.argmax(lnliks, 1)]
         return xp.logsumexp(self._ln_gamma_pdist + lnliks, 1)

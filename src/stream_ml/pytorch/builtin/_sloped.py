@@ -111,7 +111,7 @@ class Sloped(ModelBase):
         # mask is not provided, then all data points are assumed to be
         # available.
         if mask is not None:
-            indicator = mask[tuple(self.coord_bounds.keys())].array[..., 0]
+            indicator = mask[tuple(self.coord_bounds.keys())].array
         elif self.require_mask:
             msg = "mask is required"
             raise ValueError(msg)
@@ -128,11 +128,9 @@ class Sloped(ModelBase):
             # slope is a parameter. If it is not, then we assume it is 0.
             # When the slope is 0, the log-likelihood reduces to a Uniform.
             m = mpars[(k, "slope")] if (k, "slope") in self.params.flatskeys() else 0
-            ln_lks[:, i] = self.xp.log(
-                m * (data[k][:, 0] - (a_ + b_) / 2) + 1 / (b_ - a_)
-            )
+            ln_lks[:, i] = self.xp.log(m * (data[k] - (a_ + b_) / 2) + 1 / (b_ - a_))
 
-        return (indicator * ln_lks).sum(1, keepdim=True)
+        return (indicator * ln_lks).sum(1)
 
     # ========================================================================
     # ML
@@ -157,8 +155,7 @@ class Sloped(ModelBase):
         pred = self.xp.hstack(
             (
                 self.xp.zeros((len(data), 1)),  # weight placeholder
-                (self.net(data[self.indep_coord_names].array[..., 0]) - 0.5)
-                / self._bma,
+                (self.net(data[self.indep_coord_names].array) - 0.5) / self._bma,
             )
         )
         return self._forward_priors(pred, data)

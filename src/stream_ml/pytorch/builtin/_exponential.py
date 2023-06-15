@@ -77,10 +77,10 @@ class Exponential(ModelBase):
         mpars : Params[Array], positional-only
             Model parameters. Note that these are different from the ML
             parameters.
-        data : Data[Array]
+        data : (N, F) Data[Array]
             Labelled data.
 
-        mask : (N, 1) Data[Array[bool]], keyword-only
+        mask : (N, F) Data[Array[bool]], keyword-only
             Data availability. True if data is available, False if not.
             Should have the same keys as `data`.
         **kwargs : Array
@@ -88,13 +88,13 @@ class Exponential(ModelBase):
 
         Returns
         -------
-        Array
+        (N,) Array
         """
         # The mask is used to indicate which data points are available. If the
         # mask is not provided, then all data points are assumed to be
         # available.
         if mask is not None:
-            indicator = mask[tuple(self.coord_bounds.keys())].array[..., 0]
+            indicator = mask[tuple(self.coord_bounds.keys())].array
         elif self.require_mask:
             msg = "mask is required"
             raise ValueError(msg)
@@ -103,17 +103,18 @@ class Exponential(ModelBase):
             # This has shape (N, 1) so will broadcast correctly.
 
         # Data is x - a
-        d_arr = self._b - data[self.coord_names].array[..., 0]
+        d_arr = self._b - data[self.coord_names].array
         # Get the slope from `mpars` we check param names to see if the
         # slope is a parameter. If it is not, then we assume it is 0.
         # When the slope is 0, the log-likelihood reduces to a Uniform.
-        ms = self.xp.hstack(
+        ms = self.xp.stack(
             tuple(
                 mpars[(k, "slope")]
                 if (k, "slope") in self.params.flatskeys()
-                else self.xp.zeros((len(d_arr), 1))
+                else self.xp.zeros(len(d_arr))
                 for k in self.coord_names
-            )
+            ),
+            1,
         )
         n0 = ms != 0
         bma = self.xp.zeros_like(d_arr) + self._bma
@@ -125,4 +126,4 @@ class Exponential(ModelBase):
             self.xp.log(ms[n0] / self.xp.expm1(ms[n0] * bma[n0])) + ms[n0] * d_arr[n0]
         )
 
-        return (indicator * lnliks).sum(1, keepdim=True)
+        return (indicator * lnliks).sum(1)

@@ -142,9 +142,7 @@ class MixtureModel(ModelsBase, CoreMixtureModel[Array, NNModel]):
             data, names=names_intersect(data, self.data_scaler)
         )
         # TODO! need forward priors
-        weights = self.net(
-            scaled_data[self.indep_coord_names].array[..., 0]
-        )  # (N, K, ...)
+        weights = self.net(scaled_data[self.indep_coord_names].array)  # (N, K, ...)
 
         # Parameter bounds, skipping the background weight (if present),
         # since the Mixture NN should not predict it.
@@ -157,11 +155,9 @@ class MixtureModel(ModelsBase, CoreMixtureModel[Array, NNModel]):
         wgt_is: list[int] = [-1] * len(self.components)
         counter: int = 0
         for i, (name, model) in enumerate(self.components.items()):
-            weight = (
-                weights[:, i, None]
-                if name != BACKGROUND_KEY
-                else 1 - weights.sum(1, keepdims=True)
-            )
+            weight = (weights[:, i] if name != BACKGROUND_KEY else 1 - weights.sum(1))[
+                :, None
+            ]  # (N, 1)
             wgt_is[i] = counter
 
             pred = model(data)

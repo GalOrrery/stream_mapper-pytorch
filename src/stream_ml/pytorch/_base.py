@@ -66,5 +66,5 @@ class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
             data, names=names_intersect(data, self.data_scaler)
         )
         return self._forward_priors(
-            self.net(scaled_data[self.indep_coord_names].array[..., 0]), scaled_data
+            self.net(scaled_data[self.indep_coord_names].array), scaled_data
         )

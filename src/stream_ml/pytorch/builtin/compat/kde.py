@@ -69,11 +69,11 @@ class KDEModel(ModelBase):
         """
         with xp.no_grad():
             d = (
-                data[self._all_coord_names].array[..., 0]
+                data[self._all_coord_names].array
                 if not self.transpose
-                else data[self._all_coord_names].array[..., 0].T
+                else data[self._all_coord_names].array.T
             )
-            return xp.log(xp.clip(xp.asarray(self.kernel(d)), 0))[:, None]
+            return xp.log(xp.clip(xp.asarray(self.kernel(d)), 0))
 
     def forward(self, data: Data[Array]) -> Array:
         """Forward pass.
