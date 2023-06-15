@@ -18,19 +18,19 @@ if TYPE_CHECKING:
 __all__: list[str] = []
 
 
-logsqrt2pi = math.log(2 * math.pi) / 2
+log2pi = math.log(2 * math.pi)
 sqrt2 = math.sqrt(2)
 
 
 def norm_logpdf(
-    value: Array, loc: Array, sigma: Array, *, xp: ArrayNamespace[Array]
+    x: Array, loc: Array, sigma: Array, *, xp: ArrayNamespace[Array]
 ) -> Array:
     r"""Log of the probability density function of the normal distribution.
 
     Parameters
     ----------
-    value : Array
-        Value at which to evaluate the PDF.
+    x : Array
+        x at which to evaluate the PDF.
     loc : Array
         Mean of the distribution.
     sigma : Array
@@ -44,7 +44,7 @@ def norm_logpdf(
     Array
         Log of the PDF.
     """
-    return -0.5 * ((value - loc) / sigma) ** 2 - xp.log(xp.abs(sigma)) - logsqrt2pi
+    return -0.5 * (((x - loc) / sigma) ** 2 + 2 * xp.log(sigma) + log2pi)
 
 
 @dataclass(unsafe_hash=True)
@@ -104,7 +104,7 @@ class Normal(ModelBase):
 # ============================================================================
 
 
-log4 = math.log(4)
+log2 = math.log(2)
 
 
 def log_truncation_term(
@@ -113,11 +113,11 @@ def log_truncation_term(
     """Log of integral from a to b of normal."""
     erfa = xp.erf((ab[0] - loc) / sigma / sqrt2)  # type: ignore[attr-defined]
     erfb = xp.erf((ab[1] - loc) / sigma / sqrt2)  # type: ignore[attr-defined]
-    return xp.log(erfb - erfa) - log4
+    return xp.log(erfb - erfa) - log2
 
 
 def truncnorm_logpdf(
-    value: Array,
+    x: Array,
     /,
     loc: Array,
     sigma: Array,
@@ -125,9 +125,12 @@ def truncnorm_logpdf(
     *,
     xp: ArrayNamespace[Array],
 ) -> Array:
-    return norm_logpdf(value, loc=loc, sigma=sigma, xp=xp) - log_truncation_term(
-        ab, loc=loc, sigma=sigma, xp=xp
-    )
+    out = xp.full_like(x, -xp.inf)
+    sel = (ab[0] <= x) & (x <= ab[1])
+    out[sel] = norm_logpdf(
+        x[sel], loc=loc[sel], sigma=sigma[sel], xp=xp
+    ) - log_truncation_term(ab, loc=loc[sel], sigma=sigma[sel], xp=xp)
+    return out
 
 
 @dataclass(unsafe_hash=True)
