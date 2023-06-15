@@ -61,11 +61,11 @@ class MultivariateNormal(ModelBase):
         Array
         """
         return TorchMultivariateNormal(
-            xp.hstack([mpars[c, "mu"] for c in self.coord_names]),
+            self.xp.stack([mpars[c, "mu"] for c in self.coord_names], 1),
             covariance_matrix=xp.diag_embed(
-                xp.hstack([mpars[c, "sigma"] for c in self.coord_names]) ** 2
+                self.xp.stack([mpars[c, "sigma"] for c in self.coord_names], 1) ** 2
             ),
-        ).log_prob(data[self.coord_names].array[..., 0])[:, None]
+        ).log_prob(data[self.coord_names].array)
 
 
 ##############################################################################
@@ -108,13 +108,13 @@ class MultivariateMissingNormal(MultivariateNormal):  # (MultivariateNormal)
             Additional arguments.
         """
         # Normal
-        datav = data[self.coord_names].array[..., 0]
-        mu = xp.hstack([mpars[c, "mu"] for c in self.coord_names])
-        sigma = xp.hstack([mpars[c, "sigma"] for c in self.coord_names])
+        datav = data[self.coord_names].array
+        mu = self.xp.stack([mpars[c, "mu"] for c in self.coord_names], 1)
+        sigma = self.xp.stack([mpars[c, "sigma"] for c in self.coord_names], 1)
 
         indicator: Array
         if mask is not None:
-            indicator = mask[tuple(self.coord_bounds.keys())].array[..., 0]
+            indicator = mask[tuple(self.coord_bounds.keys())].array
         elif self.require_mask:
             msg = "mask is required"
             raise ValueError(msg)
@@ -123,21 +123,21 @@ class MultivariateMissingNormal(MultivariateNormal):  # (MultivariateNormal)
             # shape (1, F) so that it can broadcast with (N, F)
 
         # misc
-        dimensionality = indicator.sum(dim=1, keepdim=True)  # (N, 1)
+        dimensionality = indicator.sum(dim=1)  # (N,)
 
         # Data - model
-        dmm = indicator * (datav - mu)  # (N, 4)
+        dmm = indicator * (datav - mu)  # (N, F)
 
         # Covariance related
-        cov = indicator * sigma**2  # (N, 4) positive definite  # TODO: add eps
-        det = (cov + (1 - indicator)).prod(dim=1, keepdims=True)  # (N, 1)
+        cov = indicator * sigma**2  # (N, F) positive definite
+        det = (cov + (1 - indicator)).prod(dim=1)  # (N,)
 
         return -0.5 * (
             dimensionality * _log2pi  # dim of data
             + xp.log(det)
-            + (  # TODO: speed up
-                dmm[:, None, :]  # (N, 1, 4)
-                @ xp.linalg.pinv(xp.diag_embed(cov))  # (N, 4, 4)
-                @ dmm[:, :, None]  # (N, 4, 1)
-            )[:, :, 0]
-        )  # (N, 1)
+            + (
+                dmm[:, None, :]  # (N, 1, F)
+                @ xp.linalg.pinv(xp.diag_embed(cov))  # (N, F, F)
+                @ dmm[..., None]  # (N, F, 1)
+            ).flatten()  # (N, 1, 1) -> (N,)
+        )  # (N,)

@@ -18,8 +18,8 @@ if TYPE_CHECKING:
 __all__: list[str] = []
 
 
-_logsqrt2pi = math.log(2 * math.pi) / 2
-_sqrt2 = math.sqrt(2)
+logsqrt2pi = math.log(2 * math.pi) / 2
+sqrt2 = math.sqrt(2)
 
 
 def norm_logpdf(
@@ -44,7 +44,7 @@ def norm_logpdf(
     Array
         Log of the PDF.
     """
-    return -0.5 * ((value - loc) / sigma) ** 2 - xp.log(xp.abs(sigma)) - _logsqrt2pi
+    return -0.5 * ((value - loc) / sigma) ** 2 - xp.log(xp.abs(sigma)) - logsqrt2pi
 
 
 @dataclass(unsafe_hash=True)
@@ -97,23 +97,23 @@ class Normal(ModelBase):
         """
         c = self.coord_names[0]
         return norm_logpdf(
-            data[c],
-            mpars[c, "mu"],
-            self.xp.clip(mpars[c, "sigma"], 1e-10),
-            xp=self.xp,
+            data[c], mpars[c, "mu"], self.xp.clip(mpars[c, "sigma"], 1e-10), xp=self.xp
         )
 
 
 # ============================================================================
 
 
+log4 = math.log(4)
+
+
 def log_truncation_term(
     ab: tuple[Array, Array], /, loc: Array, sigma: Array, *, xp: ArrayNamespace[Array]
 ) -> Array:
     """Log of integral from a to b of normal."""
-    erfa = xp.erf((ab[0] - loc) / sigma / _sqrt2)  # type: ignore[attr-defined]
-    erfb = xp.erf((ab[1] - loc) / sigma / _sqrt2)  # type: ignore[attr-defined]
-    return xp.log(erfb - erfa) - xp.log(4)
+    erfa = xp.erf((ab[0] - loc) / sigma / sqrt2)  # type: ignore[attr-defined]
+    erfb = xp.erf((ab[1] - loc) / sigma / sqrt2)  # type: ignore[attr-defined]
+    return xp.log(erfb - erfa) - log4
 
 
 def truncnorm_logpdf(
