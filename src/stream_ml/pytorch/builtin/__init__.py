@@ -31,9 +31,11 @@ from stream_ml.pytorch.builtin._multinormal import (
     MultivariateMissingNormal,
     MultivariateNormal,
 )
-from stream_ml.pytorch.builtin._normal import Normal, TruncatedNormal
-from stream_ml.pytorch.builtin._skewnormal import SkewNormal, TruncatedSkewNormal
+from stream_ml.pytorch.builtin._norm import Normal
+from stream_ml.pytorch.builtin._skewnorm import SkewNormal
 from stream_ml.pytorch.builtin._sloped import Sloped
+from stream_ml.pytorch.builtin._truncnorm import TruncatedNormal
+from stream_ml.pytorch.builtin._truncskewnorm import TruncatedSkewNormal
 from stream_ml.pytorch.typing import Array, NNModel
 
 Uniform = make_dataclass(
