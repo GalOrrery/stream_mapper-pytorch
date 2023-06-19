@@ -69,5 +69,5 @@ class TruncatedSkewNormal(SkewNormal):
             self.xp.clip(mpars[c, "sigma"], 1e-10),
             mpars[c, "skew"],
             *self.coord_bounds[self.coord_names[0]],
-            min=-15.0,
+            nil=-15.0,
         )
