@@ -212,7 +212,8 @@ class ControlRegions(TrackPriorBase):
         # Get model parameters evaluated at the control points. shape (C, 1).
         cmpars = model.unpack_params(model(self._x))  # type: ignore[call-overload]  # noqa: E501
         cmp_arr = xp.stack(  # (C, F)
-            tuple(cmpars[(n, self.component_param_name)] for n in self._y_names)
+            tuple(cmpars[(n, self.component_param_name)] for n in self._y_names),
+            dim=1
         )
 
         pdf = xp.zeros_like(cmp_arr)
