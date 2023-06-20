@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 
 import torch as xp
 
-from stream_ml.pytorch.builtin._stats.norm import cdf as norm_cdf
-from stream_ml.pytorch.builtin._stats.norm import logpdf as norm_logpdf
+from stream_ml.core.builtin._stats.norm import cdf as norm_cdf
+from stream_ml.core.builtin._stats.norm import logpdf as norm_logpdf
 
 if TYPE_CHECKING:
     from stream_ml.pytorch.typing import Array
