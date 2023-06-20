@@ -28,9 +28,9 @@ def logpdf(
     a: Array | float,
     b: Array | float,
     *,
-    min: float = -xp.inf,
+    nil: float = -xp.inf,
 ) -> Array:
-    out = xp.full_like(x, min)
+    out = xp.full_like(x, nil)
     sel = (a <= x) & (x <= b)
     out[sel] = _logpdf(x[sel], loc=loc[sel], sigma=sigma[sel], a=a, b=b)
     return out

@@ -28,7 +28,7 @@ def _logpdf(
     return skewnorm_logpdf(x, loc=loc, sigma=sigma, skew=skew) - log_trunc
 
 
-def logpdf(
+def logpdf(  # noqa: PLR0913
     x: Array,
     /,
     loc: Array,
@@ -37,12 +37,12 @@ def logpdf(
     a: Array | float,
     b: Array | float,
     *,
-    min: float = -xp.inf,
+    nil: float = -xp.inf,
 ) -> Array:
-    out = xp.full_like(x, min)
+    out = xp.full_like(x, nil)
     sel = (a <= x) & (x <= b)
     out[sel] = xp.clip(
         _logpdf(x[sel], loc=loc[sel], sigma=sigma[sel], skew=skew[sel], a=a, b=b),
-        min=min,
+        nil=nil,
     )
     return out

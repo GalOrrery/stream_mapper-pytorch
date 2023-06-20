@@ -60,5 +60,5 @@ class TruncatedNormal(Normal):
             mpars[c, "mu"],
             self.xp.clip(mpars[c, "sigma"], 1e-10),
             *self.coord_bounds[self.coord_names[0]],
-            min=-10.0,
+            nil=-15.0,
         )
