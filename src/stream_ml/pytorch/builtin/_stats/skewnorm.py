@@ -36,8 +36,8 @@ def logpdf(x: Array, /, loc: Array, sigma: Array, skew: Array) -> Array:
     # https://en.wikipedia.org/wiki/Skew_normal_distribution
     return (
         log2
-        + norm_logpdf(x, loc, sigma, xp=xp)
-        + norm_logcdf(x, loc, sigma / skew, xp=xp)
+        + norm_logpdf(x, loc=loc, sigma=sigma, xp=xp)
+        + norm_logcdf(x, loc=loc, sigma=sigma / skew, xp=xp)
     )
 
 
