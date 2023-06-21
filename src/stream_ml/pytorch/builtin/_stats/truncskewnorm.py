@@ -42,7 +42,6 @@ def logpdf(  # noqa: PLR0913
     out = xp.full_like(x, nil)
     sel = (a <= x) & (x <= b)
     out[sel] = xp.clip(
-        _logpdf(x[sel], loc=loc[sel], sigma=sigma[sel], skew=skew[sel], a=a, b=b),
-        nil=nil,
+        _logpdf(x[sel], loc=loc[sel], sigma=sigma[sel], skew=skew[sel], a=a, b=b), nil
     )
     return out
