@@ -6,10 +6,10 @@ from typing import TYPE_CHECKING
 
 import torch as xp
 
-from stream_ml.pytorch.builtin._stats.norm import cdf as norm_cdf
-from stream_ml.pytorch.builtin._stats.norm import log2
-from stream_ml.pytorch.builtin._stats.norm import logcdf as norm_logcdf
-from stream_ml.pytorch.builtin._stats.norm import logpdf as norm_logpdf
+from stream_ml.core.builtin._stats.norm import cdf as norm_cdf
+from stream_ml.core.builtin._stats.norm import log2
+from stream_ml.core.builtin._stats.norm import logcdf as norm_logcdf
+from stream_ml.core.builtin._stats.norm import logpdf as norm_logpdf
 
 if TYPE_CHECKING:
     from stream_ml.pytorch.typing import Array
@@ -34,11 +34,15 @@ def owens_t_approx(x: Array, a: Array) -> Array:
 
 def logpdf(x: Array, /, loc: Array, sigma: Array, skew: Array) -> Array:
     # https://en.wikipedia.org/wiki/Skew_normal_distribution
-    return log2 + norm_logpdf(x, loc, sigma) + norm_logcdf(x, loc, sigma / skew)
+    return (
+        log2
+        + norm_logpdf(x, loc, sigma, xp=xp)
+        + norm_logcdf(x, loc, sigma / skew, xp=xp)
+    )
 
 
 def cdf(x: Array | float, /, loc: Array, sigma: Array, skew: Array) -> Array:
-    return norm_cdf(x, loc, sigma) - 2 * owens_t_approx((x - loc) / sigma, skew)
+    return norm_cdf(x, loc, sigma, xp=xp) - 2 * owens_t_approx((x - loc) / sigma, skew)
 
 
 def logcdf(x: Array, /, loc: Array, sigma: Array, skew: Array) -> Array:
