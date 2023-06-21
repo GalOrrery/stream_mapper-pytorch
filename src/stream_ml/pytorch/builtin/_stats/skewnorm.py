@@ -34,7 +34,11 @@ def owens_t_approx(x: Array, a: Array) -> Array:
 
 def logpdf(x: Array, /, loc: Array, sigma: Array, skew: Array) -> Array:
     # https://en.wikipedia.org/wiki/Skew_normal_distribution
-    return log2 + norm_logpdf(x, loc, sigma, xp=xp) + norm_logcdf(x, loc, sigma / skew, xp=xp)
+    return (
+        log2
+        + norm_logpdf(x, loc, sigma, xp=xp)
+        + norm_logcdf(x, loc, sigma / skew, xp=xp)
+    )
 
 
 def cdf(x: Array | float, /, loc: Array, sigma: Array, skew: Array) -> Array:
