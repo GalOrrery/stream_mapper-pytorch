@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+__all__: list[str] = []
+
 from collections.abc import Callable  # noqa: TCH003
 from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING
@@ -9,9 +11,6 @@ from typing import TYPE_CHECKING
 import torch as xp
 
 from stream_ml.pytorch._base import ModelBase
-
-__all__: list[str] = []
-
 
 if TYPE_CHECKING:
     from stream_ml.core.data import Data

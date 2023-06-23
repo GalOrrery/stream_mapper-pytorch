@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+__all__: list[str] = []
+
 from typing import TYPE_CHECKING
 
 import torch as xp
 
 from stream_ml.core.utils.funcs import within_bounds
-
-__all__: list[str] = []
 
 if TYPE_CHECKING:
     from stream_ml.pytorch.typing import Array

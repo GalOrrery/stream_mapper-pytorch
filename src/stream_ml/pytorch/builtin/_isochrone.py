@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+__all__: list[str] = []
+
 from dataclasses import KW_ONLY, dataclass, field
 from typing import TYPE_CHECKING, Any, Final, Protocol
 
@@ -12,8 +14,6 @@ from stream_ml.core.data import Data
 from stream_ml.core.utils.funcs import pairwise_distance
 
 from stream_ml.pytorch._base import ModelBase
-
-__all__: list[str] = []
 
 if TYPE_CHECKING:
     from scipy.interpolate import CubicSpline
