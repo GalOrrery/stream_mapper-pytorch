@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 import torch as xp
 
-from stream_ml.core.utils.compat import array_at, get_namespace
+from stream_ml.core.utils.compat import array_at, copy, get_namespace
 
 if TYPE_CHECKING:
     from stream_ml.core.typing import ArrayNamespace
@@ -69,3 +69,19 @@ def _get_namespace_pytorch(array: Array, /) -> ArrayNamespace[Array]:
     ArrayNamespace[Array]
     """
     return cast("ArrayNamespace[Array]", xp)
+
+
+@copy.register(xp.Tensor)
+def _copy_pytorch(array: Array, /) -> Array:
+    """Copy the array.
+
+    Parameters
+    ----------
+    array : Array
+        Array to copy.
+
+    Returns
+    -------
+    Array
+    """
+    return array.clone()
