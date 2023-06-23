@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+__all__: list[str] = []
+
 from contextlib import nullcontext
 from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING
@@ -12,9 +14,6 @@ from stream_ml.core.params.scaler import scale_params
 
 from stream_ml.pytorch._base import ModelBase
 from stream_ml.pytorch.utils import names_intersect
-
-__all__: list[str] = []
-
 
 if TYPE_CHECKING:
     from stream_ml.core.data import Data

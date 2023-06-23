@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+__all__: list[str] = []
+
 from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING
 
@@ -15,8 +17,6 @@ if TYPE_CHECKING:
     from stream_ml.core.params import Params
 
     from stream_ml.pytorch.typing import Array
-
-__all__: list[str] = []
 
 
 _log2pi = xp.log(xp.asarray(2 * xp.pi))

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+__all__: list[str] = []
+
 from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING
 
@@ -16,8 +18,6 @@ if TYPE_CHECKING:
     from stream_ml.core.data import Data
     from stream_ml.core.params import Params
     from stream_ml.core.typing import ArrayNamespace
-
-__all__: list[str] = []
 
 
 #####################################################################

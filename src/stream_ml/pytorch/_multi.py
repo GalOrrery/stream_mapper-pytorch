@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+__all__: list[str] = []
+
 from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING, Any, TypeVar
 
@@ -18,8 +20,6 @@ from stream_ml.core.utils.sentinel import MISSING
 
 from stream_ml.pytorch.typing import Array, NNModel
 from stream_ml.pytorch.utils import names_intersect
-
-__all__: list[str] = []
 
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
