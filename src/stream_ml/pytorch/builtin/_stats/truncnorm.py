@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 def _logpdf(
     x: Array, /, loc: Array, sigma: Array, a: Array | float, b: Array | float
 ) -> Array:
-    log_trunc = xp.log(norm_cdf(b, loc, sigma, xp=xp) - norm_cdf(a, loc, sigma), xp=xp)
+    log_trunc = xp.log(norm_cdf(b, loc, sigma, xp=xp) - norm_cdf(a, loc, sigma, xp=xp))
     return norm_logpdf(x, loc=loc, sigma=sigma, xp=xp) - log_trunc
 
 
