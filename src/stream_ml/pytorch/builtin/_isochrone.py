@@ -92,9 +92,8 @@ class IsochroneMVNorm(ModelBase):
     -----
     Ln-likelihood required parameters:
 
-    - weight
     - distmod, mu : [mag]
-    - distmod, sigma : [mag]
+    - distmod, ln-sigma : [mag]
     """
 
     _: KW_ONLY
@@ -145,9 +144,8 @@ class IsochroneMVNorm(ModelBase):
         mpars : Params
             The model parameters. Must contain the following parameters:
 
-            - weight
             - distmod, mu : [mag]
-            - distmod, sigma : [mag]
+            - distmod, ln-sigma : [mag]
 
         data : Data[Array[(N,)]]
             The data. Must contain the fields in ``mag_names`` and ``mag_err_names``.
@@ -159,7 +157,7 @@ class IsochroneMVNorm(ModelBase):
         Array[(N,)]
         """
         dm = mpars[("distmod", "mu")]  # (N,)
-        dm_sigma = mpars[("distmod", "sigma")]  # (N,)
+        dm_sigma = self.xp.exp(mpars[("distmod", "ln-sigma")])  # (N,)
 
         # Mean : isochrone + distance modulus
         # ([N], I, F) + (N, [I], [F]) = (N, I, F)

@@ -146,7 +146,7 @@ class Sloped(ModelBase):
         Returns
         -------
         Array
-            fraction, mean, sigma
+            fraction, mean, ln-sigma
         """
         # The forward step runs on the normalized coordinates
         data = self.data_scaler.transform(

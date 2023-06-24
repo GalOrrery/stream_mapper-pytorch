@@ -21,18 +21,7 @@ if TYPE_CHECKING:
 class TruncatedSkewNormal(SkewNormal):
     r"""1D Gaussian with mixture weight.
 
-    :math:`(weight, \mu, \sigma)(\phi1)`
-
-    Parameters
-    ----------
-    n_layers : int, optional
-        Number of hidden layers, by default 3.
-    hidden_features : int, optional
-        Number of hidden features, by default 50.
-    sigma_upper_limit : float, optional keyword-only
-        Upper limit on sigma, by default 0.3.
-    fraction_upper_limit : float, optional keyword-only
-        Upper limit on fraction, by default 0.45.s
+    :math:`(weight, \mu, \ln\sigma)(\phi1)`
     """
 
     def __post_init__(self) -> None:
@@ -65,9 +54,10 @@ class TruncatedSkewNormal(SkewNormal):
         c = self.coord_names[0]
         return logpdf(
             data[c],
-            mpars[c, "mu"],
-            self.xp.clip(mpars[c, "sigma"], 1e-10),
-            mpars[c, "skew"],
-            *self.coord_bounds[self.coord_names[0]],
-            nil=-15.0,
+            loc=mpars[c, "mu"],
+            sigma=self.xp.exp(mpars[c, "ln-sigma"]),
+            skew=mpars[c, "skew"],
+            a=self.coord_bounds[self.coord_names[0]][0],
+            b=self.coord_bounds[self.coord_names[0]][1],
+            nil=-100.0,
         )

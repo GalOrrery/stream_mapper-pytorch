@@ -57,7 +57,7 @@ class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
         Returns
         -------
         (N, 3) Array
-            fraction, mean, sigma
+            fraction, mean, ln-sigma
         """
         if self.net is None:
             return self.xp.asarray([])

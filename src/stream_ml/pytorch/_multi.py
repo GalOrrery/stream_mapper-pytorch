@@ -87,7 +87,7 @@ class IndependentModels(ModelsBase, CoreIndependentModels[Array, NNModel]):
         Returns
         -------
         Array
-            fraction, mean, sigma.
+            fraction, mean, ln-sigma.
         """
         pred = self.xp.concatenate(
             tuple(model(data) for model in self.components.values()), dim=1
@@ -134,7 +134,7 @@ class MixtureModel(ModelsBase, CoreMixtureModel[Array, NNModel]):
         Returns
         -------
         Array
-            fraction, mean, sigma.
+            fraction, mean, ln-sigma.
         """
         # Predict the weights, except the background weight, which is
         # always 1 - sum(weights).
