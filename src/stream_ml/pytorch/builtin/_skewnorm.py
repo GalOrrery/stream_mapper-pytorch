@@ -31,6 +31,9 @@ class SkewNormal(ModelBase):
         if len(self.coord_names) != 1:
             msg = "Only one coordinate is supported, e.g ('phi2',)"
             raise ValueError(msg)
+        if self.coord_err_names is not None and len(self.coord_err_names) != 1:
+            msg = "Only one coordinate error is supported, e.g ('phi2_err',)"
+            raise ValueError(msg)
 
     def ln_likelihood(
         self, mpars: Params[Array], /, data: Data[Array], **kwargs: Array

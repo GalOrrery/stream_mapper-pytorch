@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 from stream_ml.pytorch.builtin._skewnorm import SkewNormal
 from stream_ml.pytorch.builtin._stats.truncskewnorm import logpdf
+from stream_ml.pytorch.builtin._truncnorm import TruncatedNormal
 
 if TYPE_CHECKING:
     from stream_ml.core.data import Data
@@ -18,19 +19,11 @@ if TYPE_CHECKING:
 
 
 @dataclass(unsafe_hash=True)
-class TruncatedSkewNormal(SkewNormal):
+class TruncatedSkewNormal(TruncatedNormal, SkewNormal):
     r"""1D Gaussian with mixture weight.
 
     :math:`(weight, \mu, \ln\sigma)(\phi1)`
     """
-
-    def __post_init__(self) -> None:
-        super().__post_init__()
-
-        # Validate the coord_names
-        if len(self.coord_names) != 1:
-            msg = "Only one coordinate is supported, e.g ('phi2',)"
-            raise ValueError(msg)
 
     def ln_likelihood(
         self, mpars: Params[Array], /, data: Data[Array], **kwargs: Array
