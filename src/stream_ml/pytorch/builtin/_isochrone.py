@@ -165,8 +165,9 @@ class IsochroneMVNorm(ModelBase):
 
         # Compute what gamma is observable for each star
         # For non-observable stars, set the ln-weight to -inf
+        # (N, F, I)
         mean_data = Data(xp.swapaxes(mean, 1, 2), names=self.mag_names)
-        in_bounds = self._ln_prior_coord_bnds(mean_data)
+        in_bounds = self._ln_prior_coord_bnds(mean_data)  # (N, I)
 
         # log prior: the cluster mass function ([N], I)
         ln_cmf = self.cluster_mass_function(self._gamma_points, xp=self.xp)[None, :]
