@@ -23,6 +23,7 @@ from stream_ml.pytorch.typing import Array, NNModel
 if TYPE_CHECKING:
     from stream_ml.core import ModelAPI
     from stream_ml.core.data import Data
+    from stream_ml.core.params.scaler import ParamScaler
 
 _0 = xp.asarray(0)
 _1 = xp.asarray(1)
@@ -59,9 +60,9 @@ def scaled_sigmoid(x: Array, /, lower: Array, upper: Array) -> Array:
 class SigmoidBounds(ParameterBounds[Array]):
     """Base class for prior bounds."""
 
-    def __post_init__(self) -> None:
+    def __post_init__(self, scaler: ParamScaler[Array] | None) -> None:
         """Post-init."""
-        super().__post_init__()
+        super().__post_init__(scaler)
 
         object.__setattr__(self, "lower", xp.asarray([self.lower]))
         object.__setattr__(self, "upper", xp.asarray([self.upper]))
