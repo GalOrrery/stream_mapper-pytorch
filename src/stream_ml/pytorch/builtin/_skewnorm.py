@@ -21,18 +21,7 @@ if TYPE_CHECKING:
 class SkewNormal(ModelBase):
     r"""1D Gaussian with mixture weight.
 
-    :math:`(weight, \mu, \sigma)(\phi1)`
-
-    Parameters
-    ----------
-    n_layers : int, optional
-        Number of hidden layers, by default 3.
-    hidden_features : int, optional
-        Number of hidden features, by default 50.
-    sigma_upper_limit : float, optional keyword-only
-        Upper limit on sigma, by default 0.3.
-    fraction_upper_limit : float, optional keyword-only
-        Upper limit on fraction, by default 0.45.s
+    :math:`(weight, \mu, \ln\sigma)(\phi1)`
     """
 
     def __post_init__(self) -> None:
@@ -41,6 +30,9 @@ class SkewNormal(ModelBase):
         # Validate the coord_names
         if len(self.coord_names) != 1:
             msg = "Only one coordinate is supported, e.g ('phi2',)"
+            raise ValueError(msg)
+        if self.coord_err_names is not None and len(self.coord_err_names) != 1:
+            msg = "Only one coordinate error is supported, e.g ('phi2_err',)"
             raise ValueError(msg)
 
     def ln_likelihood(
@@ -66,6 +58,6 @@ class SkewNormal(ModelBase):
         return logpdf(
             data[c],
             loc=mpars[c, "mu"],
-            sigma=self.xp.clip(mpars[c, "sigma"], 1e-10),
+            sigma=self.xp.exp(mpars[c, "ln-sigma"]),
             skew=mpars[c, "skew"],
         )

@@ -24,19 +24,7 @@ _log2pi = xp.log(xp.asarray(2 * xp.pi))
 
 @dataclass(unsafe_hash=True)
 class MultivariateNormal(ModelBase):
-    """Stream Model.
-
-    Parameters
-    ----------
-    n_layers : int, optional
-        Number of hidden layers, by default 3.
-    hidden_features : int, optional
-        Number of hidden features, by default 50.
-    sigma_upper_limit : float, optional keyword-only
-        Upper limit on sigma, by default 0.3.
-    fraction_upper_limit : float, optional keyword-only
-        Upper limit on fraction, by default 0.45.s
-    """
+    """Multivariate-Normal Model."""
 
     # ========================================================================
     # Statistics
@@ -63,7 +51,10 @@ class MultivariateNormal(ModelBase):
         return TorchMultivariateNormal(
             self.xp.stack([mpars[c, "mu"] for c in self.coord_names], 1),
             covariance_matrix=xp.diag_embed(
-                self.xp.stack([mpars[c, "sigma"] for c in self.coord_names], 1) ** 2
+                self.xp.stack(
+                    [self.xp.exp(mpars[c, "ln-sigma"]) for c in self.coord_names], 1
+                )
+                ** 2
             ),
         ).log_prob(data[self.coord_names].array)
 
@@ -110,7 +101,9 @@ class MultivariateMissingNormal(MultivariateNormal):  # (MultivariateNormal)
         # Normal
         datav = data[self.coord_names].array
         mu = self.xp.stack([mpars[c, "mu"] for c in self.coord_names], 1)
-        sigma = self.xp.stack([mpars[c, "sigma"] for c in self.coord_names], 1)
+        sigma = self.xp.stack(
+            [self.xp.exp(mpars[c, "ln-sigma"]) for c in self.coord_names], 1
+        )
 
         indicator: Array
         if mask is not None:
