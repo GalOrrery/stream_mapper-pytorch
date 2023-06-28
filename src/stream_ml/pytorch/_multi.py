@@ -139,7 +139,7 @@ class MixtureModel(ModelsBase, CoreMixtureModel[Array, NNModel]):
         # Predict the weights, except the background weight, which is
         # always 1 - sum(weights).
         scaled_data = self.data_scaler.transform(
-            data, names=names_intersect(data, self.data_scaler)
+            data, names=names_intersect(data, self.data_scaler), xp=self.xp
         )
         # TODO! need forward priors
         weights = self.net(scaled_data[self.indep_coord_names].array)  # (N, K, ...)
