@@ -4,19 +4,22 @@ from __future__ import annotations
 
 __all__ = [
     # core
-    "SigmoidBounds",
-    # pytorch
     "ParameterBounds",
     "NoBounds",
     "ClippedBounds",
+    # pytorch
+    "SigmoidBounds",
 ]
 
-from dataclasses import dataclass
+from dataclasses import KW_ONLY, dataclass, field, make_dataclass
 from typing import TYPE_CHECKING
 
 import torch as xp
 
-from stream_ml.core.params.bounds import ClippedBounds, NoBounds, ParameterBounds
+from stream_ml.core.params.bounds import ClippedBounds as CoreClippedBounds
+from stream_ml.core.params.bounds import NoBounds as CoreNoBounds
+from stream_ml.core.params.bounds import ParameterBounds
+from stream_ml.core.typing import ArrayNamespace
 
 from stream_ml.pytorch.typing import Array, NNModel
 
@@ -25,8 +28,24 @@ if TYPE_CHECKING:
     from stream_ml.core.data import Data
     from stream_ml.core.params.scaler import ParamScaler
 
-_0 = xp.asarray(0)
-_1 = xp.asarray(1)
+
+NoBounds = make_dataclass(
+    "NoBounds",
+    [("array_namespace", ArrayNamespace[Array], field(default=xp, kw_only=True))],
+    bases=(CoreNoBounds[Array],),
+    frozen=True,
+)
+
+
+ClippedBounds = make_dataclass(
+    "ClippedBounds",
+    [("array_namespace", ArrayNamespace[Array], field(default=xp, kw_only=True))],
+    bases=(CoreClippedBounds[Array],),
+    frozen=True,
+)
+
+
+# ==============================================================================
 
 
 def scaled_sigmoid(x: Array, /, lower: Array, upper: Array) -> Array:
@@ -59,6 +78,9 @@ def scaled_sigmoid(x: Array, /, lower: Array, upper: Array) -> Array:
 @dataclass(frozen=True)
 class SigmoidBounds(ParameterBounds[Array]):
     """Base class for prior bounds."""
+
+    _: KW_ONLY
+    array_namespace: ArrayNamespace[Array] = xp
 
     def __post_init__(self, scaler: ParamScaler[Array] | None) -> None:
         """Post-init."""
