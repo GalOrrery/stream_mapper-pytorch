@@ -52,7 +52,7 @@ class FlowModel(ModelBase):
         Array
         """
         data = self.data_scaler.transform(
-            data, names=names_intersect(data, self.data_scaler)
+            data, names=names_intersect(data, self.data_scaler), xp=self.xp
         )
         mpars = scale_params(self, mpars)
 

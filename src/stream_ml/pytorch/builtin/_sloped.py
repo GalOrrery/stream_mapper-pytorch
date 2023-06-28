@@ -103,7 +103,7 @@ class Sloped(ModelBase):
         Array
         """
         data = self.data_scaler.transform(
-            data, names=names_intersect(data.names, self.data_scaler.names)
+            data, names=names_intersect(data.names, self.data_scaler.names), xp=self.xp
         )
         mpars = scale_params(self, mpars)
 
@@ -150,7 +150,7 @@ class Sloped(ModelBase):
         """
         # The forward step runs on the normalized coordinates
         data = self.data_scaler.transform(
-            data, names=names_intersect(data, self.data_scaler)
+            data, names=names_intersect(data, self.data_scaler), xp=self.xp
         )
         pred = self.xp.hstack(
             (

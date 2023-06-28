@@ -63,7 +63,7 @@ class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
             return self.xp.asarray([])
         # The forward step runs on the normalized coordinates
         scaled_data = self.data_scaler.transform(
-            data, names=names_intersect(data, self.data_scaler)
+            data, names=names_intersect(data, self.data_scaler), xp=self.xp
         )
         return self._forward_priors(
             self.net(scaled_data[self.indep_coord_names].array), scaled_data
