@@ -8,10 +8,16 @@ __all__ = [
     "within_bounds",
     # scale
     "DataScaler",
+    "CompoundDataScaler",
     "StandardScaler",
     "names_intersect",
 ]
 
 from stream_ml.core.utils.compat import array_at, get_namespace
 from stream_ml.core.utils.funcs import within_bounds
-from stream_ml.core.utils.scale import DataScaler, StandardScaler, names_intersect
+from stream_ml.core.utils.scale import (
+    CompoundDataScaler,
+    DataScaler,
+    StandardScaler,
+    names_intersect,
+)
