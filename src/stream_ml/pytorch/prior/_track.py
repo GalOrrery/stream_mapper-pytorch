@@ -40,6 +40,8 @@ class TrackPriorBase(PriorBase[Array]):
     coord_name: str = "phi1"
     component_param_name: str = "mu"
 
+    array_namespace: ArrayNamespace[Array] = xp
+
     def __post_init__(self) -> None:
         """Post-init."""
         super().__post_init__()
@@ -82,8 +84,6 @@ class ControlPoints(TrackPriorBase):
         model: ModelAPI[Array, NNModel],
         current_lnpdf: Array | None = None,
         /,
-        *,
-        xp: ArrayNamespace[Array],
     ) -> Array:
         """Evaluate the logpdf.
 
@@ -104,9 +104,6 @@ class ControlPoints(TrackPriorBase):
             The current logpdf, by default `None`. This is useful for setting
             the additive log-pdf to a specific value.
 
-        xp : ArrayNamespace[Array], keyword-only
-            The array namespace.
-
         Returns
         -------
         Array
@@ -119,7 +116,7 @@ class ControlPoints(TrackPriorBase):
         )
 
         # For each control point, add the squared distance to the logpdf.
-        return -self.lamda * ((cmp_arr - self._y) ** 2).sum()  # (C, F) -> 1
+        return -self.lamda * self.xp.sum((cmp_arr - self._y) ** 2)  # (C, F) -> 1
 
 
 #####################################################################
@@ -179,8 +176,6 @@ class ControlRegions(TrackPriorBase):
         model: ModelAPI[Array, NNModel],
         current_lnpdf: Array | None = None,
         /,
-        *,
-        xp: ArrayNamespace[Array],
     ) -> Array:
         """Evaluate the logpdf.
 
@@ -201,9 +196,6 @@ class ControlRegions(TrackPriorBase):
             The current logpdf, by default `None`. This is useful for setting
             the additive log-pdf to a specific value.
 
-        xp : ArrayNamespace[Array], keyword-only
-            The array namespace.
-
         Returns
         -------
         Array
@@ -221,4 +213,4 @@ class ControlRegions(TrackPriorBase):
         where = cmp_arr >= self._y + self._w
         pdf[where] = (cmp_arr[where] - (self._y[where] + self._w[where])) ** 2
 
-        return -self.lamda * pdf.sum()  # (C, F) -> 1
+        return -self.lamda * self.xp.sum(pdf)  # (C, F) -> 1

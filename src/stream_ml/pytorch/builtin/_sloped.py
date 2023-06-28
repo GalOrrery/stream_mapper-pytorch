@@ -51,8 +51,8 @@ class Sloped(ModelBase):
         # TODO! instead un-freeze then
         # re-freeze.
         for k, (a, b) in self.coord_bounds.items():
-            a_ = self.data_scaler.transform(a, names=(k,))
-            b_ = self.data_scaler.transform(b, names=(k,))
+            a_: Array = self.data_scaler.transform(a, names=(k,), xp=self.xp)
+            b_: Array = self.data_scaler.transform(b, names=(k,), xp=self.xp)
 
             if k in self.params:
                 _bma.append(b_ - a_)
@@ -122,8 +122,8 @@ class Sloped(ModelBase):
         # Compute the log-likelihood, columns are coordinates.
         ln_lks = self.xp.zeros((len(data), len(self.coord_bounds)))
         for i, (k, (a, b)) in enumerate(self.coord_bounds.items()):
-            a_ = self.data_scaler.transform(a, names=(k,))
-            b_ = self.data_scaler.transform(b, names=(k,))
+            a_: Array = self.data_scaler.transform(a, names=(k,), xp=self.xp)
+            b_: Array = self.data_scaler.transform(b, names=(k,), xp=self.xp)
             # Get the slope from `mpars` we check param_names to see if the
             # slope is a parameter. If it is not, then we assume it is 0.
             # When the slope is 0, the log-likelihood reduces to a Uniform.
