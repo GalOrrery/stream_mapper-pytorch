@@ -86,6 +86,7 @@ class SigmoidBounds(ParameterBounds[Array]):
         """Post-init."""
         super().__post_init__(scaler)
 
+        # Convert to array
         object.__setattr__(self, "lower", xp.asarray([self.lower]))
         object.__setattr__(self, "upper", xp.asarray([self.upper]))
 
