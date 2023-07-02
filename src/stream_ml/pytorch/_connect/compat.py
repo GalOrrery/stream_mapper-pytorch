@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, cast
 
 import torch as xp
@@ -14,21 +15,22 @@ if TYPE_CHECKING:
     from stream_ml.pytorch.typing import Array
 
 
+@dataclass(frozen=True, slots=True)
 class ArrayAt:
     """Array at index.
 
     This is to emulate the `jax.numpy.ndarray.at` method.
     """
 
-    def __init__(self, array: Array, idx: Any) -> None:
-        """Initialize."""
-        self.array = array
-        self.idx = idx
+    array: Array
+    idx: Any
+    inplace: bool = True
 
     def set(self, value: Array | float) -> Array:  # noqa: A003
         """Set the value at the index, in-place."""
-        self.array[self.idx] = value
-        return self.array
+        out = self.array if self.inplace else self.array.clone()
+        out[self.idx] = value
+        return out
 
 
 @array_at.register(xp.Tensor)
@@ -52,7 +54,7 @@ def _array_at_pytorch(array: Array, idx: Any, /, *, inplace: bool = True) -> Arr
     ArrayAt[Array]
         Setter.
     """
-    return ArrayAt(array if inplace else array.clone(), idx)
+    return ArrayAt(array if inplace else array.clone(), idx, inplace=inplace)
 
 
 @get_namespace.register(xp.Tensor)
