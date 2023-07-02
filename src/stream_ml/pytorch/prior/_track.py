@@ -15,9 +15,10 @@ from stream_ml.pytorch.typing import Array, NNModel
 
 if TYPE_CHECKING:
     from stream_ml.core._core.api import Model as ModelAPI
-    from stream_ml.core.data import Data
     from stream_ml.core.params import Params
-    from stream_ml.core.typing import ArrayNamespace
+
+    from stream_ml.pytorch import Data
+    from stream_ml.pytorch.typing import ArrayNamespace
 
 
 #####################################################################

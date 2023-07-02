@@ -6,10 +6,9 @@ import torch as xp
 
 from stream_ml.core.prior import HardThreshold as CoreHardThreshold
 from stream_ml.core.prior import Prior, PriorBase
-from stream_ml.core.typing import ArrayNamespace
 
 from stream_ml.pytorch.prior._track import ControlPoints, ControlRegions
-from stream_ml.pytorch.typing import Array
+from stream_ml.pytorch.typing import Array, ArrayNamespace
 
 __all__ = [
     # from stream_ml.core.prior

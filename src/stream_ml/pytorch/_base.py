@@ -16,8 +16,8 @@ from stream_ml.pytorch.typing import Array, NNModel
 from stream_ml.pytorch.utils import names_intersect
 
 if TYPE_CHECKING:
-    from stream_ml.core.data import Data
-    from stream_ml.core.typing import ArrayNamespace
+    from stream_ml.pytorch import Data
+    from stream_ml.pytorch.typing import ArrayNamespace
 
     Self = TypeVar("Self", bound="ModelBase")
 

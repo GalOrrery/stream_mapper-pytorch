@@ -19,14 +19,14 @@ import torch as xp
 from stream_ml.core.params.bounds import ClippedBounds as CoreClippedBounds
 from stream_ml.core.params.bounds import NoBounds as CoreNoBounds
 from stream_ml.core.params.bounds import ParameterBounds
-from stream_ml.core.typing import ArrayNamespace
 
-from stream_ml.pytorch.typing import Array, NNModel
+from stream_ml.pytorch.typing import Array, ArrayNamespace, NNModel
 
 if TYPE_CHECKING:
     from stream_ml.core import ModelAPI
-    from stream_ml.core.data import Data
     from stream_ml.core.params.scaler import ParamScaler
+
+    from stream_ml.pytorch import Data
 
 
 NoBounds = make_dataclass(

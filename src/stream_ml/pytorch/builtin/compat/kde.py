@@ -13,9 +13,9 @@ import torch as xp
 from stream_ml.pytorch._base import ModelBase
 
 if TYPE_CHECKING:
-    from stream_ml.core.data import Data
     from stream_ml.core.params import Params
 
+    from stream_ml.pytorch import Data
     from stream_ml.pytorch.typing import Array
 
 

@@ -1,6 +1,6 @@
 """Stream Memberships Likelihood, with ML."""
 
-from stream_ml.core.data import Data
+from stream_ml.core import Data
 
 from stream_ml.pytorch import builtin, nn, params, prior, utils
 from stream_ml.pytorch._base import ModelBase

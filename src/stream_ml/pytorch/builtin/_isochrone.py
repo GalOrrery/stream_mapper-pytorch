@@ -10,18 +10,17 @@ from typing import TYPE_CHECKING, Any, Final, Protocol
 import torch as xp
 from torch.distributions import MultivariateNormal
 
-from stream_ml.core.data import Data
 from stream_ml.core.utils.funcs import pairwise_distance
 
+from stream_ml.pytorch import Data
 from stream_ml.pytorch._base import ModelBase
 
 if TYPE_CHECKING:
     from scipy.interpolate import CubicSpline
 
     from stream_ml.core.params import Params
-    from stream_ml.core.typing import ArrayNamespace
 
-    from stream_ml.pytorch.typing import Array
+    from stream_ml.pytorch.typing import Array, ArrayNamespace
 
 dm_sigma_const: Final = 5 / xp.log(xp.asarray(10))
 # Constant for first order error propagation of parallax -> distance modulus

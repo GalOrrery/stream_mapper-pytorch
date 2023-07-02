@@ -7,7 +7,7 @@ from typing import Any
 import numpy as np
 import torch as xp
 
-from stream_ml.core.data import ASTYPE_REGISTRY, Data
+from stream_ml.core._data import ASTYPE_REGISTRY, Data
 
 # --------  Register  ------------------------------------------------------
 
