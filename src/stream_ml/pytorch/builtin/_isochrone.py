@@ -18,8 +18,7 @@ from stream_ml.pytorch._base import ModelBase
 if TYPE_CHECKING:
     from scipy.interpolate import CubicSpline
 
-    from stream_ml.core.params import Params
-
+    from stream_ml.pytorch.params import Params
     from stream_ml.pytorch.typing import Array, ArrayNamespace
 
 dm_sigma_const: Final = 5 / xp.log(xp.asarray(10))

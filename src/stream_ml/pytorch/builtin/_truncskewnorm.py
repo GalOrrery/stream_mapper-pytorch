@@ -12,9 +12,8 @@ from stream_ml.pytorch.builtin._stats.truncskewnorm import logpdf
 from stream_ml.pytorch.builtin._truncnorm import TruncatedNormal
 
 if TYPE_CHECKING:
-    from stream_ml.core.params import Params
-
     from stream_ml.pytorch import Data
+    from stream_ml.pytorch.params import Params
     from stream_ml.pytorch.typing import Array
 
 
