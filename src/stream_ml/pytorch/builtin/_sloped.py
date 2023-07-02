@@ -14,9 +14,8 @@ from stream_ml.pytorch.params.scaler import scale_params
 from stream_ml.pytorch.utils import names_intersect
 
 if TYPE_CHECKING:
-    from stream_ml.core.data import Data
-    from stream_ml.core.params import Params
-
+    from stream_ml.pytorch import Data
+    from stream_ml.pytorch.params import Params
     from stream_ml.pytorch.typing import Array
 
 

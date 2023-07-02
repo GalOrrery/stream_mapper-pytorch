@@ -10,9 +10,7 @@ import torch as xp
 from stream_ml.core.utils.compat import array_at, copy, get_namespace
 
 if TYPE_CHECKING:
-    from stream_ml.core.typing import ArrayNamespace
-
-    from stream_ml.pytorch.typing import Array
+    from stream_ml.pytorch.typing import Array, ArrayNamespace
 
 
 @dataclass(frozen=True, slots=True)

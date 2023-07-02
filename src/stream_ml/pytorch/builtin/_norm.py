@@ -9,10 +9,9 @@ from dataclasses import field, make_dataclass
 import torch as xp
 
 from stream_ml.core.builtin._norm import Normal as CoreNormal
-from stream_ml.core.typing import ArrayNamespace
 
 from stream_ml.pytorch._base import ModelBase
-from stream_ml.pytorch.typing import Array, NNModel
+from stream_ml.pytorch.typing import Array, ArrayNamespace, NNModel
 
 Normal = make_dataclass(
     "Normal",
