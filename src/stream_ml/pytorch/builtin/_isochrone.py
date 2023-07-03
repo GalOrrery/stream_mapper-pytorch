@@ -117,9 +117,15 @@ class IsochroneMVNorm(ModelBase):
                 f"coord_names {self.coord_names!r}"
             )
             raise ValueError(msg)
+
+        # check gamma_edges:
+        if self.gamma_edges[0] != 0 or self.gamma_edges[-1] != 1:
+            msg = "gamma_edges must start with 0 and end with 1"
+            raise ValueError(msg)
+
         # Pairwise distance along gamma  # ([N], I)
         gamma_pdist = pairwise_distance(self.gamma_edges, axis=0, xp=self.xp)
-        self._ln_gamma_pdist = self.xp.log(gamma_pdist[None, :])
+        self._ln_d_gamma = self.xp.log(gamma_pdist[None, :])
         # Midpoint of gamma edges array
         self._gamma_points: Array = self.gamma_edges[:-1] + gamma_pdist / 2
         # Points on the isochrone along gamma  # ([N], I, F)
@@ -186,4 +192,8 @@ class IsochroneMVNorm(ModelBase):
 
         # log PDF: the (log)-Reimannian sum over the isochrone (log)-pdfs:
         # sum_i(deltagamma_i PDF(gamma_i) * Pgamma)  -> translated to log_pdf
-        return xp.logsumexp(self._ln_gamma_pdist + lnliks + ln_cmf + in_bounds, 1)
+        return xp.logsumexp(
+            self._ln_d_gamma + lnliks + ln_cmf + in_bounds, 1
+        ) - xp.logsumexp(
+            self._ln_d_gamma + ln_cmf + in_bounds, 1
+        )  # normalization
