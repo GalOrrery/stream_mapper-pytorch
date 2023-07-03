@@ -106,8 +106,8 @@ class Sloped(ModelBase):
         )
         mpars = scale_params(self, mpars)
 
-        # The mask is used to indicate which data points are available. If the
-        # mask is not provided, then all data points are assumed to be
+        # 'where' is used to indicate which data points are available. If
+        # 'where' is not provided, then all data points are assumed to be
         # available.
         if mask is not None:
             indicator = mask[tuple(self.coord_bounds.keys())].array
