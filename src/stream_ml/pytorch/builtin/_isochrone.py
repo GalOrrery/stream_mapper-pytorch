@@ -10,8 +10,6 @@ from typing import TYPE_CHECKING, Any, Final, Protocol
 import torch as xp
 from torch.distributions import MultivariateNormal
 
-from stream_ml.core.utils.funcs import pairwise_distance
-
 from stream_ml.pytorch import Data
 from stream_ml.pytorch._base import ModelBase
 
@@ -29,21 +27,44 @@ dm_sigma_const: Final = 5 / xp.log(xp.asarray(10))
 # Cluster Mass Function
 
 
-class ClusterMassFunction(Protocol):
-    """Cluster Mass Function.
+class StreamMassFunction(Protocol):
+    """Stream Mass Function.
 
     Must be parametrized by gamma [0, 1], the normalized mass over the range of the
     isochrone.
+
+    Returns the log-probability that stars of that mass (gamma) are in the
+    population modeled by the isochrone.
     """
 
-    def __call__(self, gamma: Array, *, xp: ArrayNamespace[Array]) -> Array:
-        """Call."""
+    def __call__(
+        self, gamma: Array, x: Data[Array], *, xp: ArrayNamespace[Array]
+    ) -> Array:
+        r"""Log-probability of stars at position 'x' having mass 'gamma'.
+
+        Parameters
+        ----------
+        gamma : Array[(F,))]
+            The mass of the stars, normalized to [0, 1] over the range of the
+            isochrone.
+        x : Data[Array[(N,)]]
+            The independent data. Normally this is :math:`\phi_1`.
+
+        xp : ArrayNamespace[Array], keyword-only
+            The array namespace.
+
+        Returns
+        -------
+        Array[(N,F)]
+        """
         ...
 
 
-class UniformClusterMassFunction(ClusterMassFunction):
-    def __call__(self, gamma: Array, *, xp: ArrayNamespace[Array]) -> Array:
-        return xp.zeros_like(gamma)
+class UniformStreamMassFunction(StreamMassFunction):
+    def __call__(
+        self, gamma: Array, x: Data[Array], *, xp: ArrayNamespace[Array]
+    ) -> Array:
+        return xp.zeros((len(x), len(gamma)))
 
 
 # =============================================================================
@@ -80,7 +101,7 @@ class IsochroneMVNorm(ModelBase):
         The isochrone spline for the one-to-one mapping of gamma to the
         magnitude errors.
 
-    cluster_mass_function : `ClusterMassFunction`, optional
+    stream_mass_function : `StreamMassFunction`, optional
         The cluster mass function. Must be parametrized by gamma [0, 1], the
         normalized mass over the range of the isochrone. Defaults to a uniform
         distribution. Returns the log-probability that stars of that mass
@@ -103,8 +124,8 @@ class IsochroneMVNorm(ModelBase):
     isochrone_spl: CubicSpline
     isochrone_err_spl: CubicSpline | None = None
 
-    cluster_mass_function: ClusterMassFunction = field(
-        default_factory=UniformClusterMassFunction
+    stream_mass_function: StreamMassFunction = field(
+        default_factory=UniformStreamMassFunction
     )
 
     def __post_init__(self, *args: Any, **kwargs: Any) -> None:
@@ -124,10 +145,10 @@ class IsochroneMVNorm(ModelBase):
             raise ValueError(msg)
 
         # Pairwise distance along gamma  # ([N], I)
-        gamma_pdist = pairwise_distance(self.gamma_edges, axis=0, xp=self.xp)
+        gamma_pdist = self.gamma_edges[1:] - self.gamma_edges[:-1]
         self._ln_d_gamma = self.xp.log(gamma_pdist[None, :])
         # Midpoint of gamma edges array
-        self._gamma_points: Array = self.gamma_edges[:-1] + gamma_pdist / 2
+        self._gamma_points: Array = (self.gamma_edges[:-1] + self.gamma_edges[1:]) / 2
         # Points on the isochrone along gamma  # ([N], I, F)
         isochrone_locs = xp.asarray(self.isochrone_spl(self._gamma_points))
         self._isochrone_locs = isochrone_locs[None, :, :]
@@ -173,8 +194,10 @@ class IsochroneMVNorm(ModelBase):
         mean_data = Data(xp.swapaxes(mean, 1, 2), names=self.mag_names)
         in_bounds = self._ln_prior_coord_bnds(mean_data)  # (N, I)
 
-        # log prior: the cluster mass function ([N], I)
-        ln_cmf = self.cluster_mass_function(self._gamma_points, xp=self.xp)[None, :]
+        # log prior: the cluster mass function (N, I)
+        ln_cmf = self.stream_mass_function(
+            self._gamma_points, data[self.indep_coord_names], xp=self.xp
+        )[None, :]
 
         # Covariance: star (N, [I], F, F)
         cov_data = xp.diag_embed(data[self.mag_err_names].array ** 2)[:, None, :, :]
