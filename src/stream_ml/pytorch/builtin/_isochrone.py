@@ -60,11 +60,46 @@ class StreamMassFunction(Protocol):
         ...
 
 
+@dataclass(frozen=True)
 class UniformStreamMassFunction(StreamMassFunction):
     def __call__(
         self, gamma: Array, x: Data[Array], *, xp: ArrayNamespace[Array]
     ) -> Array:
         return xp.zeros((len(x), len(gamma)))
+
+
+@dataclass(frozen=True)
+class HardCutoffMassFunction(StreamMassFunction):
+    """Hard Cutoff IMF."""
+
+    lower: float = 0
+    upper: float = 1
+
+    def __call__(
+        self, gamma: Array, x: Data[Array], *, xp: ArrayNamespace[Array]
+    ) -> Array:
+        """Log-probability of the mass function."""
+        out = xp.full((len(x), len(gamma)), -xp.inf)
+        out[:, (gamma >= self.lower) & (gamma <= self.upper)] = 0
+        return out
+
+
+@dataclass(frozen=True)
+class StepwiseMassFunction(StreamMassFunction):
+    """Hard Cutoff IMF."""
+
+    boundaries: tuple[float, ...]  # (B + 1,)
+    log_probs: tuple[float, ...]  # (B,)
+
+    def __call__(
+        self, gamma: Array, x: Data[Array], *, xp: ArrayNamespace[Array]
+    ) -> Array:
+        out = xp.full((len(x), len(gamma)), -xp.inf)
+        for lower, upper, lnp in zip(
+            self.boundaries[:-1], self.boundaries[1:], self.log_probs, strict=True
+        ):
+            out[:, (gamma >= lower) & (gamma < upper)] = lnp
+        return out
 
 
 # =============================================================================

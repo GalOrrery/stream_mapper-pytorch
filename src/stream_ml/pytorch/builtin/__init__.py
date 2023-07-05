@@ -7,11 +7,16 @@ __all__ = [
     "Uniform",
     "Sloped",
     "Exponential",
-    "IsochroneMVNorm",
     "Normal",
     "TruncatedNormal",
     "SkewNormal",
     "TruncatedSkewNormal",
+    # -- isochrone
+    "IsochroneMVNorm",
+    "StreamMassFunction",
+    "UniformStreamMassFunction",
+    "HardCutoffMassFunction",
+    "StepwiseMassFunction",
     # -- multivariate
     "MultivariateNormal",
     "MultivariateMissingNormal",
@@ -28,7 +33,13 @@ from stream_ml.core.builtin._uniform import Uniform as CoreUniform
 
 from stream_ml.pytorch._base import ModelBase
 from stream_ml.pytorch.builtin import compat
-from stream_ml.pytorch.builtin._isochrone import IsochroneMVNorm
+from stream_ml.pytorch.builtin._isochrone import (
+    HardCutoffMassFunction,
+    IsochroneMVNorm,
+    StepwiseMassFunction,
+    StreamMassFunction,
+    UniformStreamMassFunction,
+)
 from stream_ml.pytorch.builtin._multinormal import (
     MultivariateMissingNormal,
     MultivariateNormal,
