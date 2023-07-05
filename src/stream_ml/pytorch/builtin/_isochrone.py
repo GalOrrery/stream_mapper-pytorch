@@ -55,7 +55,7 @@ class StreamMassFunction(Protocol):
 
         Returns
         -------
-        Array[(N,F)]
+        Array[(N, F)]
         """
         ...
 
@@ -78,7 +78,6 @@ class HardCutoffMassFunction(StreamMassFunction):
     def __call__(
         self, gamma: Array, x: Data[Array], *, xp: ArrayNamespace[Array]
     ) -> Array:
-        """Log-probability of the mass function."""
         out = xp.full((len(x), len(gamma)), -xp.inf)
         out[:, (gamma >= self.lower) & (gamma <= self.upper)] = 0
         return out
@@ -232,7 +231,7 @@ class IsochroneMVNorm(ModelBase):
         # log prior: the cluster mass function (N, I)
         ln_cmf = self.stream_mass_function(
             self._gamma_points, data[self.indep_coord_names], xp=self.xp
-        )[None, :]
+        )
 
         # Covariance: star (N, [I], F, F)
         cov_data = xp.diag_embed(data[self.mag_err_names].array ** 2)[:, None, :, :]
