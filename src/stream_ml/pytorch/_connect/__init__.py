@@ -2,4 +2,4 @@
 
 __all__: list[str] = []
 
-from stream_ml.pytorch._connect import base, compat, data, funcs  # noqa: F401
+from stream_ml.pytorch._connect import compat, data, funcs, nn_namespace  # noqa: F401
