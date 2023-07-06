@@ -4,18 +4,16 @@ from __future__ import annotations
 
 __all__: list[str] = []
 
-from dataclasses import KW_ONLY, dataclass
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from torch import nn
 
 from stream_ml.core import IndependentModels as CoreIndependentModels
 from stream_ml.core import MixtureModel as CoreMixtureModel
-from stream_ml.core import ModelAPI, NNField
 from stream_ml.core import ModelsBase as CoreModelsBase
-from stream_ml.core.prior import PriorBase  # noqa: TCH001
+from stream_ml.core import NNField
 from stream_ml.core.setup_package import BACKGROUND_KEY
-from stream_ml.core.utils.frozen_dict import FrozenDictField
 from stream_ml.core.utils.sentinel import MISSING
 
 from stream_ml.pytorch.typing import Array, NNModel
@@ -30,11 +28,6 @@ if TYPE_CHECKING:
 @dataclass
 class ModelsBase(nn.Module, CoreModelsBase[Array, NNModel]):
     """Multi-model base class."""
-
-    components: FrozenDictField[str, ModelAPI[Array, NNModel]] = FrozenDictField()
-
-    _: KW_ONLY
-    priors: tuple[PriorBase[Array], ...] = ()
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -114,7 +107,6 @@ class MixtureModel(ModelsBase, CoreMixtureModel[Array, NNModel]):
     """
 
     net: NNField[NNModel] = NNField(default=MISSING)
-    _: KW_ONLY
 
     def __new__(cls: type[Self], *args: Any, **kwargs: Any) -> Self:  # noqa: ARG003
         """Initialize the model. This is needed for PyTorch."""
