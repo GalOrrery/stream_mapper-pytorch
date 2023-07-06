@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 #####################################################################
 
 
-def atleast_2d(x: Array) -> Array:
+def _atleast_2d(x: Array) -> Array:
     """Ensure that x is at least 2d."""
     if x.ndim == 1:
         return x[:, None]
@@ -59,7 +59,7 @@ class TrackPriorBase(PriorBase[Array]):
 
         self._y: Array
         object.__setattr__(
-            self, "_y", atleast_2d(xp.squeeze(self.control_points[dep_names].array))
+            self, "_y", _atleast_2d(xp.squeeze(self.control_points[dep_names].array))
         )
 
 
@@ -165,7 +165,7 @@ class ControlRegions(TrackPriorBase):
         object.__setattr__(
             self,
             "_w",
-            atleast_2d(xp.squeeze(self.width[self._y_names].array))
+            _atleast_2d(xp.squeeze(self.width[self._y_names].array))
             if not isinstance(self.width, float)
             else xp.ones_like(self._y) * self.width,
         )
