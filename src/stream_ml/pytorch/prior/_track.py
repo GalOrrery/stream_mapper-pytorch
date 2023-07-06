@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 import torch as xp
 
-from stream_ml.core.prior import PriorBase
+from stream_ml.core.prior import Prior
 
 from stream_ml.pytorch.typing import Array, NNModel
 
@@ -32,7 +32,7 @@ def _atleast_2d(x: Array) -> Array:
 
 
 @dataclass(frozen=True)
-class TrackPriorBase(PriorBase[Array]):
+class TrackPrior(Prior[Array]):
     """Track Prior Base."""
 
     control_points: Data[Array]
@@ -67,7 +67,7 @@ class TrackPriorBase(PriorBase[Array]):
 
 
 @dataclass(frozen=True)
-class ControlPoints(TrackPriorBase):
+class ControlPoints(TrackPrior):
     """Control points prior.
 
     Parameters
@@ -124,7 +124,7 @@ class ControlPoints(TrackPriorBase):
 
 
 @dataclass(frozen=True)
-class ControlRegions(TrackPriorBase):
+class ControlRegions(TrackPrior):
     r"""Control regions prior.
 
     The gaussian control points work very well, but they are very informative.
