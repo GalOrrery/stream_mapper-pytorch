@@ -5,16 +5,22 @@ from __future__ import annotations
 __all__: list[str] = []
 
 from dataclasses import KW_ONLY, dataclass, field
+from functools import reduce
 from typing import TYPE_CHECKING, Any, Final, Protocol
 
 import torch as xp
 from torch.distributions import MultivariateNormal
+
+from stream_ml.core.utils.frozen_dict import FrozenDict, FrozenDictField
+from stream_ml.core.utils.funcs import within_bounds
 
 from stream_ml.pytorch import Data
 from stream_ml.pytorch._base import ModelBase
 
 if TYPE_CHECKING:
     from scipy.interpolate import CubicSpline
+
+    from stream_ml.core.typing import BoundsT
 
     from stream_ml.pytorch.params import Params
     from stream_ml.pytorch.typing import Array, ArrayNamespace
@@ -121,6 +127,8 @@ class IsochroneMVNorm(ModelBase):
         The names of the independent coordinates.
     coord_names : tuple[str, ...], optional
         The names of the coordinates.
+        This is not the same as the ``mag_names``.
+
     mag_names : tuple[str, ...], optional
         The names of the magnitudes.
     mag_err_names : tuple[str, ...], optional
@@ -150,10 +158,14 @@ class IsochroneMVNorm(ModelBase):
     """
 
     _: KW_ONLY
+    coord_names: tuple[str, ...] = ()  # optional
+
     # Photometric information
     mag_names: tuple[str, ...] = ("g", "r")
     mag_err_names: tuple[str, ...] = ("g_err", "r_err")
+    mag_bounds: FrozenDictField[str, BoundsT] = FrozenDictField(FrozenDict())
 
+    # Isochrone information
     gamma_edges: Array
     isochrone_spl: CubicSpline
     isochrone_err_spl: CubicSpline | None = None
@@ -165,11 +177,21 @@ class IsochroneMVNorm(ModelBase):
     def __post_init__(self, *args: Any, **kwargs: Any) -> None:
         super().__post_init__(*args, **kwargs)
 
-        # Check mag_names is a subset of coord_names
-        if not set(self.mag_names).issubset(self.coord_names):
+        # Coordinate bounds are necessary
+        if self.mag_bounds.keys() != set(self.mag_names):
             msg = (
-                f"mag_names {self.mag_names!r} must be a subset of "
-                f"coord_names {self.coord_names!r}"
+                f"`mag_bounds` ({tuple(self.mag_bounds.keys())}) do not match "
+                f"`mag_names` ({self.mag_names})."
+            )
+            raise ValueError(msg)
+
+        # mag_err_names must be None or the same length as mag_names.
+        # we can't check that the names are the same, because they aren't.
+        kmen = self.mag_err_names
+        if kmen is not None and len(kmen) != len(self.mag_names):
+            msg = (
+                f"`mag_err_names` ({kmen}) must be None or "
+                f"the same length as `mag_names` ({self.mag_names})."
             )
             raise ValueError(msg)
 
@@ -192,6 +214,22 @@ class IsochroneMVNorm(ModelBase):
         else:
             isochrone_err = xp.asarray(self.isochrone_err_spl(self._gamma_points))
             self._isochrone_cov = xp.diag_embed(isochrone_err[None, :, :])
+
+    def _mags_in_bound(self, data: Data[Array], /) -> Array:
+        """Elementwise log prior for coordinate bounds.
+
+        Zero everywhere except where the data are outside the
+        coordinate bounds, where it is -inf.
+        """
+        shape = data.array.shape[:1] + data.array.shape[2:]
+        where = reduce(
+            self.xp.logical_or,
+            (~within_bounds(data[k], *v) for k, v in self.mag_bounds.items()),
+            self.xp.zeros(shape, dtype=bool),
+        )
+        return self.xp.where(
+            where, self.xp.full(shape, -self.xp.inf), self.xp.zeros(shape)
+        )
 
     def ln_likelihood(
         self, mpars: Params[Array], /, data: Data[Array], **kwargs: Array
@@ -226,7 +264,7 @@ class IsochroneMVNorm(ModelBase):
         # For non-observable stars, set the ln-weight to -inf
         # (N, F, I)
         mean_data = Data(xp.swapaxes(mean, 1, 2), names=self.mag_names)
-        in_bounds = self._ln_prior_coord_bnds(mean_data)  # (N, I)
+        in_bounds = self._mags_in_bound(mean_data)  # (N, I)
 
         # log prior: the cluster mass function (N, I)
         ln_cmf = self.stream_mass_function(
@@ -251,6 +289,4 @@ class IsochroneMVNorm(ModelBase):
         # sum_i(deltagamma_i PDF(gamma_i) * Pgamma)  -> translated to log_pdf
         return xp.logsumexp(
             self._ln_d_gamma + lnliks + ln_cmf + in_bounds, 1
-        ) - xp.logsumexp(
-            self._ln_d_gamma + ln_cmf + in_bounds, 1
-        )  # normalization
+        ) - xp.logsumexp(self._ln_d_gamma + ln_cmf + in_bounds, 1)
