@@ -126,24 +126,22 @@ class IsochroneMVNorm(ModelBase):
     indep_coord_names : tuple[str, ...], optional
         The names of the independent coordinates.
     coord_names : tuple[str, ...], optional
-        The names of the coordinates.
-        This is not the same as the ``mag_names``.
+        The names of the coordinates. This is not the same as the
+        ``phot_names``.
 
-    mag_names : tuple[str, ...], optional
-        The names of the magnitudes.
-    mag_err_names : tuple[str, ...], optional
-        The names of the magnitude errors.
-    color_names : tuple[str, ...], optional
-        The names of the colors.
-    color_err_names : tuple[str, ...], optional
-        The names of the color errors.
+    phot_names : tuple[str, ...], optional
+        The names of the photometric coordinates: magnitudes and colors.
+    phot_err_names : tuple[str, ...], optional
+        The names of the photometric errors: magnitudes and colors.
+    phot_apply_dm : tuple[bool, ...], optional
+        Whether to apply the distance modulus to the photometric coordinate.
+        Must be the same length as ``phot_names``.
 
     gamma_edges : Array
         The edges of the gamma bins. Must be 1D.
     isochrone_spl : CubicSpline
         The isochrone spline for the one-to-one mapping of gamma to the
-        magnitudes (``mag_names``) and colors (``color_names``).
-        The magnitude coordinates must precede the color coordinates.
+        photometry (``phot_names``).
     isochrone_err_spl : CubicSpline
         The isochrone spline for the one-to-one mapping of gamma to the
         magnitude errors.
@@ -168,28 +166,20 @@ class IsochroneMVNorm(ModelBase):
         from stream_ml.pytorch.builtin import IsochroneMVNorm
 
         model = IsochroneMVNorm(
-            net=...,  # (N,) -> ...
-            data_scaler=...,
-            indep_coord_names=("phi1",),
-            # coordinates
-            coord_names=(...),
-            coord_bounds=(...),
-            # photometry
-            mag_names=("g",),
-            mag_err_names=("g_err",),
-            color_names=("g-r",),
-            color_err_names=("g-r_err",),
-            phot_bounds=(...),
+            net=...,  # (N,) -> ... data_scaler=...,
+            indep_coord_names=("phi1",), # coordinates coord_names=(...),
+            coord_bounds=(...), # photometry mag_names=("g",),
+            mag_err_names=("g_err",), color_names=("g-r",),
+            color_err_names=("g-r_err",), phot_bounds=(...),
     """
 
     _: KW_ONLY
     coord_names: tuple[str, ...] = ()  # optional
 
     # Photometric information
-    mag_names: tuple[str, ...] = ()
-    mag_err_names: tuple[str, ...] | None = None
-    color_names: tuple[str, ...] = ()
-    color_err_names: tuple[str, ...] | None = None
+    phot_names: tuple[str, ...]
+    phot_err_names: tuple[str, ...] | None = None
+    phot_apply_dm: tuple[bool, ...] = ()
     phot_bounds: FrozenDictField[str, BoundsT] = FrozenDictField(FrozenDict())
 
     # Isochrone information
@@ -204,28 +194,26 @@ class IsochroneMVNorm(ModelBase):
     def __post_init__(self, *args: Any, **kwargs: Any) -> None:
         super().__post_init__(*args, **kwargs)
 
-        # Need one of mag_names or color_names
-        if not self.mag_names and not self.color_names:
-            msg = "Must provide at least one of `mag_names` or `color_names`."
+        # Need phot_names
+        if not self.phot_names:
+            msg = "Must provide `phot_names`."
             raise ValueError(msg)
 
-        # mag_err_names must be None or the same length as mag_names.
-        # we can't check that the names are the same, because they aren't.
-        kmen = self.mag_err_names
-        if kmen is not None and len(kmen) != len(self.mag_names):
+        # And phot_apply_dm
+        if len(self.phot_apply_dm) != len(self.phot_names):
             msg = (
-                f"`mag_err_names` ({kmen}) must be None or "
-                f"the same length as `mag_names` ({self.mag_names})."
+                f"`phot_apply_dm` ({self.phot_apply_dm}) must be the same "
+                f"length as `phot_names` ({self.phot_names})."
             )
             raise ValueError(msg)
 
-        # color_err_names must be None or the same length as color_names.
+        # phot_err_names must be None or the same length as phot_names.
         # we can't check that the names are the same, because they aren't.
-        kcen = self.color_err_names
-        if kcen is not None and len(kcen) != len(self.color_names):
+        kmen = self.phot_err_names
+        if kmen is not None and len(kmen) != len(self.phot_names):
             msg = (
-                f"`color_err_names` ({kcen}) must be None or "
-                f"the same length as `color_names` ({self.color_names})."
+                f"`phot_err_names` ({kmen}) must be None or "
+                f"the same length as `phot_names` ({self.phot_names})."
             )
             raise ValueError(msg)
 
@@ -238,7 +226,7 @@ class IsochroneMVNorm(ModelBase):
             raise ValueError(msg)
 
         # Check gamma_edges:
-        if self.gamma_edges[0] != 0 or self.gamma_edges[-1] != 1:
+        if (self.gamma_edges[0] != 0) or (self.gamma_edges[-1] != 1):
             msg = "gamma_edges must start with 0 and end with 1"
             raise ValueError(msg)
 
@@ -264,22 +252,6 @@ class IsochroneMVNorm(ModelBase):
         else:
             isochrone_err = xp.asarray(self.isochrone_err_spl(self._gamma_points))
             self._isochrone_cov = xp.diag_embed(isochrone_err[None, :, :])
-
-    @property
-    def phot_names(self) -> tuple[str, ...]:
-        """The names of the photometric data."""
-        return self.mag_names + self.color_names
-
-    @property
-    def phot_err_names(self) -> tuple[str, ...] | None:
-        """The names of the photometric error data."""
-        if self.mag_err_names is None and self.color_err_names is None:
-            return None
-        elif self.mag_err_names is None:
-            return self.color_err_names
-        elif self.color_err_names is None:
-            return self.mag_err_names
-        return self.mag_err_names + self.color_err_names
 
     def _phot_in_bound(self, data: Data[Array], /) -> Array:
         """Elementwise log prior for coordinate bounds.
@@ -311,7 +283,7 @@ class IsochroneMVNorm(ModelBase):
             - distmod, ln-sigma : [mag]
 
         data : Data[Array[(N,)]]
-            The data. Must contain the fields in ``mag_names`` and ``mag_err_names``.
+            The data. Must contain the fields in ``phot_names`` and ``phot_err_names``.
         **kwargs: Array
             Not used.
 
@@ -325,7 +297,7 @@ class IsochroneMVNorm(ModelBase):
         # Mean : isochrone + distance modulus
         # ([N], I, F) + (N, [I], [F]) = (N, I, F)
         mean = self.xp.zeros((len(dm), 1, 1)) + self._isochrone_locs
-        mean[:, :, : len(self.mag_names)] += dm[:, None, None]
+        mean[:, :, self.phot_apply_dm] += dm[:, None, None]
 
         # Compute what gamma is observable for each star
         # For non-observable stars, set the ln-weight to -inf
