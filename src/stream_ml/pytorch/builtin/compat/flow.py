@@ -50,6 +50,7 @@ class FlowModel(ModelBase):
         -------
         Array
         """
+        # TODO: support `where` argument.
         data = self.data_scaler.transform(
             data, names=names_intersect(data, self.data_scaler), xp=self.xp
         )

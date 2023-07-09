@@ -5,16 +5,22 @@ from __future__ import annotations
 __all__: list[str] = []
 
 from dataclasses import KW_ONLY, dataclass, field
+from functools import reduce
 from typing import TYPE_CHECKING, Any, Final, Protocol
 
 import torch as xp
 from torch.distributions import MultivariateNormal
+
+from stream_ml.core.utils.frozen_dict import FrozenDict, FrozenDictField
+from stream_ml.core.utils.funcs import within_bounds
 
 from stream_ml.pytorch import Data
 from stream_ml.pytorch._base import ModelBase
 
 if TYPE_CHECKING:
     from scipy.interpolate import CubicSpline
+
+    from stream_ml.core.typing import BoundsT
 
     from stream_ml.pytorch.params import Params
     from stream_ml.pytorch.typing import Array, ArrayNamespace
@@ -120,17 +126,22 @@ class IsochroneMVNorm(ModelBase):
     indep_coord_names : tuple[str, ...], optional
         The names of the independent coordinates.
     coord_names : tuple[str, ...], optional
-        The names of the coordinates.
-    mag_names : tuple[str, ...], optional
-        The names of the magnitudes.
-    mag_err_names : tuple[str, ...], optional
-        The names of the magnitude errors.
+        The names of the coordinates. This is not the same as the
+        ``phot_names``.
+
+    phot_names : tuple[str, ...], optional
+        The names of the photometric coordinates: magnitudes and colors.
+    phot_err_names : tuple[str, ...], optional
+        The names of the photometric errors: magnitudes and colors.
+    phot_apply_dm : tuple[bool, ...], optional
+        Whether to apply the distance modulus to the photometric coordinate.
+        Must be the same length as ``phot_names``.
 
     gamma_edges : Array
         The edges of the gamma bins. Must be 1D.
     isochrone_spl : CubicSpline
         The isochrone spline for the one-to-one mapping of gamma to the
-        magnitudes (``mag_names``).
+        photometry (``phot_names``).
     isochrone_err_spl : CubicSpline
         The isochrone spline for the one-to-one mapping of gamma to the
         magnitude errors.
@@ -147,13 +158,31 @@ class IsochroneMVNorm(ModelBase):
 
     - distmod, mu : [mag]
     - distmod, ln-sigma : [mag]
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from stream_ml.pytorch.builtin import IsochroneMVNorm
+
+        model = IsochroneMVNorm(
+            net=...,  # (N,) -> ... data_scaler=...,
+            indep_coord_names=("phi1",), # coordinates coord_names=(...),
+            coord_bounds=(...), # photometry mag_names=("g",),
+            mag_err_names=("g_err",), color_names=("g-r",),
+            color_err_names=("g-r_err",), phot_bounds=(...),
     """
 
     _: KW_ONLY
-    # Photometric information
-    mag_names: tuple[str, ...] = ("g", "r")
-    mag_err_names: tuple[str, ...] = ("g_err", "r_err")
+    coord_names: tuple[str, ...] = ()  # optional
 
+    # Photometric information
+    phot_names: tuple[str, ...]
+    phot_err_names: tuple[str, ...] | None = None
+    phot_apply_dm: tuple[bool, ...] = ()
+    phot_bounds: FrozenDictField[str, BoundsT] = FrozenDictField(FrozenDict())
+
+    # Isochrone information
     gamma_edges: Array
     isochrone_spl: CubicSpline
     isochrone_err_spl: CubicSpline | None = None
@@ -165,17 +194,48 @@ class IsochroneMVNorm(ModelBase):
     def __post_init__(self, *args: Any, **kwargs: Any) -> None:
         super().__post_init__(*args, **kwargs)
 
-        # Check mag_names is a subset of coord_names
-        if not set(self.mag_names).issubset(self.coord_names):
+        # Need phot_names
+        if not self.phot_names:
+            msg = "Must provide `phot_names`."
+            raise ValueError(msg)
+
+        # And phot_apply_dm
+        if len(self.phot_apply_dm) != len(self.phot_names):
             msg = (
-                f"mag_names {self.mag_names!r} must be a subset of "
-                f"coord_names {self.coord_names!r}"
+                f"`phot_apply_dm` ({self.phot_apply_dm}) must be the same "
+                f"length as `phot_names` ({self.phot_names})."
             )
             raise ValueError(msg)
 
-        # check gamma_edges:
-        if self.gamma_edges[0] != 0 or self.gamma_edges[-1] != 1:
+        # phot_err_names must be None or the same length as phot_names.
+        # we can't check that the names are the same, because they aren't.
+        kmen = self.phot_err_names
+        if kmen is not None and len(kmen) != len(self.phot_names):
+            msg = (
+                f"`phot_err_names` ({kmen}) must be None or "
+                f"the same length as `phot_names` ({self.phot_names})."
+            )
+            raise ValueError(msg)
+
+        # Coordinate bounds are necessary
+        if self.phot_bounds.keys() != set(self.phot_names):
+            msg = (
+                f"`phot_bounds` ({tuple(self.phot_bounds.keys())}) do not match "
+                f"`phot_names` ({self.phot_names})."
+            )
+            raise ValueError(msg)
+
+        # Check gamma_edges:
+        if (self.gamma_edges[0] != 0) or (self.gamma_edges[-1] != 1):
             msg = "gamma_edges must start with 0 and end with 1"
+            raise ValueError(msg)
+
+        # Check isochrone_spl:
+        if self.isochrone_spl.c.shape[-1] != len(self.phot_names):
+            msg = (
+                f"`isochrone_spl` must have {len(self.phot_names)} "
+                f"features, but has {self.isochrone_spl.c.shape[-1]}."
+            )
             raise ValueError(msg)
 
         # Pairwise distance along gamma  # ([N], I)
@@ -193,10 +253,32 @@ class IsochroneMVNorm(ModelBase):
             isochrone_err = xp.asarray(self.isochrone_err_spl(self._gamma_points))
             self._isochrone_cov = xp.diag_embed(isochrone_err[None, :, :])
 
+    def _phot_in_bound(self, data: Data[Array], /) -> Array:
+        """Elementwise log prior for coordinate bounds.
+
+        Zero everywhere except where the data are outside the
+        coordinate bounds, where it is -inf.
+        """
+        shape = data.array.shape[:1] + data.array.shape[2:]
+        where = reduce(
+            self.xp.logical_or,
+            (~within_bounds(data[k], *v) for k, v in self.phot_bounds.items()),
+            self.xp.zeros(shape, dtype=bool),
+        )
+        return self.xp.where(
+            where, self.xp.full(shape, -self.xp.inf), self.xp.zeros(shape)
+        )
+
     def ln_likelihood(
-        self, mpars: Params[Array], /, data: Data[Array], **kwargs: Array
+        self,
+        mpars: Params[Array],
+        /,
+        data: Data[Array],
+        *,
+        correlation_matrix: Array | None = None,
+        **kwargs: Array,
     ) -> Array:
-        """Compute the log-likelihood.
+        r"""Compute the log-likelihood.
 
         Parameters
         ----------
@@ -207,7 +289,16 @@ class IsochroneMVNorm(ModelBase):
             - distmod, ln-sigma : [mag]
 
         data : Data[Array[(N,)]]
-            The data. Must contain the fields in ``mag_names`` and ``mag_err_names``.
+            The data. Must contain the fields in ``phot_names`` and ``phot_err_names``.
+
+        correlation_matrix : Array[(N,F,F)], optional keyword-only
+            The correlation matrix. If not provided, then the covariance matrix is
+            assumed to be diagonal.
+            The covariance matrix is computed as:
+
+            .. math::
+
+                \rm{cov}(X) = \rm{diag}(\vec{\sigma}) \cdot \rm{corr} \cdot \rm{diag}(\vec{\sigma})
         **kwargs: Array
             Not used.
 
@@ -220,13 +311,14 @@ class IsochroneMVNorm(ModelBase):
 
         # Mean : isochrone + distance modulus
         # ([N], I, F) + (N, [I], [F]) = (N, I, F)
-        mean = self._isochrone_locs + dm[:, None, None]
+        mean = self.xp.zeros((len(dm), 1, 1)) + self._isochrone_locs
+        mean[:, :, self.phot_apply_dm] += dm[:, None, None]
 
         # Compute what gamma is observable for each star
         # For non-observable stars, set the ln-weight to -inf
         # (N, F, I)
-        mean_data = Data(xp.swapaxes(mean, 1, 2), names=self.mag_names)
-        in_bounds = self._ln_prior_coord_bnds(mean_data)  # (N, I)
+        mean_data = Data(xp.swapaxes(mean, 1, 2), names=self.phot_names)
+        in_bounds = self._phot_in_bound(mean_data)  # (N, I)
 
         # log prior: the cluster mass function (N, I)
         ln_cmf = self.stream_mass_function(
@@ -234,23 +326,30 @@ class IsochroneMVNorm(ModelBase):
         )
 
         # Covariance: star (N, [I], F, F)
-        cov_data = xp.diag_embed(data[self.mag_err_names].array ** 2)[:, None, :, :]
+        vars_data = (
+            xp.diag_embed(data[self.phot_err_names].array)[:, None, :, :]
+            if self.phot_err_names is not None
+            else self.xp.zeros(1)
+        )
+        cov_data = (
+            vars_data @ vars_data
+            if correlation_matrix is None
+            else vars_data @ correlation_matrix[:, None, :, :] @ vars_data
+        )
         # Covariance: isochrone ([N], I, F, F)
         # Covariance: distance modulus  (N, [I], F, F)
         cov_dm = xp.diag_embed(
-            xp.ones((len(data), len(self.mag_names))) * dm_sigma[:, None] ** 2
+            xp.ones((len(data), len(self.phot_names))) * dm_sigma[:, None] ** 2
         )[:, None, :, :]
         cov = cov_data + self._isochrone_cov + cov_dm
 
         # Log-likelihood of the multivariate normal
         mvn = MultivariateNormal(mean, covariance_matrix=cov)
-        mdata = data[self.mag_names].array[:, None, ...]  # (N, [I], F)
+        mdata = data[self.phot_names].array[:, None, ...]  # (N, [I], F)
         lnliks = mvn.log_prob(mdata)  # (N, I)
 
         # log PDF: the (log)-Reimannian sum over the isochrone (log)-pdfs:
         # sum_i(deltagamma_i PDF(gamma_i) * Pgamma)  -> translated to log_pdf
         return xp.logsumexp(
             self._ln_d_gamma + lnliks + ln_cmf + in_bounds, 1
-        ) - xp.logsumexp(
-            self._ln_d_gamma + ln_cmf + in_bounds, 1
-        )  # normalization
+        ) - xp.logsumexp(self._ln_d_gamma + ln_cmf + in_bounds, 1)

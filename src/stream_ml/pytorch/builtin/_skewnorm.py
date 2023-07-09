@@ -83,9 +83,9 @@ class SkewNormal(ModelBase):
         cns, cens = self.coord_names, self.coord_err_names
         x = data[cns].array  # (N, F)
 
-        mu = self.xp.stack(tuple(mpars[(k, "mu")] for k in cns), 1)[idx]
-        ln_s = self.xp.stack(tuple(mpars[(k, "ln-sigma")] for k in cns), 1)[idx]
-        skew = self.xp.stack(tuple(mpars[(k, "skew")] for k in cns), 1)[idx]
+        mu = self._stack_param(mpars, "mu", cns)[idx]
+        ln_s = self._stack_param(mpars, "ln-sigma", cns)[idx]
+        skew = self._stack_param(mpars, "skew", cns)[idx]
         if cens is not None:
             # it's fine if sigma_o is 0
             # TODO: I suspect there are better ways to write this

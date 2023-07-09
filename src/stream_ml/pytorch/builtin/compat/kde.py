@@ -65,6 +65,7 @@ class KDEModel(ModelBase):
         -------
         Array
         """
+        # TODO: support `where` argument.
         with xp.no_grad():
             d = (
                 data[self._all_coord_names].array
