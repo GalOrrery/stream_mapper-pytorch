@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any, Final, Protocol
 import torch as xp
 from torch.distributions import MultivariateNormal
 
+from stream_ml.core._core.field import NNField
 from stream_ml.core.utils.frozen_dict import FrozenDict, FrozenDictField
 from stream_ml.core.utils.funcs import within_bounds
 
@@ -20,7 +21,7 @@ from stream_ml.pytorch._base import ModelBase
 if TYPE_CHECKING:
     from scipy.interpolate import CubicSpline
 
-    from stream_ml.core.typing import BoundsT
+    from stream_ml.core.typing import BoundsT, NNModel
 
     from stream_ml.pytorch.params import Params
     from stream_ml.pytorch.typing import Array, ArrayNamespace
@@ -161,7 +162,9 @@ class IsochroneMVNorm(ModelBase):
 
     Examples
     --------
-    .. code-block:: python
+    An example of how to use this model:
+
+    ::
 
         from stream_ml.pytorch.builtin import IsochroneMVNorm
 
@@ -172,6 +175,8 @@ class IsochroneMVNorm(ModelBase):
             mag_err_names=("g_err",), color_names=("g-r",),
             color_err_names=("g-r_err",), phot_bounds=(...),
     """
+
+    net: NNField[NNModel, None] = NNField(default=None)
 
     _: KW_ONLY
     coord_names: tuple[str, ...] = ()  # optional
@@ -298,7 +303,9 @@ class IsochroneMVNorm(ModelBase):
 
             .. math::
 
-                \rm{cov}(X) = \rm{diag}(\vec{\sigma}) \cdot \rm{corr} \cdot \rm{diag}(\vec{\sigma})
+                \rm{cov}(X) =       \rm{diag}(\vec{\sigma})
+                              \cdot \rm{corr}
+                              \cdot \rm{diag}(\vec{\sigma})
         **kwargs: Array
             Not used.
 
