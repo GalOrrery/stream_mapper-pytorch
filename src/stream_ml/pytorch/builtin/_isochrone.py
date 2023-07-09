@@ -270,9 +270,15 @@ class IsochroneMVNorm(ModelBase):
         )
 
     def ln_likelihood(
-        self, mpars: Params[Array], /, data: Data[Array], **kwargs: Array
+        self,
+        mpars: Params[Array],
+        /,
+        data: Data[Array],
+        *,
+        correlation_matrix: Array | None = None,
+        **kwargs: Array,
     ) -> Array:
-        """Compute the log-likelihood.
+        r"""Compute the log-likelihood.
 
         Parameters
         ----------
@@ -284,6 +290,15 @@ class IsochroneMVNorm(ModelBase):
 
         data : Data[Array[(N,)]]
             The data. Must contain the fields in ``phot_names`` and ``phot_err_names``.
+
+        correlation_matrix : Array[(N,F,F)], optional keyword-only
+            The correlation matrix. If not provided, then the covariance matrix is
+            assumed to be diagonal.
+            The covariance matrix is computed as:
+
+            .. math::
+
+                \rm{cov}(X) = \rm{diag}(\vec{\sigma}) \cdot \rm{corr} \cdot \rm{diag}(\vec{\sigma})
         **kwargs: Array
             Not used.
 
@@ -311,10 +326,15 @@ class IsochroneMVNorm(ModelBase):
         )
 
         # Covariance: star (N, [I], F, F)
-        cov_data = (
-            xp.diag_embed(data[self.phot_err_names].array ** 2)[:, None, :, :]
+        vars_data = (
+            xp.diag_embed(data[self.phot_err_names].array)[:, None, :, :]
             if self.phot_err_names is not None
             else self.xp.zeros(1)
+        )
+        cov_data = (
+            vars_data @ vars_data
+            if correlation_matrix is None
+            else vars_data @ correlation_matrix[:, None, :, :] @ vars_data
         )
         # Covariance: isochrone ([N], I, F, F)
         # Covariance: distance modulus  (N, [I], F, F)
