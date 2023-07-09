@@ -29,9 +29,15 @@ class MultivariateNormal(ModelBase):
     # Statistics
 
     def ln_likelihood(
-        self, mpars: Params[Array], /, data: Data[Array], **kwargs: Array
+        self,
+        mpars: Params[Array],
+        /,
+        data: Data[Array],
+        *,
+        correlation_matrix: Array | None = None,
+        **kwargs: Array,
     ) -> Array:
-        """Log-likelihood of the distribution.
+        r"""Log-likelihood of the distribution.
 
         Parameters
         ----------
@@ -40,6 +46,15 @@ class MultivariateNormal(ModelBase):
             parameters.
         data : Data[Array]
             Data (phi1, phi2, ...).
+
+        correlation_matrix : Array[(N,F,F)], optional keyword-only
+            The correlation matrix. If not provided, then the covariance matrix is
+            assumed to be diagonal.
+            The covariance matrix is computed as:
+
+            .. math::
+
+                \rm{cov}(X) = \rm{diag}(\vec{\sigma}) \cdot \rm{corr} \cdot \rm{diag}(\vec{\sigma})
         **kwargs : Array
             Additional arguments.
 
@@ -47,14 +62,18 @@ class MultivariateNormal(ModelBase):
         -------
         Array
         """
+        marginals = xp.diag_embed(
+            self.xp.exp(self._stack_params(mpars, "ln-sigma", self.coord_names))
+        )
+        cov = (
+            marginals @ marginals
+            if correlation_matrix is None
+            else marginals @ correlation_matrix @ marginals
+        )
+
         return TorchMultivariateNormal(
             self.xp.stack([mpars[c, "mu"] for c in self.coord_names], 1),
-            covariance_matrix=xp.diag_embed(
-                self.xp.stack(
-                    [self.xp.exp(mpars[c, "ln-sigma"]) for c in self.coord_names], 1
-                )
-                ** 2
-            ),
+            covariance_matrix=cov,
         ).log_prob(data[self.coord_names].array)
 
 
