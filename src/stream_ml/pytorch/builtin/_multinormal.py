@@ -54,7 +54,10 @@ class MultivariateNormal(ModelBase):
 
             .. math::
 
-                \rm{cov}(X) = \rm{diag}(\vec{\sigma}) \cdot \rm{corr} \cdot \rm{diag}(\vec{\sigma})
+                \rm{cov}(X) =       \rm{diag}(\vec{\sigma})
+                              \cdot \rm{corr}
+                              \cdot \rm{diag}(\vec{\sigma})
+
         **kwargs : Array
             Additional arguments.
 
