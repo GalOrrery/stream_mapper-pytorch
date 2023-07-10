@@ -6,6 +6,7 @@ __all__: list[str] = []
 
 from dataclasses import KW_ONLY, dataclass, field
 from functools import reduce
+from math import log
 from typing import TYPE_CHECKING, Any, Final, Protocol
 
 import torch as xp
@@ -17,6 +18,7 @@ from stream_ml.core.utils.funcs import within_bounds
 
 from stream_ml.pytorch import Data
 from stream_ml.pytorch._base import ModelBase
+from stream_ml.pytorch.params import set_param
 
 if TYPE_CHECKING:
     from scipy.interpolate import CubicSpline
@@ -360,3 +362,37 @@ class IsochroneMVNorm(ModelBase):
         return xp.logsumexp(
             self._ln_d_gamma + lnliks + ln_cmf + in_bounds, 1
         ) - xp.logsumexp(self._ln_d_gamma + ln_cmf + in_bounds, 1)
+
+
+# =============================================================================
+
+_five_over_log10: Final = 5 / log(10)
+
+
+@dataclass(frozen=True)
+class Parallax2DistMod:
+    astrometric_coord: str
+    photometric_coord: str
+
+    _: KW_ONLY
+    xp: ArrayNamespace[Array] = xp
+
+    def __call__(self, pars: Params[Array], /) -> Params[Array]:
+        # Convert parallax (mas) to distance modulus
+        # .. math::
+        #       distmod = 5 log10(d [pc]) - 5 = -5 log10(plx [arcsec]) - 5
+        #               = -5 log10(plx [mas] / 1e3) - 5
+        #               = 10 - 5 log10(plx [mas])
+        # dm = 10 - 5 * xp.log10(pars["photometric.parallax"]["mu"].reshape((-1, 1)))
+        dm = 10 - 5 * self.xp.log10(pars[self.astrometric_coord]["mu"])
+        ln_dm_sigma = self.xp.log(
+            _five_over_log10
+            * self.xp.exp(pars[self.astrometric_coord][ex"ln-sigma"])
+            * dm
+        )
+
+        # Set the distance modulus
+        set_param(pars, (self.photometric_coord, "mu"), dm)
+        set_param(pars, (self.photometric_coord, "ln-sigma"), ln_dm_sigma)
+
+        return pars
