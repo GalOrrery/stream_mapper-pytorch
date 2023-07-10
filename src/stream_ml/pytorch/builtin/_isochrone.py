@@ -387,7 +387,7 @@ class Parallax2DistMod:
         dm = 10 - 5 * self.xp.log10(pars[self.astrometric_coord]["mu"])
         ln_dm_sigma = self.xp.log(
             _five_over_log10
-            * self.xp.exp(pars[self.astrometric_coord][ex"ln-sigma"])
+            * self.xp.exp(pars[self.astrometric_coord]["ln-sigma"])
             * dm
         )
 
