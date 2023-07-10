@@ -17,6 +17,7 @@ __all__ = [
     "UniformStreamMassFunction",
     "HardCutoffMassFunction",
     "StepwiseMassFunction",
+    "Parallax2DistMod",
     # -- multivariate
     "MultivariateNormal",
     "MultivariateMissingNormal",
@@ -36,6 +37,7 @@ from stream_ml.pytorch.builtin import compat
 from stream_ml.pytorch.builtin._isochrone import (
     HardCutoffMassFunction,
     IsochroneMVNorm,
+    Parallax2DistMod,
     StepwiseMassFunction,
     StreamMassFunction,
     UniformStreamMassFunction,
