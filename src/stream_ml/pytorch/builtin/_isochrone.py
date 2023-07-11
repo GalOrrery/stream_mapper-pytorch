@@ -375,6 +375,7 @@ class Parallax2DistMod:
     photometric_coord: str
 
     _: KW_ONLY
+    neg_clip_mu: float = 1e-30
     xp: ArrayNamespace[Array] = xp
 
     def __call__(self, pars: Params[Array], /) -> Params[Array]:
@@ -384,7 +385,9 @@ class Parallax2DistMod:
         #               = -5 log10(plx [mas] / 1e3) - 5
         #               = 10 - 5 log10(plx [mas])
         # dm = 10 - 5 * xp.log10(pars["photometric.parallax"]["mu"].reshape((-1, 1)))
-        dm = 10 - 5 * self.xp.log10(pars[self.astrometric_coord]["mu"])
+        dm = 10 - 5 * self.xp.log10(
+            self.xp.clip(pars[self.astrometric_coord]["mu"], self.neg_clip_mu)
+        )
         ln_dm_sigma = self.xp.log(
             _five_over_log10
             * self.xp.exp(pars[self.astrometric_coord]["ln-sigma"])
