@@ -359,9 +359,13 @@ class IsochroneMVNorm(ModelBase):
 
         # log PDF: the (log)-Reimannian sum over the isochrone (log)-pdfs:
         # sum_i(deltagamma_i PDF(gamma_i) * Pgamma)  -> translated to log_pdf
-        return xp.logsumexp(
+        lnlik_unnormalized = xp.logsumexp(
             self._ln_d_gamma + lnliks + ln_cmf + in_bounds, 1
-        ) - xp.logsumexp(self._ln_d_gamma + ln_cmf + in_bounds, 1)
+        )
+        normalization = xp.nan_to_num(
+            xp.logsumexp(self._ln_d_gamma + ln_cmf + in_bounds, 1),
+        )
+        return lnlik_unnormalized - normalization
 
 
 # =============================================================================
