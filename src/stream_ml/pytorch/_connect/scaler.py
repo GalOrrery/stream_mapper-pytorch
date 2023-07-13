@@ -18,13 +18,13 @@ __all__: list[str] = []
 
 
 def standard_scaler_astype_tensor(
-    scaler: StandardScaler[Any],
+    scaler: StandardScaler[Any], /, **kwargs: Any
 ) -> StandardScaler[xp.Tensor]:
     """Register the `StandardScaler` class for `numpy.ndarray`."""
     return replace(
         scaler,
-        mean=xp.asarray(scaler.mean),
-        scale=xp.asarray(scaler.scale),
+        mean=xp.asarray(scaler.mean, **kwargs),
+        scale=xp.asarray(scaler.scale, **kwargs),
         names=scaler.names,
     )
 
