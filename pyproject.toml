@@ -132,6 +132,7 @@ where = ["src"]
 
   [[tool.mypy.overrides]]
     module = [
+      "asdf.*",
       "scipy.*",
       "torch.*",
     ]
