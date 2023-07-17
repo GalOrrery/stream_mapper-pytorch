@@ -35,7 +35,7 @@ def _atleast_2d(x: Array) -> Array:
 class TrackPrior(Prior[Array]):
     """Track Prior Base."""
 
-    control_points: Data[Array]
+    center: Data[Array]
     lamda: float = 0.05
     _: KW_ONLY
     coord_name: str = "phi1"
@@ -49,75 +49,18 @@ class TrackPrior(Prior[Array]):
 
         # Pre-store the control points, seprated by indep & dep parameters.
         self._x: Data[Array]
-        object.__setattr__(self, "_x", self.control_points[(self.coord_name,)])
+        object.__setattr__(self, "_x", self.center[(self.coord_name,)])
 
         dep_names: tuple[str, ...] = tuple(
-            n for n in self.control_points.names if n != self.coord_name
+            n for n in self.center.names if n != self.coord_name
         )
         self._y_names: tuple[str, ...]
         object.__setattr__(self, "_y_names", dep_names)
 
         self._y: Array
         object.__setattr__(
-            self, "_y", _atleast_2d(xp.squeeze(self.control_points[dep_names].array))
+            self, "_y", _atleast_2d(xp.squeeze(self.center[dep_names].array))
         )
-
-
-#####################################################################
-
-
-@dataclass(frozen=True)
-class ControlPoints(TrackPrior):
-    """Control points prior.
-
-    Parameters
-    ----------
-    control_points : Data[Array]
-        The control points.
-    lamda : float, optional
-        Importance hyperparameter.
-    """
-
-    def logpdf(
-        self,
-        mpars: Params[Array],
-        data: Data[Array],
-        model: ModelAPI[Array, NNModel],
-        current_lnpdf: Array | None = None,
-        /,
-    ) -> Array:
-        """Evaluate the logpdf.
-
-        This log-pdf is added to the current logpdf. So if you want to set the
-        logpdf to a specific value, you can uses the `current_lnpdf` to set the
-        output value such that ``current_lnpdf + logpdf = <want>``.
-
-        Parameters
-        ----------
-        mpars : Params[Array], positional-only
-            Model parameters. Note that these are different from the ML
-            parameters.
-        data : Data[Array], position-only
-            The data for which evaluate the prior.
-        model : Model, position-only
-            The model for which evaluate the prior.
-        current_lnpdf : Array | None, optional position-only
-            The current logpdf, by default `None`. This is useful for setting
-            the additive log-pdf to a specific value.
-
-        Returns
-        -------
-        Array
-            The logpdf.
-        """
-        # Get the model parameters evaluated at the control points. shape (C, 1).
-        cmpars = model.unpack_params(model(self._x))  # type: ignore[call-overload]  # noqa: E501
-        cmp_arr = xp.hstack(  # (C, F)
-            tuple(cmpars[(n, self.component_param_name)] for n in self._y_names)
-        )
-
-        # For each control point, add the squared distance to the logpdf.
-        return -self.lamda * self.xp.sum((cmp_arr - self._y) ** 2)  # (C, F) -> 1
 
 
 #####################################################################
@@ -142,16 +85,12 @@ class ControlRegions(TrackPrior):
 
     Parameters
     ----------
-    control_points : Data[Array]
+    center : Data[Array]
         The control points. These are the means of the regions (mu in the above).
+    width : Data[Array], optional
+        Width(s) of the region(s).
     lamda : float, optional
         Importance hyperparameter.
-        TODO: make this also able to be an array, so that each region can have
-        a different width.
-    width : float, optional
-        Width of the region.
-        TODO: make this also able to be an array, so that each region can have
-        a different width.
     """
 
     width: float | Data[Array] = 0.5

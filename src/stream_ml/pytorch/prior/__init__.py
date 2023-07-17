@@ -7,7 +7,7 @@ import torch as xp
 from stream_ml.core.prior import FunctionPrior, Prior
 from stream_ml.core.prior import HardThreshold as CoreHardThreshold
 
-from stream_ml.pytorch.prior._track import ControlPoints, ControlRegions
+from stream_ml.pytorch.prior._track import ControlRegions
 from stream_ml.pytorch.typing import Array, ArrayNamespace
 
 __all__ = [
@@ -16,7 +16,6 @@ __all__ = [
     "FunctionPrior",
     "HardThreshold",
     # from here
-    "ControlPoints",
     "ControlRegions",
 ]
 
