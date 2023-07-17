@@ -23,10 +23,10 @@ from stream_ml.pytorch.params import set_param
 if TYPE_CHECKING:
     from scipy.interpolate import CubicSpline
 
-    from stream_ml.core.typing import BoundsT, NNModel
+    from stream_ml.core.typing import BoundsT
 
     from stream_ml.pytorch.params import Params
-    from stream_ml.pytorch.typing import Array, ArrayNamespace
+    from stream_ml.pytorch.typing import Array, ArrayNamespace, NNModel
 
 dm_sigma_const: Final = 5 / xp.log(xp.asarray(10))
 # Constant for first order error propagation of parallax -> distance modulus

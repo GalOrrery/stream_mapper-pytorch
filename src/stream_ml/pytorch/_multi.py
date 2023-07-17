@@ -106,7 +106,7 @@ class MixtureModel(ModelsBase, CoreMixtureModel[Array, NNModel]):
         The neural network that is used to combine the components.
     """
 
-    net: NNField[NNModel] = NNField(default=MISSING)
+    net: NNField[NNModel, NNModel] = NNField(default=MISSING)
 
     def __new__(cls: type[Self], *args: Any, **kwargs: Any) -> Self:  # noqa: ARG003
         """Initialize the model. This is needed for PyTorch."""
