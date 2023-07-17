@@ -35,7 +35,7 @@ def _atleast_2d(x: Array) -> Array:
 class TrackPrior(Prior[Array]):
     """Track Prior Base."""
 
-    control_points: Data[Array]
+    center: Data[Array]
     lamda: float = 0.05
     _: KW_ONLY
     coord_name: str = "phi1"
@@ -49,17 +49,17 @@ class TrackPrior(Prior[Array]):
 
         # Pre-store the control points, seprated by indep & dep parameters.
         self._x: Data[Array]
-        object.__setattr__(self, "_x", self.control_points[(self.coord_name,)])
+        object.__setattr__(self, "_x", self.center[(self.coord_name,)])
 
         dep_names: tuple[str, ...] = tuple(
-            n for n in self.control_points.names if n != self.coord_name
+            n for n in self.center.names if n != self.coord_name
         )
         self._y_names: tuple[str, ...]
         object.__setattr__(self, "_y_names", dep_names)
 
         self._y: Array
         object.__setattr__(
-            self, "_y", _atleast_2d(xp.squeeze(self.control_points[dep_names].array))
+            self, "_y", _atleast_2d(xp.squeeze(self.center[dep_names].array))
         )
 
 
@@ -85,16 +85,12 @@ class ControlRegions(TrackPrior):
 
     Parameters
     ----------
-    control_points : Data[Array]
+    center : Data[Array]
         The control points. These are the means of the regions (mu in the above).
+    width : Data[Array], optional
+        Width(s) of the region(s).
     lamda : float, optional
         Importance hyperparameter.
-        TODO: make this also able to be an array, so that each region can have
-        a different width.
-    width : float, optional
-        Width of the region.
-        TODO: make this also able to be an array, so that each region can have
-        a different width.
     """
 
     width: float | Data[Array] = 0.5
