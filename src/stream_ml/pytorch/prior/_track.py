@@ -67,63 +67,6 @@ class TrackPrior(Prior[Array]):
 
 
 @dataclass(frozen=True)
-class ControlPoints(TrackPrior):
-    """Control points prior.
-
-    Parameters
-    ----------
-    control_points : Data[Array]
-        The control points.
-    lamda : float, optional
-        Importance hyperparameter.
-    """
-
-    def logpdf(
-        self,
-        mpars: Params[Array],
-        data: Data[Array],
-        model: ModelAPI[Array, NNModel],
-        current_lnpdf: Array | None = None,
-        /,
-    ) -> Array:
-        """Evaluate the logpdf.
-
-        This log-pdf is added to the current logpdf. So if you want to set the
-        logpdf to a specific value, you can uses the `current_lnpdf` to set the
-        output value such that ``current_lnpdf + logpdf = <want>``.
-
-        Parameters
-        ----------
-        mpars : Params[Array], positional-only
-            Model parameters. Note that these are different from the ML
-            parameters.
-        data : Data[Array], position-only
-            The data for which evaluate the prior.
-        model : Model, position-only
-            The model for which evaluate the prior.
-        current_lnpdf : Array | None, optional position-only
-            The current logpdf, by default `None`. This is useful for setting
-            the additive log-pdf to a specific value.
-
-        Returns
-        -------
-        Array
-            The logpdf.
-        """
-        # Get the model parameters evaluated at the control points. shape (C, 1).
-        cmpars = model.unpack_params(model(self._x))  # type: ignore[call-overload]  # noqa: E501
-        cmp_arr = xp.hstack(  # (C, F)
-            tuple(cmpars[(n, self.component_param_name)] for n in self._y_names)
-        )
-
-        # For each control point, add the squared distance to the logpdf.
-        return -self.lamda * self.xp.sum((cmp_arr - self._y) ** 2)  # (C, F) -> 1
-
-
-#####################################################################
-
-
-@dataclass(frozen=True)
 class ControlRegions(TrackPrior):
     r"""Control regions prior.
 
