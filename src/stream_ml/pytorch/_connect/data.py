@@ -31,6 +31,16 @@ def _from_ndarray_to_tensor(
 ASTYPE_REGISTRY[(np.ndarray, xp.Tensor)] = _from_ndarray_to_tensor
 
 
+def _from_tensor_to_ndarray(
+    data: Data[xp.Tensor], /, **kwargs: Any
+) -> Data[np.ndarray[Any, Any]]:
+    """Convert from torch.Tensor to numpy.ndarray."""
+    return replace(data, array=np.asarray(data.array, **kwargs))
+
+
+ASTYPE_REGISTRY[(xp.Tensor, np.ndarray)] = _from_tensor_to_ndarray  # type: ignore[assignment]  # noqa: E501
+
+
 try:
     import asdf
 except ImportError:
