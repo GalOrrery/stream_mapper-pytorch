@@ -6,8 +6,7 @@ __all__: list[str] = []
 
 from dataclasses import KW_ONLY, dataclass, field
 from functools import reduce
-from math import log
-from typing import TYPE_CHECKING, Any, Final, Protocol
+from typing import TYPE_CHECKING, Any
 
 import torch as xp
 from torch.distributions import MultivariateNormal
@@ -18,7 +17,10 @@ from stream_ml.core.utils.funcs import within_bounds
 
 from stream_ml.pytorch import Data
 from stream_ml.pytorch._base import ModelBase
-from stream_ml.pytorch.params import set_param
+from stream_ml.pytorch.builtin._isochrone.mf import (
+    StreamMassFunction,
+    UniformStreamMassFunction,
+)
 
 if TYPE_CHECKING:
     from scipy.interpolate import CubicSpline
@@ -26,88 +28,7 @@ if TYPE_CHECKING:
     from stream_ml.core.typing import BoundsT
 
     from stream_ml.pytorch.params import Params
-    from stream_ml.pytorch.typing import Array, ArrayNamespace, NNModel
-
-dm_sigma_const: Final = 5 / xp.log(xp.asarray(10))
-# Constant for first order error propagation of parallax -> distance modulus
-
-
-# =============================================================================
-# Cluster Mass Function
-
-
-class StreamMassFunction(Protocol):
-    """Stream Mass Function.
-
-    Must be parametrized by gamma [0, 1], the normalized mass over the range of the
-    isochrone.
-
-    Returns the log-probability that stars of that mass (gamma) are in the
-    population modeled by the isochrone.
-    """
-
-    def __call__(
-        self, gamma: Array, x: Data[Array], *, xp: ArrayNamespace[Array]
-    ) -> Array:
-        r"""Log-probability of stars at position 'x' having mass 'gamma'.
-
-        Parameters
-        ----------
-        gamma : Array[(F,))]
-            The mass of the stars, normalized to [0, 1] over the range of the
-            isochrone.
-        x : Data[Array[(N,)]]
-            The independent data. Normally this is :math:`\phi_1`.
-
-        xp : ArrayNamespace[Array], keyword-only
-            The array namespace.
-
-        Returns
-        -------
-        Array[(N, F)]
-        """
-        ...
-
-
-@dataclass(frozen=True)
-class UniformStreamMassFunction(StreamMassFunction):
-    def __call__(
-        self, gamma: Array, x: Data[Array], *, xp: ArrayNamespace[Array]
-    ) -> Array:
-        return xp.zeros((len(x), len(gamma)))
-
-
-@dataclass(frozen=True)
-class HardCutoffMassFunction(StreamMassFunction):
-    """Hard Cutoff IMF."""
-
-    lower: float = 0
-    upper: float = 1
-
-    def __call__(
-        self, gamma: Array, x: Data[Array], *, xp: ArrayNamespace[Array]
-    ) -> Array:
-        out = xp.full((len(x), len(gamma)), -xp.inf)
-        out[:, (gamma >= self.lower) & (gamma <= self.upper)] = 0
-        return out
-
-
-@dataclass(frozen=True)
-class StepwiseMassFunction(StreamMassFunction):
-    """Hard Cutoff IMF."""
-
-    boundaries: tuple[float, ...]  # (B + 1,)
-    log_probs: tuple[float, ...]  # (B,)
-
-    def __call__(
-        self, gamma: Array, x: Data[Array], *, xp: ArrayNamespace[Array]
-    ) -> Array:
-        out = xp.full((len(x), len(gamma)), -xp.inf)
-        for lower, upper, lnp in zip(
-            self.boundaries[:-1], self.boundaries[1:], self.log_probs, strict=True
-        ):
-            out[:, (gamma >= lower) & (gamma < upper)] = lnp
-        return out
+    from stream_ml.pytorch.typing import Array, NNModel
 
 
 # =============================================================================
@@ -366,40 +287,3 @@ class IsochroneMVNorm(ModelBase):
             xp.logsumexp(self._ln_d_gamma + ln_cmf + in_bounds, 1),
         )
         return lnlik_unnormalized - normalization
-
-
-# =============================================================================
-
-_five_over_log10: Final = 5 / log(10)
-
-
-@dataclass(frozen=True)
-class Parallax2DistMod:
-    astrometric_coord: str
-    photometric_coord: str
-
-    _: KW_ONLY
-    neg_clip_mu: float = 1e-30
-    xp: ArrayNamespace[Array] = xp
-
-    def __call__(self, pars: Params[Array], /) -> Params[Array]:
-        # Convert parallax (mas) to distance modulus
-        # .. math::
-        #       distmod = 5 log10(d [pc]) - 5 = -5 log10(plx [arcsec]) - 5
-        #               = -5 log10(plx [mas] / 1e3) - 5
-        #               = 10 - 5 log10(plx [mas])
-        # dm = 10 - 5 * xp.log10(pars["photometric.parallax"]["mu"].reshape((-1, 1)))
-        dm = 10 - 5 * self.xp.log10(
-            self.xp.clip(pars[self.astrometric_coord]["mu"], self.neg_clip_mu)
-        )
-        ln_dm_sigma = self.xp.log(
-            _five_over_log10
-            * self.xp.exp(pars[self.astrometric_coord]["ln-sigma"])
-            * dm
-        )
-
-        # Set the distance modulus
-        set_param(pars, (self.photometric_coord, "mu"), dm)
-        set_param(pars, (self.photometric_coord, "ln-sigma"), ln_dm_sigma)
-
-        return pars
