@@ -2,15 +2,6 @@
 
 from __future__ import annotations
 
-from stream_ml.pytorch.builtin._isochrone.core import IsochroneMVNorm
-from stream_ml.pytorch.builtin._isochrone.mf import (
-    HardCutoffMassFunction,
-    StepwiseMassFunction,
-    StreamMassFunction,
-    UniformStreamMassFunction,
-)
-from stream_ml.pytorch.builtin._isochrone.utils import Parallax2DistMod
-
 __all__: list[str] = [
     # Mass Function
     "StreamMassFunction",
@@ -22,3 +13,12 @@ __all__: list[str] = [
     # Utils
     "Parallax2DistMod",
 ]
+
+from stream_ml.pytorch.builtin._isochrone.core import IsochroneMVNorm
+from stream_ml.pytorch.builtin._isochrone.mf import (
+    HardCutoffMassFunction,
+    StepwiseMassFunction,
+    StreamMassFunction,
+    UniformStreamMassFunction,
+)
+from stream_ml.pytorch.builtin._isochrone.utils import Parallax2DistMod
