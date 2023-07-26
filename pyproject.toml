@@ -32,6 +32,7 @@
     "tqdm",
     "nflows",
     "zuko",
+    "torchcubicspline @ git+https://github.com/patrick-kidger/torchcubicspline.git",
   ]
   test = [
     "coverage[toml]",
@@ -136,6 +137,7 @@ where = ["src"]
       "asdf.*",
       "scipy.*",
       "torch.*",
+      "torchcubicspline.*",
     ]
     ignore_missing_imports = true
 

@@ -1,5 +1,23 @@
 """Stream models."""
 
+from dataclasses import field, make_dataclass
+
+import torch as xp
+
+from stream_ml.core.builtin._exponential import Exponential as CoreExponential
+from stream_ml.core.builtin._norm import Normal as CoreNormal
+from stream_ml.core.builtin._truncnorm import TruncatedNormal as CoreTruncatedNormal
+from stream_ml.core.builtin._uniform import Uniform as CoreUniform
+
+from stream_ml.pytorch._base import ModelBase
+from stream_ml.pytorch.builtin import _isochrone, compat
+from stream_ml.pytorch.builtin._isochrone import *  # noqa: F403
+from stream_ml.pytorch.builtin._multinormal import MultivariateNormal
+from stream_ml.pytorch.builtin._skewnorm import SkewNormal
+from stream_ml.pytorch.builtin._sloped import Sloped
+from stream_ml.pytorch.builtin._truncskewnorm import TruncatedSkewNormal
+from stream_ml.pytorch.typing import Array, ArrayNamespace, NNModel
+
 __all__ = [
     # modules
     "compat",
@@ -11,41 +29,11 @@ __all__ = [
     "TruncatedNormal",
     "SkewNormal",
     "TruncatedSkewNormal",
-    # -- isochrone
-    "IsochroneMVNorm",
-    "StreamMassFunction",
-    "UniformStreamMassFunction",
-    "HardCutoffMassFunction",
-    "StepwiseMassFunction",
-    "Parallax2DistMod",
     # -- multivariate
     "MultivariateNormal",
 ]
+__all__ += _isochrone.__all__
 
-from dataclasses import field, make_dataclass
-
-import torch as xp
-
-from stream_ml.core.builtin._exponential import Exponential as CoreExponential
-from stream_ml.core.builtin._norm import Normal as CoreNormal
-from stream_ml.core.builtin._truncnorm import TruncatedNormal as CoreTruncatedNormal
-from stream_ml.core.builtin._uniform import Uniform as CoreUniform
-
-from stream_ml.pytorch._base import ModelBase
-from stream_ml.pytorch.builtin import compat
-from stream_ml.pytorch.builtin._isochrone import (
-    HardCutoffMassFunction,
-    IsochroneMVNorm,
-    Parallax2DistMod,
-    StepwiseMassFunction,
-    StreamMassFunction,
-    UniformStreamMassFunction,
-)
-from stream_ml.pytorch.builtin._multinormal import MultivariateNormal
-from stream_ml.pytorch.builtin._skewnorm import SkewNormal
-from stream_ml.pytorch.builtin._sloped import Sloped
-from stream_ml.pytorch.builtin._truncskewnorm import TruncatedSkewNormal
-from stream_ml.pytorch.typing import Array, ArrayNamespace, NNModel
 
 Normal = make_dataclass(
     "Normal",

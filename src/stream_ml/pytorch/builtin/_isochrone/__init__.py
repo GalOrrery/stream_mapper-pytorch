@@ -8,6 +8,7 @@ __all__: list[str] = [
     "UniformStreamMassFunction",
     "HardCutoffMassFunction",
     "StepwiseMassFunction",
+    "KroupaIMF",
     # Core
     "IsochroneMVNorm",
     # Utils
@@ -17,6 +18,7 @@ __all__: list[str] = [
 from stream_ml.pytorch.builtin._isochrone.core import IsochroneMVNorm
 from stream_ml.pytorch.builtin._isochrone.mf import (
     HardCutoffMassFunction,
+    KroupaIMF,
     StepwiseMassFunction,
     StreamMassFunction,
     UniformStreamMassFunction,
