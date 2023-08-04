@@ -4,7 +4,7 @@ from __future__ import annotations
 
 __all__: list[str] = []
 
-from dataclasses import KW_ONLY, dataclass
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import torch as xp
@@ -24,9 +24,6 @@ if TYPE_CHECKING:
 @dataclass(unsafe_hash=True)
 class TruncatedSkewNormal(SkewNormal):
     r"""Truncated Skew-Normal."""
-
-    _: KW_ONLY
-    require_where: bool = False
 
     def ln_likelihood(
         self,
@@ -65,9 +62,7 @@ class TruncatedSkewNormal(SkewNormal):
         elif self.require_where:
             raise WhereRequiredError
         else:
-            idx = self.xp.ones(
-                (len(data), len(self.coord_names)), dtype=bool, require_grad=False
-            )
+            idx = self.xp.ones((len(data), self.ndim), dtype=bool, require_grad=False)
             # This has shape (N,F) so will broadcast correctly.
 
         cns, cens = self.coord_names, self.coord_err_names

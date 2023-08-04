@@ -66,7 +66,7 @@ class MultivariateNormal(ModelBase):
         Array
         """
         marginals = xp.diag_embed(
-            self.xp.exp(self._stack_params(mpars, "ln-sigma", self.coord_names))
+            self.xp.exp(self._stack_param(mpars, "ln-sigma", self.coord_names))
         )
         cov = (
             marginals @ marginals
@@ -75,7 +75,7 @@ class MultivariateNormal(ModelBase):
         )
 
         return TorchMultivariateNormal(
-            self.xp.stack([mpars[c, "mu"] for c in self.coord_names], 1),
+            self._stack_param(mpars, "mu", self.coord_names),
             covariance_matrix=cov,
         ).log_prob(data[self.coord_names].array)
 
@@ -121,31 +121,28 @@ class MultivariateMissingNormal(MultivariateNormal):  # (MultivariateNormal)
         """
         # Normal
         x = data[self.coord_names].array
-        mu = self._stack_params(mpars, "mu", self.coord_names)
-        sigma = self.xp.exp(self._stack_params(mpars, "ln-sigma", self.coord_names))
+        mu = self._stack_param(mpars, "mu", self.coord_names)
+        sigma = self.xp.exp(self._stack_param(mpars, "ln-sigma", self.coord_names))
 
-        indicator: Array
+        idx: Array
         if mask is not None:
-            indicator = mask[tuple(self.coord_bounds.keys())].array
+            idx = mask[tuple(self.coord_bounds.keys())].array
         elif self.require_mask:
             msg = "mask is required"
             raise ValueError(msg)
         else:
-            indicator = xp.ones_like(x, dtype=xp.int)
+            idx = xp.ones_like(x, dtype=xp.int)
             # shape (1, F) so that it can broadcast with (N, F)
 
-        # misc
-        dimensionality = indicator.sum(dim=1)  # (N,)
-
-        # Data - model
-        dmm = indicator * (x - mu)  # (N, F)
+        D = idx.sum(dim=1)  # Dimensionality (N,)  # noqa: N806
+        dmm = idx * (x - mu)  # Data - model (N, F)
 
         # Covariance related
-        cov = indicator * sigma**2  # (N, F) positive definite
-        det = (cov + (1 - indicator)).prod(dim=1)  # (N,)
+        cov = idx * sigma**2  # (N, F) positive definite
+        det = (cov * idx + (1 - idx)).prod(dim=1)  # (N,)
 
         return -0.5 * (
-            dimensionality * _log2pi  # dim of data
+            D * _log2pi
             + xp.log(det)
             + (
                 dmm[:, None, :]  # (N, 1, F)
