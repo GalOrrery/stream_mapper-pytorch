@@ -125,6 +125,9 @@ class IsochroneMVNorm(ModelBase):
         if not self.phot_names:
             msg = "Must provide `phot_names`."
             raise ValueError(msg)
+        elif not isinstance(self.phot_names, tuple):
+            msg = "`phot_names` must be a tuple."  # type: ignore[unreachable]
+            raise ValueError(msg)
 
         # And phot_apply_dm
         if len(self.phot_apply_dm) != len(self.phot_names):
@@ -266,7 +269,7 @@ class IsochroneMVNorm(ModelBase):
         # available.
         where_: Array  # (N, F)
         if where is not None:
-            where_ = where[tuple(self.phot_names)].array
+            where_ = where[self.phot_names].array
         elif self.require_where:
             raise WhereRequiredError
         else:
