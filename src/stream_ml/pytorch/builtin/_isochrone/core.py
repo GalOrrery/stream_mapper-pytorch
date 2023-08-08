@@ -296,9 +296,8 @@ class IsochroneMVNorm(ModelBase):
         )
 
         # Covariance: star (N, [I], F, F)
-        stds = data[self.phot_err_names].array
         std_data = (
-            xp.diag_embed(stds)[:, None, :, :]
+            xp.diag_embed(data[self.phot_err_names].array)[:, None, :, :]
             if self.phot_err_names is not None
             else self.xp.zeros(1)
         )
