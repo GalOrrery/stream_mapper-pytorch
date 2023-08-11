@@ -20,7 +20,6 @@ __all__ = [
     "Parallax2DistMod",
     # -- multivariate
     "MultivariateNormal",
-    "MultivariateMissingNormal",
 ]
 
 from dataclasses import field, make_dataclass
@@ -42,10 +41,7 @@ from stream_ml.pytorch.builtin._isochrone import (
     StreamMassFunction,
     UniformStreamMassFunction,
 )
-from stream_ml.pytorch.builtin._multinormal import (
-    MultivariateMissingNormal,
-    MultivariateNormal,
-)
+from stream_ml.pytorch.builtin._multinormal import MultivariateNormal
 from stream_ml.pytorch.builtin._skewnorm import SkewNormal
 from stream_ml.pytorch.builtin._sloped import Sloped
 from stream_ml.pytorch.builtin._truncskewnorm import TruncatedSkewNormal

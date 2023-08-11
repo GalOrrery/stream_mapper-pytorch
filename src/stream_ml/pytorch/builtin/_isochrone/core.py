@@ -336,7 +336,6 @@ class IsochroneMVNorm(ModelBase):
             - mean[sel]
         )
 
-        lnliks = xp.zeros((len(data), len(self._gamma_points)))  # (N, I)
         lnliks = -0.5 * (  # (N, I, 1, 1) -> (N, I)
             D[:, None] * _log2pi
             + logdet
