@@ -99,9 +99,8 @@ class MultivariateNormal(ModelBase):
         # Covariance data "The covariance matrix can be written as the rescaling
         # of a correlation matrix by the marginal variances:"
         # (https://en.wikipedia.org/wiki/Covariance_matrix#Correlation_matrix)
-        stds = data[self.coord_err_names].array
         std_data = (
-            xp.diag_embed(stds)
+            xp.diag_embed(data[self.coord_err_names].array)
             if self.coord_err_names is not None
             else self.xp.zeros(1)
         )
