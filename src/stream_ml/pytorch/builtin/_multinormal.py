@@ -93,9 +93,6 @@ class MultivariateNormal(ModelBase):
             msg = "Must provide `correlation_det`."
             raise ValueError(msg)
 
-        # Covariance: model  (N, F, F)
-        lnsigma = self.xp.exp(self._stack_param(mpars, "ln-sigma", self.coord_names))
-        cov_model = xp.diag_embed(xp.exp(2 * lnsigma))
         # Covariance data "The covariance matrix can be written as the rescaling
         # of a correlation matrix by the marginal variances:"
         # (https://en.wikipedia.org/wiki/Covariance_matrix#Correlation_matrix)
@@ -109,9 +106,12 @@ class MultivariateNormal(ModelBase):
             if correlation_matrix is None
             else std_data @ correlation_matrix[:, :, :] @ std_data
         )
+        # Covariance model (N, F, F)
+        lnsigma = self._stack_param(mpars, "ln-sigma", self.coord_names)
+        cov_model = xp.diag_embed(self.xp.exp(2 * lnsigma))
         # The covariance, setting non-observed dimensions to 0. (N, F, F)
         # positive definite.
-        idx_cov = xp.diag_embed(where_.to(dtype=data.dtype))  # (N, F, F)
+        idx_cov = xp.diag_embed(where_.to(dtype=data.dtype))
         cov = idx_cov @ (cov_data + cov_model) @ idx_cov
         # The determinant, dropping the dimensionality of non-observed
         # dimensions.
