@@ -38,13 +38,12 @@ class Parallax2DistMod:
         #               = -5 log10(plx [mas] / 1e3) - 5
         #               = 10 - 5 log10(plx [mas])
         # dm = 10 - 5 * xp.log10(pars["photometric.parallax"]["mu"].reshape((-1, 1)))
-        dm = 10 - 5 * self.xp.log10(
-            self.xp.clip(pars[self.astrometric_coord]["mu"], self.neg_clip_mu)
-        )
+        mu = self.xp.clip(pars[self.astrometric_coord]["mu"], self.neg_clip_mu)
+        dm = 10 - 5 * self.xp.log10(mu)
         ln_dm_sigma = self.xp.log(
             _five_over_log10
             * self.xp.exp(pars[self.astrometric_coord]["ln-sigma"])
-            * dm
+            / mu
         )
 
         # Set the distance modulus
