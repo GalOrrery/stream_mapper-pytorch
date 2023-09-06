@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from stream_ml.pytorch.typing import Array, ArrayNamespace
 
 
-@dataclass(unsafe_hash=True)
+@dataclass(unsafe_hash=True, repr=False)
 class SkewNormal(ModelBase):
     r"""Skew-Normal.
 

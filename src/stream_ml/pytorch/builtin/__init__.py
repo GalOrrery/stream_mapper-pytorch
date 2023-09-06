@@ -52,6 +52,7 @@ Normal = make_dataclass(
     [("array_namespace", ArrayNamespace[Array], field(default=xp, kw_only=True))],
     bases=(CoreNormal[Array, NNModel], ModelBase),
     unsafe_hash=True,
+    repr=False,
 )
 
 
@@ -60,6 +61,7 @@ Uniform = make_dataclass(
     [("array_namespace", ArrayNamespace[Array], field(default=xp, kw_only=True))],
     bases=(CoreUniform[Array, NNModel], ModelBase),
     unsafe_hash=True,
+    repr=False,
 )
 
 
@@ -68,6 +70,7 @@ Exponential = make_dataclass(
     [("array_namespace", ArrayNamespace[Array], field(default=xp, kw_only=True))],
     bases=(CoreExponential[Array, NNModel], ModelBase),
     unsafe_hash=True,
+    repr=False,
 )
 
 
@@ -76,6 +79,7 @@ TruncatedNormal = make_dataclass(
     [("array_namespace", ArrayNamespace[Array], field(default=xp, kw_only=True))],
     bases=(CoreTruncatedNormal[Array, NNModel], ModelBase),
     unsafe_hash=True,
+    repr=False,
 )
 
 

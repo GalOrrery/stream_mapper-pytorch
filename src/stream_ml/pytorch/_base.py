@@ -11,6 +11,7 @@ import torch as xp
 from torch import nn
 
 from stream_ml.core import ModelBase as CoreModelBase
+from stream_ml.core.utils.dataclasses import ArrayNamespaceReprMixin
 
 from stream_ml.pytorch.typing import Array, NNModel
 from stream_ml.pytorch.utils import names_intersect
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
     Self = TypeVar("Self", bound="ModelBase")
 
 
-@dataclass(unsafe_hash=True)
+@dataclass(unsafe_hash=True, repr=False)
 class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
     """Model base class."""
 
@@ -42,6 +43,10 @@ class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
         # Net needs to added to ensure that it's registered as a module.
         # TODO! not need to overwrite the descriptor.
         self.net: NNModel = self.net
+
+    def __repr__(self) -> str:
+        """Repr."""
+        return ArrayNamespaceReprMixin.__repr__(self)
 
     # ========================================================================
     # ML

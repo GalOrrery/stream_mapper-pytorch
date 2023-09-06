@@ -31,7 +31,7 @@ def _atleast_2d(x: Array) -> Array:
     return x
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, repr=False)
 class TrackPrior(Prior[Array]):
     """Track Prior Base."""
 
@@ -66,7 +66,7 @@ class TrackPrior(Prior[Array]):
 #####################################################################
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, repr=False)
 class ControlRegions(TrackPrior):
     r"""Control regions prior.
 
