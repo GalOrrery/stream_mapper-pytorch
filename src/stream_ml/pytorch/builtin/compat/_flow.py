@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from abc import abstractmethod
+
 __all__: list[str] = []
 
 from contextlib import nullcontext
@@ -22,12 +24,16 @@ if TYPE_CHECKING:
 
 
 @dataclass(unsafe_hash=True)
-class FlowModel(ModelBase):
+class _FlowModel(ModelBase):
     """Normalizing flow model."""
 
     _: KW_ONLY
     jacobian_logdet: float  # Log of the Jacobian determinant
     with_grad: bool = True
+
+    @abstractmethod
+    def _log_prob(self, data: Data[Array], idx: Array) -> Array:
+        """Log-probability of the array."""
 
     def ln_likelihood(
         self,
@@ -83,12 +89,7 @@ class FlowModel(ModelBase):
 
         out = self.xp.zeros(len(data), dtype=data.dtype)
         with nullcontext() if self.with_grad else xp.no_grad():
-            out[idx] = self.jacobian_logdet + self.net.log_prob(
-                inputs=data[self.coord_names].array[idx],
-                context=data[self.indep_coord_names].array[idx]
-                if self.indep_coord_names is not None
-                else None,
-            )
+            out[idx] = self.jacobian_logdet + self._log_prob(data, idx)
         return out
 
     def forward(self, data: Data[Array]) -> Array:

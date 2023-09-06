@@ -25,12 +25,13 @@
     "scipy>=1.7",
     "stream_ml.core @ git+https://github.com/nstarman/stream_ml-core.git",
     "torch>=1.13",
-    "nflows",
   ]
 
 [project.optional-dependencies]
   all = [
     "tqdm",
+    "nflows",
+    "zuko",
   ]
   test = [
     "coverage[toml]",
