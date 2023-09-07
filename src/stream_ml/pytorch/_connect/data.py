@@ -51,7 +51,9 @@ else:
         data: Data[np.ndarray[Any, Any]], /, **kwargs: Any
     ) -> Data[xp.Tensor]:
         """Convert from numpy.ndarray to torch.Tensor."""
-        return replace(data, array=xp.asarray(np.asarray(data.array), **kwargs))
+        array = np.array(data.array, copy=True, subok=False)
+        array.flags.writeable = True
+        return replace(data, array=xp.asarray(array, **kwargs))
 
     ASTYPE_REGISTRY[
         (asdf.tags.core.ndarray.NDArrayType, xp.Tensor)
