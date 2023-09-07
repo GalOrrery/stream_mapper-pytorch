@@ -26,7 +26,9 @@ if TYPE_CHECKING:
 
 def _atleast_2d(x: Array) -> Array:
     """Ensure that x is at least 2d."""
-    if x.ndim == 1:
+    if x.ndim == 0:
+        return x[None, None]
+    elif x.ndim == 1:
         return x[:, None]
     return x
 
