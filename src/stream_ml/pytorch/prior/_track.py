@@ -34,42 +34,7 @@ def _atleast_2d(x: Array) -> Array:
 
 
 @dataclass(frozen=True, repr=False)
-class TrackPrior(Prior[Array]):
-    """Track Prior Base."""
-
-    center: Data[Array]
-    lamda: float = 0.05
-    _: KW_ONLY
-    coord_name: str = "phi1"
-    component_param_name: str = "mu"
-
-    array_namespace: ArrayNamespace[Array] = xp
-
-    def __post_init__(self) -> None:
-        """Post-init."""
-        super().__post_init__()
-
-        # Pre-store the control points, seprated by indep & dep parameters.
-        self._x: Data[Array]
-        object.__setattr__(self, "_x", self.center[(self.coord_name,)])
-
-        dep_names: tuple[str, ...] = tuple(
-            n for n in self.center.names if n != self.coord_name
-        )
-        self._y_names: tuple[str, ...]
-        object.__setattr__(self, "_y_names", dep_names)
-
-        self._y: Array
-        object.__setattr__(
-            self, "_y", _atleast_2d(xp.squeeze(self.center[dep_names].array))
-        )
-
-
-#####################################################################
-
-
-@dataclass(frozen=True, repr=False)
-class ControlRegions(TrackPrior):
+class ControlRegions(Prior[Array]):
     r"""Control regions prior.
 
     The gaussian control points work very well, but they are very informative.
@@ -95,11 +60,33 @@ class ControlRegions(TrackPrior):
         Importance hyperparameter.
     """
 
+    center: Data[Array]
     width: float | Data[Array] = 0.5
+    lamda: float = 0.05
+    _: KW_ONLY
+    coord_name: str = "phi1"
+    component_param_name: str = "mu"
+
+    array_namespace: ArrayNamespace[Array] = xp
 
     def __post_init__(self) -> None:
         """Post-init."""
         super().__post_init__()
+
+        # Pre-store the control points, seprated by indep & dep parameters.
+        self._x: Data[Array]
+        object.__setattr__(self, "_x", self.center[(self.coord_name,)])
+
+        dep_names: tuple[str, ...] = tuple(
+            n for n in self.center.names if n != self.coord_name
+        )
+        self._y_names: tuple[str, ...]
+        object.__setattr__(self, "_y_names", dep_names)
+
+        self._y: Array
+        object.__setattr__(
+            self, "_y", _atleast_2d(xp.squeeze(self.center[dep_names].array))
+        )
 
         # Pre-store the width.
         self._w: Array
