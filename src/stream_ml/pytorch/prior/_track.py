@@ -136,10 +136,10 @@ class ControlRegions(Prior[Array]):
             tuple(cmpars[(n, self.component_param_name)] for n in self._y_names), 1
         )
 
-        pdf = xp.zeros_like(cmp_arr)
+        lnpdf = xp.zeros_like(cmp_arr)
         where = cmp_arr <= self._y - self._w
-        pdf[where] = (cmp_arr[where] - (self._y[where] - self._w[where])) ** 2
+        lnpdf[where] = (cmp_arr[where] - (self._y[where] - self._w[where])) ** 2
         where = cmp_arr >= self._y + self._w
-        pdf[where] = (cmp_arr[where] - (self._y[where] + self._w[where])) ** 2
+        lnpdf[where] = (cmp_arr[where] - (self._y[where] + self._w[where])) ** 2
 
-        return -self.lamda * self.xp.sum(pdf)  # (C, F) -> 1
+        return -self.lamda * self.xp.sum(lnpdf)  # (C, F) -> 1
