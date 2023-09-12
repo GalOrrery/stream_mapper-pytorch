@@ -34,6 +34,7 @@ NoBounds = make_dataclass(
     [("array_namespace", ArrayNamespace[Array], field(default=xp, kw_only=True))],
     bases=(CoreNoBounds[Array],),
     frozen=True,
+    repr=False,
 )
 
 
@@ -42,6 +43,7 @@ ClippedBounds = make_dataclass(
     [("array_namespace", ArrayNamespace[Array], field(default=xp, kw_only=True))],
     bases=(CoreClippedBounds[Array],),
     frozen=True,
+    repr=False,
 )
 
 
