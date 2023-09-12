@@ -25,5 +25,6 @@ HardThreshold = make_dataclass(
     [("array_namespace", ArrayNamespace[Array], field(default=xp, kw_only=True))],
     bases=(CoreHardThreshold[Array],),
     frozen=True,
+    repr=False,
     unsafe_hash=True,
 )

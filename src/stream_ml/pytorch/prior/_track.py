@@ -137,8 +137,13 @@ class ControlRegions(Prior[Array]):
         )
 
         lnpdf = xp.zeros_like(cmp_arr)
+
+        # Lower side
+        # Note that comparison to NaN is always False.
         where = cmp_arr <= self._y - self._w
         lnpdf[where] = (cmp_arr[where] - (self._y[where] - self._w[where])) ** 2
+
+        # Upper side
         where = cmp_arr >= self._y + self._w
         lnpdf[where] = (cmp_arr[where] - (self._y[where] + self._w[where])) ** 2
 

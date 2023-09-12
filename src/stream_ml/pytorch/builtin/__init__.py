@@ -89,6 +89,7 @@ TruncatedNormal = make_dataclass(
 #     [("array_namespace", ArrayNamespace[Array], field(default=xp, kw_only=True))],
 #     bases=(CoreSkewNormal[Array, NNModel], ModelBase),
 #     unsafe_hash=True,
+#     repr=False,
 # )
 
 
@@ -97,4 +98,5 @@ TruncatedNormal = make_dataclass(
 #     [("array_namespace", ArrayNamespace[Array], field(default=xp, kw_only=True))],
 #     bases=(CoreTruncatedSkewNormal[Array, NNModel], ModelBase),
 #     unsafe_hash=True,
+#     repr=False,
 # )
