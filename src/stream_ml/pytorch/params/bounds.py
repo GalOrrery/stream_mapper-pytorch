@@ -77,7 +77,7 @@ def scaled_sigmoid(x: Array, /, lower: Array, upper: Array) -> Array:
     return xp.sigmoid(x) * (upper - lower) + lower
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, repr=False)
 class SigmoidBounds(ParameterBounds[Array]):
     """Base class for prior bounds."""
 
