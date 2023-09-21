@@ -134,12 +134,12 @@ class MixtureModel(ModelsBase, CoreMixtureModel[Array, NNModel]):
             data, names=names_intersect(data, self.data_scaler), xp=self.xp
         )
         # TODO! need forward priors
-        weights = self.net(scaled_data[self.indep_coord_names].array)  # (N, K, ...)
+        ln_weights = self.net(scaled_data[self.indep_coord_names].array)  # (N, K, ...)
 
         # Parameter bounds, skipping the background weight (if present),
         # since the Mixture NN should not predict it.
         for param in self.params.flatvalues()[self._bkg_slc]:
-            weights = param.bounds(weights, scaled_data, self)
+            ln_weights = param.bounds(ln_weights, scaled_data, self)
 
         # Predict the parameters for each component.
         # The weight is added
@@ -147,13 +147,15 @@ class MixtureModel(ModelsBase, CoreMixtureModel[Array, NNModel]):
         wgt_is: list[int] = [-1] * len(self.components)
         counter: int = 0
         for i, (name, model) in enumerate(self.components.items()):
-            weight = (weights[:, i] if name != BACKGROUND_KEY else 1 - weights.sum(1))[
-                :, None
-            ]  # (N, 1)
+            ln_weight = (  # (N, 1)
+                ln_weights[:, i]
+                if name != BACKGROUND_KEY
+                else self.xp.log(1 - self.xp.logsumexp(ln_weights, 1))
+            )[:, None]
             wgt_is[i] = counter
 
             pred = model(data)
-            preds.extend((weight, pred))
+            preds.extend((ln_weight, pred))
             counter += 1 + (pred.shape[1] if len(pred.shape) > 1 else 0)
 
         out = self.xp.concatenate(preds, 1)
@@ -164,6 +166,8 @@ class MixtureModel(ModelsBase, CoreMixtureModel[Array, NNModel]):
 
         # Ensure that the background weight is 1 - sum(weights)
         if self._includes_bkg:
-            out[:, wgt_is[-1]] = 1 - out[:, wgt_is[:-1]].sum(1)
+            out[:, wgt_is[-1]] = self.xp.log(
+                1 - self.xp.logsumexp(out[:, wgt_is[:-1]], 1)
+            )
 
         return out
