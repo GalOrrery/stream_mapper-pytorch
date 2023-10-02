@@ -131,7 +131,7 @@ class ControlRegions(Prior[Array]):
             The logpdf.
         """
         # Get model parameters evaluated at the control points. shape (C, 1).
-        cmpars = model.unpack_params(model(self._x))  # type: ignore[call-overload]  # noqa: E501
+        cmpars = model.unpack_params(model(self._x))  # type: ignore[call-overload]
         cmp_arr = xp.stack(  # (C, F)
             tuple(cmpars[(n, self.component_param_name)] for n in self._y_names), 1
         )
