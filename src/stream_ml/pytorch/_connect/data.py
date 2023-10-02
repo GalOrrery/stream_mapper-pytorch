@@ -38,7 +38,7 @@ def _from_tensor_to_ndarray(
     return replace(data, array=np.asarray(data.array, **kwargs))
 
 
-ASTYPE_REGISTRY[(xp.Tensor, np.ndarray)] = _from_tensor_to_ndarray  # type: ignore[assignment]  # noqa: E501
+ASTYPE_REGISTRY[(xp.Tensor, np.ndarray)] = _from_tensor_to_ndarray  # type: ignore[assignment]
 
 
 try:

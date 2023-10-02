@@ -29,4 +29,4 @@ def standard_scaler_astype_tensor(
     )
 
 
-ASTYPE_REGISTRY[(StandardScaler, xp.Tensor)] = standard_scaler_astype_tensor  # type: ignore[assignment]  # noqa: E501
+ASTYPE_REGISTRY[(StandardScaler, xp.Tensor)] = standard_scaler_astype_tensor  # type: ignore[assignment]
