@@ -8,4 +8,5 @@ from stream_ml.pytorch._connect import (  # noqa: F401
     funcs,
     nn_namespace,
     scaler,
+    xp_namespace,
 )

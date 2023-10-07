@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 
 NoBounds = make_dataclass(
     "NoBounds",
-    [("array_namespace", ArrayNamespace[Array], field(default=xp, kw_only=True))],
+    [("array_namespace", ArrayNamespace[Array], field(default="torch", kw_only=True))],
     bases=(CoreNoBounds[Array],),
     frozen=True,
     repr=False,
@@ -40,7 +40,7 @@ NoBounds = make_dataclass(
 
 ClippedBounds = make_dataclass(
     "ClippedBounds",
-    [("array_namespace", ArrayNamespace[Array], field(default=xp, kw_only=True))],
+    [("array_namespace", ArrayNamespace[Array], field(default="torch", kw_only=True))],
     bases=(CoreClippedBounds[Array],),
     frozen=True,
     repr=False,

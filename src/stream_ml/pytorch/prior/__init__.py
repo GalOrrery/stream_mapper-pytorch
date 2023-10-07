@@ -2,8 +2,6 @@
 
 from dataclasses import field, make_dataclass
 
-import torch as xp
-
 from stream_ml.core.prior import FunctionPrior, Prior
 from stream_ml.core.prior import HardThreshold as CoreHardThreshold
 
@@ -22,7 +20,7 @@ __all__ = [
 
 HardThreshold = make_dataclass(
     "HardThreshold",
-    [("array_namespace", ArrayNamespace[Array], field(default=xp, kw_only=True))],
+    [("array_namespace", ArrayNamespace[Array], field(default="torch", kw_only=True))],
     bases=(CoreHardThreshold[Array],),
     frozen=True,
     repr=False,
