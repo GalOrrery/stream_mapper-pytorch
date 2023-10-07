@@ -24,8 +24,6 @@ __all__ = [
 
 from dataclasses import field, make_dataclass
 
-import torch as xp
-
 from stream_ml.core.builtin._exponential import Exponential as CoreExponential
 from stream_ml.core.builtin._norm import Normal as CoreNormal
 from stream_ml.core.builtin._truncnorm import TruncatedNormal as CoreTruncatedNormal
@@ -49,7 +47,7 @@ from stream_ml.pytorch.typing import Array, ArrayNamespace, NNModel
 
 Normal = make_dataclass(
     "Normal",
-    [("array_namespace", ArrayNamespace[Array], field(default=xp, kw_only=True))],
+    [("array_namespace", ArrayNamespace[Array], field(default="torch", kw_only=True))],
     bases=(CoreNormal[Array, NNModel], ModelBase),
     unsafe_hash=True,
     repr=False,
@@ -58,7 +56,7 @@ Normal = make_dataclass(
 
 Uniform = make_dataclass(
     "Uniform",
-    [("array_namespace", ArrayNamespace[Array], field(default=xp, kw_only=True))],
+    [("array_namespace", ArrayNamespace[Array], field(default="torch", kw_only=True))],
     bases=(CoreUniform[Array, NNModel], ModelBase),
     unsafe_hash=True,
     repr=False,
@@ -67,7 +65,7 @@ Uniform = make_dataclass(
 
 Exponential = make_dataclass(
     "Exponential",
-    [("array_namespace", ArrayNamespace[Array], field(default=xp, kw_only=True))],
+    [("array_namespace", ArrayNamespace[Array], field(default="torch", kw_only=True))],
     bases=(CoreExponential[Array, NNModel], ModelBase),
     unsafe_hash=True,
     repr=False,
@@ -76,7 +74,7 @@ Exponential = make_dataclass(
 
 TruncatedNormal = make_dataclass(
     "TruncatedNormal",
-    [("array_namespace", ArrayNamespace[Array], field(default=xp, kw_only=True))],
+    [("array_namespace", ArrayNamespace[Array], field(default="torch", kw_only=True))],
     bases=(CoreTruncatedNormal[Array, NNModel], ModelBase),
     unsafe_hash=True,
     repr=False,
