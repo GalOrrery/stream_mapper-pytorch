@@ -11,6 +11,7 @@ import torch as xp
 from torch import nn
 
 from stream_ml.core import ModelBase as CoreModelBase
+from stream_ml.core._api import SupportsXPNN
 from stream_ml.core.utils.dataclasses import ArrayNamespaceReprMixin
 
 from stream_ml.pytorch.typing import Array, NNModel
@@ -47,6 +48,8 @@ class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
     def __repr__(self) -> str:
         """Repr."""
         return ArrayNamespaceReprMixin.__repr__(self)
+
+    __setstate__ = SupportsXPNN.__setstate__
 
     # ========================================================================
     # ML
