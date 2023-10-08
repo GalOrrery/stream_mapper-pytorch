@@ -13,6 +13,7 @@ from stream_ml.core import IndependentModels as CoreIndependentModels
 from stream_ml.core import MixtureModel as CoreMixtureModel
 from stream_ml.core import ModelsBase as CoreModelsBase
 from stream_ml.core import NNField
+from stream_ml.core._api import SupportsXPNN
 from stream_ml.core.setup_package import BACKGROUND_KEY
 from stream_ml.core.utils.sentinel import MISSING
 
@@ -34,6 +35,8 @@ class ModelsBase(nn.Module, CoreModelsBase[Array, NNModel]):
         # Register the models with pytorch.
         for name, model in self.components.items():
             self.add_module(name=name, module=model)
+
+    __setstate__ = SupportsXPNN.__setstate__
 
 
 @dataclass(unsafe_hash=True)
