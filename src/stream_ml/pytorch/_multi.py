@@ -153,7 +153,9 @@ class MixtureModel(ModelsBase, CoreMixtureModel[Array, NNModel]):
             ln_weight = (  # (N, 1)
                 ln_weights[:, i]
                 if name != BACKGROUND_KEY
-                else self.xp.log(1 - self.xp.sum(self.xp.exp(ln_weights), 1))
+                else self.xp.log(
+                    -self.xp.expm1(self.xp.special.logsumexp(ln_weights, 1))
+                )
             )[:, None]
             wgt_is[i] = counter
 
@@ -170,7 +172,7 @@ class MixtureModel(ModelsBase, CoreMixtureModel[Array, NNModel]):
         # Ensure that the background weight is 1 - sum(weights)
         if self._includes_bkg:
             out[:, wgt_is[-1]] = self.xp.log(
-                1 - self.xp.sum(self.xp.exp(out[:, wgt_is[:-1]]), 1)
+                -self.xp.expm1(self.xp.special.logsumexp(out[:, wgt_is[:-1]], 1))
             )
 
         return out
