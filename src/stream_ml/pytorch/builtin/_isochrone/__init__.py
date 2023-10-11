@@ -37,6 +37,7 @@ Parallax2DistMod = make_dataclass(
     "Parallax2DistMod",
     [("array_namespace", ArrayNamespace[Array], field(default=xp, kw_only=True))],
     bases=(CoreParallax2DistMod[Array],),
+    frozen=True,
     unsafe_hash=True,
     repr=False,
 )
