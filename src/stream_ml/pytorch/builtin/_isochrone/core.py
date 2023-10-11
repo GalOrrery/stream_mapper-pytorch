@@ -10,17 +10,16 @@ from typing import TYPE_CHECKING, Any
 
 import torch as xp
 
-from stream_ml.core._core.field import NNField
+from stream_ml.core import Data, NNField
+from stream_ml.core.builtin._isochrone.mf import (
+    StreamMassFunction,
+    UniformStreamMassFunction,
+)
 from stream_ml.core.builtin._utils import WhereRequiredError
 from stream_ml.core.utils.frozen_dict import FrozenDict, FrozenDictField
 from stream_ml.core.utils.funcs import within_bounds
 
-from stream_ml.pytorch import Data
 from stream_ml.pytorch._base import ModelBase
-from stream_ml.pytorch.builtin._isochrone.mf import (
-    StreamMassFunction,
-    UniformStreamMassFunction,
-)
 
 if TYPE_CHECKING:
     from scipy.interpolate import CubicSpline
