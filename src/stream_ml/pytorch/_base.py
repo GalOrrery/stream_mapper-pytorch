@@ -49,7 +49,7 @@ class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
         """Repr."""
         return ArrayNamespaceReprMixin.__repr__(self)
 
-    __setstate__ = SupportsXPNN.__setstate__
+    __setstate__ = SupportsXPNN[Array, NNModel].__setstate__
 
     # ========================================================================
     # ML

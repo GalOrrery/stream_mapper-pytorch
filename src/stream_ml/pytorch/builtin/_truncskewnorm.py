@@ -13,7 +13,7 @@ from stream_ml.core.builtin import WhereRequiredError
 from stream_ml.core.builtin._stats.trunc_norm import logpdf as truncnorm_logpdf
 from stream_ml.core.builtin._stats.trunc_skewnorm import logpdf as truncskewnorm_logpdf
 
-from stream_ml.pytorch.builtin._skewnorm import SkewNormal
+from stream_ml.pytorch.builtin import SkewNormal
 
 if TYPE_CHECKING:
     from stream_ml.core import Data, Params

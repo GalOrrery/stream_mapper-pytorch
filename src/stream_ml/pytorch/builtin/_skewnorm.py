@@ -17,8 +17,9 @@ from stream_ml.pytorch._base import ModelBase
 
 if TYPE_CHECKING:
     from stream_ml.core import Data, Params
+    from stream_ml.core.typing import ArrayNamespace
 
-    from stream_ml.pytorch.typing import Array, ArrayNamespace
+    from stream_ml.pytorch.typing import Array
 
 
 @dataclass(unsafe_hash=True, repr=False)

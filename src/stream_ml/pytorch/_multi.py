@@ -35,7 +35,7 @@ class ModelsBase(nn.Module, CoreModelsBase[Array, NNModel]):
         for name, model in self.components.items():
             self.add_module(name=name, module=model)
 
-    __setstate__ = SupportsXPNN.__setstate__
+    __setstate__ = SupportsXPNN[Array, NNModel].__setstate__
 
 
 @dataclass(unsafe_hash=True)

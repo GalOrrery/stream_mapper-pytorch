@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-__all__ = [
+__all__ = (
     "IsochroneMVNorm",
     # Mass Function
     "StreamMassFunction",
@@ -13,7 +13,7 @@ __all__ = [
     "IsochroneMVNorm",
     # Utils
     "Parallax2DistMod",
-]
+)
 
 from dataclasses import KW_ONLY, dataclass, field, make_dataclass
 from functools import reduce
@@ -32,11 +32,12 @@ from stream_ml.core.builtin._isochrone.mf import (
 from stream_ml.core.builtin._isochrone.utils import (
     Parallax2DistMod as CoreParallax2DistMod,
 )
+from stream_ml.core.typing import ArrayNamespace
 from stream_ml.core.utils import within_bounds
 from stream_ml.core.utils.frozen_dict import FrozenDict, FrozenDictField
 
 from stream_ml.pytorch._base import ModelBase
-from stream_ml.pytorch.typing import Array, ArrayNamespace
+from stream_ml.pytorch.typing import Array
 
 if TYPE_CHECKING:
     from scipy.interpolate import CubicSpline

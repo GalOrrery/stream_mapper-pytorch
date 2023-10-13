@@ -1,6 +1,6 @@
 """Stream models."""
 
-__all__ = [
+__all__ = (
     # modules
     "compat",
     # classes
@@ -20,7 +20,7 @@ __all__ = [
     "Parallax2DistMod",
     # -- multivariate
     "MultivariateNormal",
-]
+)
 
 from dataclasses import field, make_dataclass
 

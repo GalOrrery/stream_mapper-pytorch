@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-__all__ = [
+__all__ = (
     # core
     "ParameterBounds",
     "NoBounds",
     "ClippedBounds",
     # pytorch
     "SigmoidBounds",
-]
+)
 
 from dataclasses import KW_ONLY, dataclass, field, make_dataclass
 from typing import TYPE_CHECKING
