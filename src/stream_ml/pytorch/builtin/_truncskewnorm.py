@@ -2,28 +2,28 @@
 
 from __future__ import annotations
 
-__all__: list[str] = []
+__all__: tuple[str, ...] = ()
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import torch as xp
 
+from stream_ml.core.builtin import WhereRequiredError
 from stream_ml.core.builtin._stats.trunc_norm import logpdf as truncnorm_logpdf
 from stream_ml.core.builtin._stats.trunc_skewnorm import logpdf as truncskewnorm_logpdf
-from stream_ml.core.builtin._utils import WhereRequiredError
 
 from stream_ml.pytorch.builtin._skewnorm import SkewNormal
 
 if TYPE_CHECKING:
-    from stream_ml.pytorch import Data
-    from stream_ml.pytorch.params import Params
+    from stream_ml.core import Data, Params
+
     from stream_ml.pytorch.typing import Array
 
 
 @dataclass(unsafe_hash=True)
 class TruncatedSkewNormal(SkewNormal):
-    r"""Truncated Skew-Normal."""
+    """Truncated Skew-Normal."""
 
     def ln_likelihood(
         self,

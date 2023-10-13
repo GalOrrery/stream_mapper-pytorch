@@ -2,26 +2,25 @@
 
 from __future__ import annotations
 
-__all__: list[str] = []
+__all__: tuple[str, ...] = ()
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from torch import nn
 
+from stream_ml.core import BACKGROUND_KEY, NNField
 from stream_ml.core import IndependentModels as CoreIndependentModels
 from stream_ml.core import MixtureModel as CoreMixtureModel
 from stream_ml.core import ModelsBase as CoreModelsBase
-from stream_ml.core import NNField
 from stream_ml.core._api import SupportsXPNN
-from stream_ml.core.setup_package import BACKGROUND_KEY
+from stream_ml.core.utils import names_intersect
 from stream_ml.core.utils.sentinel import MISSING
 
 from stream_ml.pytorch.typing import Array, NNModel
-from stream_ml.pytorch.utils import names_intersect
 
 if TYPE_CHECKING:
-    from stream_ml.pytorch import Data
+    from stream_ml.core import Data
 
     Self = TypeVar("Self", bound="MixtureModel")
 

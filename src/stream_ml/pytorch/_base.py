@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-__all__: list[str] = []
+__all__: tuple[str, ...] = ()
 
 from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING, Any, TypeVar
@@ -12,14 +12,14 @@ import torch as xp
 
 from stream_ml.core import ModelBase as CoreModelBase
 from stream_ml.core._api import SupportsXPNN
+from stream_ml.core.utils import names_intersect
 from stream_ml.core.utils.dataclasses import ArrayNamespaceReprMixin
 
 from stream_ml.pytorch.typing import Array, NNModel
-from stream_ml.pytorch.utils import names_intersect
 
 if TYPE_CHECKING:
-    from stream_ml.pytorch import Data
-    from stream_ml.pytorch.typing import ArrayNamespace
+    from stream_ml.core import Data
+    from stream_ml.core.typing import ArrayNamespace
 
     Self = TypeVar("Self", bound="ModelBase")
 

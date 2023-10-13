@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-__all__: list[str] = []
+__all__: tuple[str, ...] = ()
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
@@ -10,7 +10,8 @@ from typing import TYPE_CHECKING
 from stream_ml.pytorch.builtin.compat._flow import _FlowModel
 
 if TYPE_CHECKING:
-    from stream_ml.pytorch import Data
+    from stream_ml.core import Data
+
     from stream_ml.pytorch.typing import Array
 
 

@@ -2,20 +2,20 @@
 
 from __future__ import annotations
 
-__all__: list[str] = []
+__all__: tuple[str, ...] = ()
 
 from dataclasses import KW_ONLY, dataclass, replace
 from typing import TYPE_CHECKING
 
+from stream_ml.core.params import scale_params
+from stream_ml.core.utils import names_intersect
 from stream_ml.core.utils.frozen_dict import FrozenDict
 
 from stream_ml.pytorch._base import ModelBase
-from stream_ml.pytorch.params.scaler import scale_params
-from stream_ml.pytorch.utils import names_intersect
 
 if TYPE_CHECKING:
-    from stream_ml.pytorch import Data
-    from stream_ml.pytorch.params import Params
+    from stream_ml.core import Data, Params
+
     from stream_ml.pytorch.typing import Array
 
 

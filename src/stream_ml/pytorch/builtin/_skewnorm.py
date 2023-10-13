@@ -2,28 +2,28 @@
 
 from __future__ import annotations
 
-__all__: list[str] = []
+__all__: tuple[str, ...] = ()
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import torch as xp
 
+from stream_ml.core.builtin import WhereRequiredError
 from stream_ml.core.builtin._stats.norm import logpdf as norm_logpdf
 from stream_ml.core.builtin._stats.skewnorm import logpdf as skewnorm_logpdf
-from stream_ml.core.builtin._utils import WhereRequiredError
 
 from stream_ml.pytorch._base import ModelBase
 
 if TYPE_CHECKING:
-    from stream_ml.pytorch import Data
-    from stream_ml.pytorch.params import Params
+    from stream_ml.core import Data, Params
+
     from stream_ml.pytorch.typing import Array, ArrayNamespace
 
 
 @dataclass(unsafe_hash=True, repr=False)
 class SkewNormal(ModelBase):
-    r"""Skew-Normal.
+    """Skew-Normal.
 
     The skew-normal distribution is not numerically stable in the far tails
     (e.g. at log-probabiliy -100), from the computation of the logarithm of the

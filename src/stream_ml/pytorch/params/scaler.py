@@ -1,19 +1,6 @@
 """Core feature."""
 
-__all__ = [
-    "ParamScaler",
-    "Identity",
-    "StandardLocation",
-    "StandardWidth",
-    "StandardLnWidth",
-    "scale_params",
-]
+from stream_ml.core.params import scaler
+from stream_ml.core.params.scaler import *  # noqa: F403
 
-from stream_ml.core.params.scaler import (
-    Identity,
-    ParamScaler,
-    StandardLnWidth,
-    StandardLocation,
-    StandardWidth,
-    scale_params,
-)
+__all__ = scaler.__all__

@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import torch as xp
 
-from stream_ml.core._data import ASTYPE_REGISTRY, Data
+from stream_ml.core._data import ASTYPE_REGISTRY
+
+if TYPE_CHECKING:
+    from stream_ml.core import Data
 
 # --------  Register  ------------------------------------------------------
 

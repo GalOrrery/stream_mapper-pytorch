@@ -1,6 +1,6 @@
 """Register extensions and single-dispatch functions with stream_ml."""
 
-__all__: list[str] = []
+__all__: tuple[str, ...] = ()
 
 from stream_ml.pytorch._connect import (  # noqa: F401
     compat,
