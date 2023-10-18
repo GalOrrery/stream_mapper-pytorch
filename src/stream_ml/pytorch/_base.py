@@ -12,8 +12,8 @@ import torch as xp
 
 from stream_ml.core import ModelBase as CoreModelBase
 from stream_ml.core._api import SupportsXPNN
-from stream_ml.core.utils import names_intersect
 from stream_ml.core.utils.dataclasses import ArrayNamespaceReprMixin
+from stream_ml.core.utils.scale import names_intersect
 
 from stream_ml.pytorch.typing import Array, NNModel
 
