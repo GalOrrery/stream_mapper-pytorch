@@ -11,7 +11,8 @@ from torch import nn
 import torch as xp
 
 from stream_ml.core import ModelBase as CoreModelBase
-from stream_ml.core._api import SupportsXPNN
+from stream_ml.core._connect.nn_namespace import NN_NAMESPACE
+from stream_ml.core._connect.xp_namespace import XP_NAMESPACE
 from stream_ml.core.utils.dataclasses import ArrayNamespaceReprMixin
 from stream_ml.core.utils.scale import names_intersect
 
@@ -49,7 +50,15 @@ class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
         """Repr."""
         return ArrayNamespaceReprMixin.__repr__(self)
 
-    __setstate__ = SupportsXPNN[Array, NNModel].__setstate__
+    # __setstate__ = SupportsXPNN[Array, NNModel].__setstate__
+    def __setstate__(self, state: dict[str, Any]) -> None:
+        """Set state."""
+        try:
+            super().__setstate__(state)  # type: ignore[misc]
+        except AttributeError:
+            self.__dict__.update(state)
+        object.__setattr__(self, "array_namespace", XP_NAMESPACE[self.array_namespace])
+        object.__setattr__(self, "_nn_namespace_", NN_NAMESPACE[self.array_namespace])
 
     # ========================================================================
     # ML
