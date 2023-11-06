@@ -7,8 +7,8 @@ __all__: list[str] = []
 from dataclasses import KW_ONLY, dataclass
 from typing import TYPE_CHECKING, Any, TypeVar
 
-import torch as xp
 from torch import nn
+import torch as xp
 
 from stream_ml.core import ModelBase as CoreModelBase
 from stream_ml.core._api import SupportsXPNN
