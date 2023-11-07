@@ -2,8 +2,8 @@
 
 __all__: list[str] = []
 
-import torch as xp
 from torch import nn
+import torch as xp
 
 from stream_ml.core._connect.nn_namespace import NN_NAMESPACE
 
