@@ -54,7 +54,7 @@ class ModelBase(nn.Module, CoreModelBase[Array, NNModel]):
     def __setstate__(self, state: dict[str, Any]) -> None:
         """Set state."""
         try:
-            super().__setstate__(state)  # type: ignore[misc]
+            super().__setstate__(state)
         except AttributeError:
             self.__dict__.update(state)
         object.__setattr__(self, "array_namespace", XP_NAMESPACE[self.array_namespace])
