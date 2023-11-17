@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import field, make_dataclass
+from dataclasses import KW_ONLY, dataclass, field
 
 from stream_ml.core import prior
 from stream_ml.core.prior import *  # noqa: F403
@@ -14,19 +14,14 @@ from stream_ml.pytorch.typing import Array
 
 __all__ = prior.__all__
 
-HardThreshold = make_dataclass(
-    "HardThreshold",
-    [("array_namespace", ArrayNamespace[Array], field(default="torch", kw_only=True))],
-    bases=(CoreHardThreshold[Array],),
-    frozen=True,
-    repr=False,
-)
+
+@dataclass(frozen=True, repr=False)
+class HardThreshold(CoreHardThreshold[Array]):
+    _: KW_ONLY
+    array_namespace: ArrayNamespace[Array] = field(default="torch", kw_only=True)  # type: ignore[arg-type]
 
 
-ControlRegions = make_dataclass(
-    "ControlRegions",
-    [("array_namespace", ArrayNamespace[Array], field(default="torch", kw_only=True))],
-    bases=(CoreControlRegions[Array],),
-    frozen=True,
-    repr=False,
-)
+@dataclass(frozen=True, repr=False)
+class ControlRegions(CoreControlRegions[Array]):
+    _: KW_ONLY
+    array_namespace: ArrayNamespace[Array] = field(default="torch", kw_only=True)  # type: ignore[arg-type]
