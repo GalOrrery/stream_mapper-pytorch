@@ -2,33 +2,64 @@
 
 from __future__ import annotations
 
-__all__ = ["IsochroneMVNorm"]
+__all__ = (
+    "IsochroneMVNorm",
+    # Mass Function
+    "StreamMassFunction",
+    "UniformStreamMassFunction",
+    "HardCutoffMassFunction",
+    "StepwiseMassFunction",
+    # Core
+    "IsochroneMVNorm",
+    # Utils
+    "Parallax2DistMod",
+)
 
-from dataclasses import KW_ONLY, dataclass, field
+from dataclasses import KW_ONLY, dataclass, field, make_dataclass
 from functools import reduce
 from typing import TYPE_CHECKING, Any
 
 import torch as xp
 
 from stream_ml.core import Data, NNField
+from stream_ml.core.builtin import WhereRequiredError
 from stream_ml.core.builtin._isochrone.mf import (
+    HardCutoffMassFunction,
+    StepwiseMassFunction,
     StreamMassFunction,
     UniformStreamMassFunction,
 )
-from stream_ml.core.builtin._utils import WhereRequiredError
+from stream_ml.core.builtin._isochrone.utils import (
+    Parallax2DistMod as CoreParallax2DistMod,
+)
+from stream_ml.core.typing import ArrayNamespace
+from stream_ml.core.utils import within_bounds
 from stream_ml.core.utils.frozen_dict import FrozenDict, FrozenDictField
-from stream_ml.core.utils.funcs import within_bounds
 
 from stream_ml.pytorch._base import ModelBase
+from stream_ml.pytorch.typing import Array
 
 if TYPE_CHECKING:
     from scipy.interpolate import CubicSpline
 
+    from stream_ml.core import Params
     from stream_ml.core.typing import BoundsT
 
-    from stream_ml.pytorch.params import Params
-    from stream_ml.pytorch.typing import Array, NNModel
+    from stream_ml.pytorch.typing import NNModel
 
+
+# -----------------------------------------------------------------------------
+
+Parallax2DistMod = make_dataclass(
+    "Parallax2DistMod",
+    [("array_namespace", ArrayNamespace[Array], field(default=xp, kw_only=True))],
+    bases=(CoreParallax2DistMod[Array],),
+    frozen=True,
+    unsafe_hash=True,
+    repr=False,
+)
+
+# -----------------------------------------------------------------------------
 
 _log2pi = xp.log(xp.asarray(2 * xp.pi))
 

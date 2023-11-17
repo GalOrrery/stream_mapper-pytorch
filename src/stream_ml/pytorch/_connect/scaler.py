@@ -7,10 +7,10 @@ from typing import Any
 
 import torch as xp
 
+from stream_ml.core.utils import StandardScaler
 from stream_ml.core.utils.scale._api import ASTYPE_REGISTRY
-from stream_ml.core.utils.scale._standard import StandardScaler
 
-__all__: list[str] = []
+__all__: tuple[str, ...] = ()
 
 
 #####################################################################

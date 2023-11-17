@@ -2,20 +2,20 @@
 
 from __future__ import annotations
 
-__all__: list[str] = []
+__all__: tuple[str, ...] = ()
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import torch as xp
 
-from stream_ml.core.builtin._utils import WhereRequiredError
+from stream_ml.core.builtin import WhereRequiredError
 
 from stream_ml.pytorch._base import ModelBase
 
 if TYPE_CHECKING:
-    from stream_ml.pytorch import Data
-    from stream_ml.pytorch.params import Params
+    from stream_ml.core import Data, Params
+
     from stream_ml.pytorch.typing import Array
 
 

@@ -2,26 +2,26 @@
 
 from __future__ import annotations
 
-__all__: list[str] = []
+__all__: tuple[str, ...] = ()
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, TypeVar
 
 from torch import nn
 
+from stream_ml.core import BACKGROUND_KEY, NNField
 from stream_ml.core import IndependentModels as CoreIndependentModels
 from stream_ml.core import MixtureModel as CoreMixtureModel
 from stream_ml.core import ModelsBase as CoreModelsBase
-from stream_ml.core import NNField
-from stream_ml.core._api import SupportsXPNN
-from stream_ml.core.setup_package import BACKGROUND_KEY
+from stream_ml.core._connect.nn_namespace import NN_NAMESPACE
+from stream_ml.core._connect.xp_namespace import XP_NAMESPACE
+from stream_ml.core.utils import names_intersect
 from stream_ml.core.utils.sentinel import MISSING
 
 from stream_ml.pytorch.typing import Array, NNModel
-from stream_ml.pytorch.utils import names_intersect
 
 if TYPE_CHECKING:
-    from stream_ml.pytorch import Data
+    from stream_ml.core import Data
 
     Self = TypeVar("Self", bound="MixtureModel")
 
@@ -36,7 +36,15 @@ class ModelsBase(nn.Module, CoreModelsBase[Array, NNModel]):
         for name, model in self.components.items():
             self.add_module(name=name, module=model)
 
-    __setstate__ = SupportsXPNN.__setstate__
+    # __setstate__ = SupportsXPNN[Array, NNModel].__setstate__
+    def __setstate__(self, state: dict[str, Any]) -> None:
+        """Set state."""
+        try:
+            super().__setstate__(state)
+        except AttributeError:
+            self.__dict__.update(state)
+        object.__setattr__(self, "array_namespace", XP_NAMESPACE[self.array_namespace])
+        object.__setattr__(self, "_nn_namespace_", NN_NAMESPACE[self.array_namespace])
 
 
 @dataclass(unsafe_hash=True)

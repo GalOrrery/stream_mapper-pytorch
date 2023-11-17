@@ -5,7 +5,7 @@ import operator
 
 from torch import nn
 
-__all__ = ["sequential"]
+__all__ = ("sequential",)
 
 
 def sequential(

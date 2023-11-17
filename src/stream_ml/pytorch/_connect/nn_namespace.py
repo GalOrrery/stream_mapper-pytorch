@@ -1,6 +1,6 @@
 """Register extensions and single-dispatch functions with stream_ml."""
 
-__all__: list[str] = []
+__all__: tuple[str, ...] = ()
 
 from torch import nn
 import torch as xp

@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-__all__ = [
+__all__ = (
     # core
     "ParameterBounds",
     "NoBounds",
     "ClippedBounds",
     # pytorch
     "SigmoidBounds",
-]
+)
 
 from dataclasses import KW_ONLY, dataclass, field, make_dataclass
 from typing import TYPE_CHECKING
@@ -23,10 +23,8 @@ from stream_ml.core.params.bounds import ParameterBounds
 from stream_ml.pytorch.typing import Array, ArrayNamespace, NNModel
 
 if TYPE_CHECKING:
-    from stream_ml.core import ModelAPI
-    from stream_ml.core.params.scaler import ParamScaler
-
-    from stream_ml.pytorch import Data
+    from stream_ml.core import Data, ModelAPI
+    from stream_ml.core.params import ParamScaler
 
 
 NoBounds = make_dataclass(

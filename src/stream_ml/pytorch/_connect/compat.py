@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 import torch as xp
 
-from stream_ml.core.utils.compat import array_at, copy, get_namespace
+from stream_ml.core.utils import array_at, copy, get_namespace
 
 if TYPE_CHECKING:
     from stream_ml.pytorch.typing import Array, ArrayNamespace
