@@ -1,6 +1,6 @@
 """Stream Memberships Likelihood, with ML."""
 
-from stream_ml.core import Data
+from stream_ml.core import Data, Params
 
 from stream_ml.pytorch import builtin, nn, params, prior, utils
 from stream_ml.pytorch._base import ModelBase
@@ -19,6 +19,7 @@ __all__ = (
     "IndependentModels",
     # classes
     "Data",
+    "Params",
 )
 
 # Register with single-dispatch
