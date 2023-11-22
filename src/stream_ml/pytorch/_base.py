@@ -13,6 +13,7 @@ from torch import nn
 from stream_ml.core import ModelBase as CoreModelBase
 from stream_ml.core._connect.nn_namespace import NN_NAMESPACE
 from stream_ml.core._connect.xp_namespace import XP_NAMESPACE
+from stream_ml.core.typing import ArrayNamespace  # noqa: TCH001
 from stream_ml.core.utils.dataclasses import ArrayNamespaceReprMixin
 from stream_ml.core.utils.scale import names_intersect
 
@@ -20,7 +21,6 @@ from stream_ml.pytorch.typing import Array, NNModel
 
 if TYPE_CHECKING:
     from stream_ml.core import Data
-    from stream_ml.core.typing import ArrayNamespace
 
     Self = TypeVar("Self", bound="ModelBase")
 
