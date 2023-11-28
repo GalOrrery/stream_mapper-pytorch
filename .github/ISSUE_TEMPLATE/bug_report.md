@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Create a report describing unexpected or incorrect behavior in `stream_ml`.
+about: Create a report describing unexpected or incorrect behavior in `stream_mapper`.
 title: "[BUG] "
 labels: Bug
 assignees: 'nstarman'

@@ -1,5 +1,5 @@
 [project]
-  name = "stream_ml.pytorch"
+  name = "stream_mapper.pytorch"
   version = "0.1.0"
   description = "Stream ML pytorch extension."
   readme = "README.rst"
@@ -23,7 +23,7 @@
   ]
   dependencies = [
     "scipy>=1.7",
-    "stream_ml.core @ git+https://github.com/nstarman/stream_ml-core.git",
+    "stream_mapper.core @ git+https://github.com/GalOrrery/stream_mapper-core.git",
     "torch>=1.13",
   ]
 
@@ -53,9 +53,9 @@
   ]
 
 [project.urls]
-  homepage = "https://github.com/nstarman/stream_ml-pytorch"
-  repository = "https://github.com/nstarman/stream_ml-pytorch"
-  documentation = "https://github.com/nstarman/stream_ml-pytorch"
+  homepage = "https://github.com/nstarman/stream_mapper-pytorch"
+  repository = "https://github.com/nstarman/stream_mapper-pytorch"
+  documentation = "https://github.com/nstarman/stream_mapper-pytorch"
 
 
 [build-system]
@@ -174,8 +174,8 @@ ban-relative-imports = "all"
 [tool.ruff.isort]
 force-sort-within-sections = true
 known-third-party = ["numpy", "pytest", "torch"]
-known-first-party = ["stream_ml.core"]
-known-local-folder = ["stream_ml.pytorch"]
+known-first-party = ["stream_mapper.core"]
+known-local-folder = ["stream_mapper.pytorch"]
 
 [tool.ruff.pylint]
 max-args = 6
