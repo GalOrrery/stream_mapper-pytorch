@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an idea to improve ``stream_ml``
+about: Suggest an idea to improve ``stream_mapper``
 title: ''
 labels: enhancement
 assignees: ''
