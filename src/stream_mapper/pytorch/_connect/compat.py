@@ -24,7 +24,7 @@ class ArrayAt:
     idx: Any
     inplace: bool = True
 
-    def set(self, value: Array | float) -> Array:  # noqa: A003
+    def set(self, value: Array | float) -> Array:
         """Set the value at the index, in-place."""
         out = self.array if self.inplace else self.array.clone()
         out[self.idx] = value
