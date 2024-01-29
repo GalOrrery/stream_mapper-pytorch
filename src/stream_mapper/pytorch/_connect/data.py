@@ -58,6 +58,6 @@ else:
         array.flags.writeable = True
         return replace(data, array=xp.asarray(array, **kwargs))
 
-    ASTYPE_REGISTRY[
-        (asdf.tags.core.ndarray.NDArrayType, xp.Tensor)
-    ] = _from_ndarraytype_to_tensor
+    ASTYPE_REGISTRY[(asdf.tags.core.ndarray.NDArrayType, xp.Tensor)] = (
+        _from_ndarraytype_to_tensor
+    )
