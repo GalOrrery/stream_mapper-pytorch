@@ -80,9 +80,7 @@ class TruncatedSkewNormal(SkewNormal):
             # TODO: I suspect there are better ways to write this
             sigma_o = data[cens].array[idx]
             sigma = self.xp.exp(ln_s)
-            skew = (
-                skew * sigma / self.xp.sqrt(sigma**2 + (1 + skew**2) * sigma_o**2)
-            )
+            skew = skew * sigma / self.xp.sqrt(sigma**2 + (1 + skew**2) * sigma_o**2)
             ln_s = self.xp.log(sigma**2 + sigma_o**2) / 2
 
         # Find where -inf

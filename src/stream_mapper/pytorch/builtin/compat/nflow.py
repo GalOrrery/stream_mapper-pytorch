@@ -23,7 +23,9 @@ class NFlowModel(_FlowModel):
         """Log-probability of the array."""
         return self.net.log_prob(
             inputs=data[self.coord_names].array[idx],
-            context=data[self.indep_coord_names].array[idx]
-            if self.indep_coord_names is not None
-            else None,
+            context=(
+                data[self.indep_coord_names].array[idx]
+                if self.indep_coord_names is not None
+                else None
+            ),
         )
