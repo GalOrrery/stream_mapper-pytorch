@@ -39,6 +39,7 @@ def _within_bounds_pytorch(
     -------
     ndarray
         Boolean array indicating whether the value is within the bounds.
+
     """
     inbounds = xp.ones_like(value, dtype=xp.bool)
     if lower_bound is not None:

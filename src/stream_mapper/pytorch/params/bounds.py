@@ -66,6 +66,7 @@ def scaled_sigmoid(x: Array, /, lower: Array, upper: Array) -> Array:
     Returns
     -------
     Array
+
     """
     if xp.isneginf(lower) and xp.isposinf(upper):
         return x

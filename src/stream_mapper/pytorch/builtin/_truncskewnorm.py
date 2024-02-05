@@ -55,6 +55,7 @@ class TruncatedSkewNormal(SkewNormal):
         Returns
         -------
         Array
+
         """
         # 'where' is used to indicate which data points are available. If
         # 'where' is not provided, then all data points are assumed to be

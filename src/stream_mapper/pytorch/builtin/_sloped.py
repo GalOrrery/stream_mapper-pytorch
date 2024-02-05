@@ -37,6 +37,7 @@ class Sloped(ModelBase):
     net : nn.Module, keyword-only
         The network to use. If not provided, a new one will be created. Must be
         a layer with 1 input and ``len(param names)-1`` outputs.
+
     """
 
     _: KW_ONLY
@@ -100,6 +101,7 @@ class Sloped(ModelBase):
         Returns
         -------
         Array
+
         """
         data = self.data_scaler.transform(
             data, names=names_intersect(data.names, self.data_scaler.names), xp=self.xp
@@ -146,6 +148,7 @@ class Sloped(ModelBase):
         -------
         Array
             fraction, mean, ln-sigma
+
         """
         # The forward step runs on the normalized coordinates
         data = self.data_scaler.transform(
