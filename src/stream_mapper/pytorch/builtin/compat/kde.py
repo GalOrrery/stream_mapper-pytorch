@@ -64,6 +64,7 @@ class KDEModel(ModelBase):
         Returns
         -------
         Array
+
         """
         # TODO: support `where` argument.
         with xp.no_grad():
@@ -85,5 +86,6 @@ class KDEModel(ModelBase):
         Returns
         -------
         Array
+
         """
         return xp.asarray([])

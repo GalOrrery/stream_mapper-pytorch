@@ -126,6 +126,7 @@ class IsochroneMVNorm(ModelBase):
             coord_bounds=(...), # photometry mag_names=("g",),
             mag_err_names=("g_err",), color_names=("g-r",),
             color_err_names=("g-r_err",), phot_bounds=(...),
+
     """
 
     net: NNField[NNModel, None] = NNField(default=None)
@@ -293,6 +294,7 @@ class IsochroneMVNorm(ModelBase):
         Returns
         -------
         Array[(N,)]
+
         """
         # 'where' is used to indicate which data points are available. If
         # 'where' is not provided, then all data points are assumed to be

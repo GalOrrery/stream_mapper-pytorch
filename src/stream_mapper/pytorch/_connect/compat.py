@@ -51,6 +51,7 @@ def _array_at_pytorch(array: Array, idx: Any, /, *, inplace: bool = True) -> Arr
     -------
     ArrayAt[Array]
         Setter.
+
     """
     return ArrayAt(array if inplace else array.clone(), idx, inplace=inplace)
 
@@ -67,6 +68,7 @@ def _get_namespace_pytorch(array: Array, /) -> ArrayNamespace[Array]:
     Returns
     -------
     ArrayNamespace[Array]
+
     """
     return cast("ArrayNamespace[Array]", xp)
 
@@ -83,5 +85,6 @@ def _copy_pytorch(array: Array, /) -> Array:
     Returns
     -------
     Array
+
     """
     return array.clone()

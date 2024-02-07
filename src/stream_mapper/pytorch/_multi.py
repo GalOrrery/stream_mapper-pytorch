@@ -74,6 +74,7 @@ class IndependentModels(ModelsBase, CoreIndependentModels[Array, NNModel]):
         Mapping of parameter names to priors. This is useful for setting priors
         on parameters across models, e.g. the background and stream models in a
         mixture model.
+
     """
 
     def __post_init__(self) -> None:
@@ -92,6 +93,7 @@ class IndependentModels(ModelsBase, CoreIndependentModels[Array, NNModel]):
         -------
         Array
             fraction, mean, ln-sigma.
+
         """
         pred = self.xp.concatenate(
             tuple(model(data) for model in self.components.values()), dim=1
@@ -115,6 +117,7 @@ class MixtureModel(ModelsBase, CoreMixtureModel[Array, NNModel]):
         control over the type of the models attribute.
     net : NNModel, optional postional-only
         The neural network that is used to combine the components.
+
     """
 
     net: NNField[NNModel, NNModel] = NNField(default=MISSING)
@@ -138,6 +141,7 @@ class MixtureModel(ModelsBase, CoreMixtureModel[Array, NNModel]):
         -------
         Array
             fraction, mean, ln-sigma.
+
         """
         # Predict the weights, except the background weight, which is
         # always 1 - sum(weights).

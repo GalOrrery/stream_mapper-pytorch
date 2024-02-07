@@ -39,6 +39,7 @@ def sequential(
     Returns
     -------
     `torch.nn.Sequential`
+
     """
     activation_func = nn.Tanh if activation is None else activation
 
