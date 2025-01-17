@@ -25,7 +25,7 @@ ASTYPE_REGISTRY[(xp.Tensor, xp.Tensor)] = _from_tensor_to_tensor
 
 
 def _from_ndarray_to_tensor(
-    data: Data[np.ndarray[Any, Any]], /, **kwargs: Any
+    data: Data[np.ndarray[Any, Any]], /, **kwargs: Any  # type: ignore[type-var]
 ) -> Data[xp.Tensor]:
     """Convert from numpy.ndarray to torch.Tensor."""
     return replace(data, array=xp.asarray(data.array, **kwargs))
@@ -36,7 +36,7 @@ ASTYPE_REGISTRY[(np.ndarray, xp.Tensor)] = _from_ndarray_to_tensor
 
 def _from_tensor_to_ndarray(
     data: Data[xp.Tensor], /, **kwargs: Any
-) -> Data[np.ndarray[Any, Any]]:
+) -> Data[np.ndarray[Any, Any]]:  # type: ignore[type-var]
     """Convert from torch.Tensor to numpy.ndarray."""
     return replace(data, array=np.asarray(data.array, **kwargs))
 
@@ -51,7 +51,7 @@ except ImportError:
 else:
 
     def _from_ndarraytype_to_tensor(
-        data: Data[np.ndarray[Any, Any]], /, **kwargs: Any
+        data: Data[np.ndarray[Any, Any]], /, **kwargs: Any  # type: ignore[type-var]
     ) -> Data[xp.Tensor]:
         """Convert from numpy.ndarray to torch.Tensor."""
         array = np.array(data.array, copy=True, subok=False)

@@ -163,6 +163,7 @@ ignore = [
 
   # ruff (RUF)
   "RUF009",  # do not perform function call in dataclass defaults
+  "RUF022",
 
   # flake8-todo (TD)  # TODO: fix these
   "TD",
