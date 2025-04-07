@@ -122,7 +122,7 @@ class MixtureModel(ModelsBase, CoreMixtureModel[Array, NNModel]):
 
     net: NNField[NNModel, NNModel] = NNField(default=MISSING)
 
-    def __new__(cls: type[Self], *args: Any, **kwargs: Any) -> Self:  # noqa: ARG003
+    def __new__(cls: type[Self], *args: Any, **kwargs: Any) -> Self:
         """Initialize the model. This is needed for PyTorch."""
         self: Self = super().__new__(cls)
         # PyTorch needs to be initialized before attributes are assigned.
