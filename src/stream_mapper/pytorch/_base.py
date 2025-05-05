@@ -5,10 +5,11 @@ from __future__ import annotations
 __all__: tuple[str, ...] = ()
 
 from dataclasses import KW_ONLY, dataclass
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any
 
 import torch as xp
 from torch import nn
+from typing_extensions import Self
 
 from stream_mapper.core import ModelBase as CoreModelBase
 from stream_mapper.core._connect.nn_namespace import NN_NAMESPACE
@@ -21,8 +22,6 @@ from stream_mapper.pytorch.typing import Array, NNModel
 
 if TYPE_CHECKING:
     from stream_mapper.core import Data
-
-    Self = TypeVar("Self", bound="ModelBase")
 
 
 @dataclass(unsafe_hash=True, repr=False)
