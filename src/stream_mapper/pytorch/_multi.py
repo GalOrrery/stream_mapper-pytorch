@@ -5,9 +5,10 @@ from __future__ import annotations
 __all__: tuple[str, ...] = ()
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any
 
 from torch import nn
+from typing_extensions import Self
 
 from stream_mapper.core import BACKGROUND_KEY, NNField
 from stream_mapper.core import IndependentModels as CoreIndependentModels
@@ -22,8 +23,6 @@ from stream_mapper.pytorch.typing import Array, NNModel
 
 if TYPE_CHECKING:
     from stream_mapper.core import Data
-
-    Self = TypeVar("Self", bound="MixtureModel")
 
 
 @dataclass
@@ -122,7 +121,7 @@ class MixtureModel(ModelsBase, CoreMixtureModel[Array, NNModel]):
 
     net: NNField[NNModel, NNModel] = NNField(default=MISSING)
 
-    def __new__(cls: type[Self], *args: Any, **kwargs: Any) -> Self:
+    def __new__(cls: type[Self], *_: Any, **__: Any) -> Self:
         """Initialize the model. This is needed for PyTorch."""
         self: Self = super().__new__(cls)
         # PyTorch needs to be initialized before attributes are assigned.

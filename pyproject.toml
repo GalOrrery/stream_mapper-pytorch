@@ -143,9 +143,11 @@ where = ["src"]
 [tool.ruff]
 target-version = "py310"
 line-length = 88
+
+[tool.ruff.lint]
 select = ["ALL"]
 ignore = [
-  "ANN101", "ANN102", "ANN401",
+  "ANN401",
   "ARG001", "ARG002",
   "D105", "D107", "D203", "D213",
   "ERA001",
@@ -169,14 +171,14 @@ ignore = [
   "TD",
 ]
 
-[tool.ruff.flake8-tidy-imports]
+[tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 force-sort-within-sections = true
 known-third-party = ["numpy", "pytest", "torch"]
 known-first-party = ["stream_mapper.core"]
 known-local-folder = ["stream_mapper.pytorch"]
 
-[tool.ruff.pylint]
+[tool.ruff.lint.pylint]
 max-args = 6
