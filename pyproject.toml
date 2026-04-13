@@ -24,7 +24,7 @@
   dependencies = [
     "scipy>=1.7",
     "stream_mapper.core @ git+https://github.com/GalOrrery/stream_mapper-core.git",
-    "torch>=1.13",
+    "torch>=2.8.0",
   ]
 
 [project.optional-dependencies]
@@ -62,7 +62,7 @@
   requires = [
     "mypy>=0.971",
     "numpy>=1.21",
-    "setuptools>=45.0",
+    "setuptools>=78.1.1",
     "setuptools_scm[toml]>=6.3.1",
     "wheel",
   ]
