@@ -24,7 +24,7 @@
   dependencies = [
     "scipy>=1.7",
     "stream_mapper.core @ git+https://github.com/GalOrrery/stream_mapper-core.git",
-    "torch>=2.8.0",
+    "torch>=2.11.0",
   ]
 
 [project.optional-dependencies]
