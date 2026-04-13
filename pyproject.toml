@@ -24,7 +24,7 @@
   dependencies = [
     "scipy>=1.7",
     "stream_mapper.core @ git+https://github.com/GalOrrery/stream_mapper-core.git",
-    "torch>=1.13",
+    "torch>=2.11.0",
   ]
 
 [project.optional-dependencies]
@@ -35,7 +35,7 @@
   ]
   test = [
     "coverage[toml]",
-    "numpy>=1.18",
+    "numpy>=2.2.6",
     "pytest",
     "pytest-astropy",
     "typing_extensions>=4.15.0",
@@ -61,9 +61,9 @@
 [build-system]
   requires = [
     "mypy>=0.971",
-    "numpy>=1.21",
-    "setuptools>=45.0",
-    "setuptools_scm[toml]>=6.3.1",
+    "numpy>=2.2.6",
+    "setuptools>=82.0.1",
+    "setuptools_scm[toml]>=10.0.5",
     "wheel",
   ]
 
